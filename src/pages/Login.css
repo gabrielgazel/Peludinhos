@@ -1,0 +1,272 @@
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  background-color: var(--nb-yellow);
+}
+
+.login-page__dots {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    var(--nb-black) 1.5px,
+    transparent 1.5px
+  );
+  background-size: 28px 28px;
+  opacity: 0.12;
+}
+
+/*Blocos decorativos*/
+.deco {
+  position: absolute;
+  display: none;
+}
+
+.deco--1 {
+  top: 40px;
+  left: 40px;
+  width: 80px;
+  height: 80px;
+  background-color: var(--nb-pink);
+  border: 3px solid var(--nb-black);
+  transform: rotate(12deg);
+}
+
+.deco--2 {
+  right: 56px;
+  bottom: 64px;
+  width: 56px;
+  height: 56px;
+  background-color: var(--nb-orange);
+  border: 3px solid var(--nb-black);
+  transform: rotate(-8deg);
+}
+
+.deco--3 {
+  top: 33%;
+  right: 32px;
+  width: 32px;
+  height: 32px;
+  background-color: var(--nb-black);
+  transform: rotate(20deg);
+}
+
+.deco--4 {
+  bottom: 128px;
+  left: 32px;
+  width: 40px;
+  height: 40px;
+  background-color: var(--nb-yellow);
+  border: 3px solid var(--nb-black);
+  transform: rotate(-15deg);
+}
+
+@media (min-width: 768px) {
+  .deco--md {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .deco--lg {
+    display: block;
+  }
+}
+
+/*Card*/
+.login-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 448px;
+  background-color: var(--nb-white);
+  border: 4px solid var(--nb-black);
+  box-shadow: 8px 8px 0 var(--nb-black);
+}
+
+.login-card__header {
+  padding: 32px 32px 24px;
+  border-bottom: 4px solid var(--nb-black);
+  background-color: var(--nb-pink);
+}
+
+.login-card__brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.login-card__brand-name {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+.login-card__title {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/*Formulário*/
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 32px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field__label {
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.field__input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--nb-black);
+  background-color: var(--nb-white);
+  border: 3px solid var(--nb-black);
+  border-radius: 0;
+  outline: none;
+  box-shadow: 4px 4px 0 transparent;
+  transition: box-shadow 0.15s ease;
+}
+
+/*Sombra rosa*/
+.field__input:not(:placeholder-shown) {
+  box-shadow: 4px 4px 0 var(--nb-pink);
+}
+
+.field__input:focus {
+  box-shadow: 4px 4px 0 var(--nb-black);
+}
+
+.field__wrapper {
+  position: relative;
+}
+
+.field__input--password {
+  padding-right: 88px;
+}
+
+.field__toggle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--nb-black);
+  background-color: transparent;
+  border: none;
+  border-left: 3px solid var(--nb-black);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.field__toggle:hover {
+  background-color: var(--nb-yellow);
+}
+
+.field__toggle:focus-visible {
+  outline: 3px solid var(--nb-black);
+  outline-offset: -3px;
+}
+
+/*Botão*/
+.login-button {
+  width: 100%;
+  padding: 16px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--nb-black);
+  background-color: var(--nb-yellow);
+  border: 4px solid var(--nb-black);
+  border-radius: 0;
+  box-shadow: 6px 6px 0 var(--nb-black);
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background-color 0.15s ease;
+}
+
+.login-button:hover:not(:disabled) {
+  background-color: var(--nb-pink);
+  transform: translate(2px, 2px);
+  box-shadow: 4px 4px 0 var(--nb-black);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translate(4px, 4px);
+  box-shadow: 2px 2px 0 var(--nb-black);
+}
+
+.login-button:focus-visible {
+  outline: 3px solid var(--nb-black);
+  outline-offset: 4px;
+}
+
+.login-button:disabled {
+  color: var(--nb-yellow);
+  background-color: var(--nb-black);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--nb-black);
+  cursor: not-allowed;
+}
+
+.login-button__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-button__spinner {
+  animation: login-spin 1s linear infinite;
+}
+
+@keyframes login-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*Rodapé do card*/
+.login-form__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--nb-muted);
+}
