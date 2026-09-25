@@ -1,5 +1,5 @@
-import Login from './app/pages/Login'
+import { App as AppShell } from './app/App'
 
 export default function App() {
-  return <Login />
+  return <AppShell />
 }

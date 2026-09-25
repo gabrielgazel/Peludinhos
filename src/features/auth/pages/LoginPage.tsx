@@ -63,13 +63,6 @@ export function LoginPage() {
 
   return (
     <div className="login-page">
-      <div className="login-page__dots" />
-
-      <div className="deco deco--md deco--1" />
-      <div className="deco deco--md deco--2" />
-      <div className="deco deco--lg deco--3" />
-      <div className="deco deco--lg deco--4" />
-
       <div className="login-card">
         <div className="login-card__header">
           <div className="login-card__brand">
@@ -77,9 +70,9 @@ export function LoginPage() {
             <span className="login-card__brand-name">Peludinhos</span>
           </div>
           <h1 className="login-card__title">
-            ACESSO
+            Acesso
             <br />
-            DA EQUIPE
+            da equipe
           </h1>
         </div>
 
