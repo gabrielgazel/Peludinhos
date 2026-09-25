@@ -1,4 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { useLocation, useNavigate, type Location } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { HttpError } from '../../../shared/api/httpsClient'
 import './Login.css'
 
 function CatPaw() {
@@ -20,19 +23,42 @@ function CatPaw() {
   )
 }
 
-export default function Login() {
+interface LocationState {
+  from?: Location
+}
+
+export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  const { login } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    setError(null)
     setLoading(true)
 
-    // TODO: trocar esse setTimeout pela chamada real de autenticação.
-    // Os valores digitados estão em `email` e `password`.
-    setTimeout(() => setLoading(false), 1800)
+    try {
+      await login({ email, password })
+
+      // Volta pra rota que o usuário tentou acessar antes de cair
+      // no /login (guardada pelo ProtectedRoute); sem isso, vai pra home.
+      const state = location.state as LocationState | null
+      navigate(state?.from?.pathname ?? '/', { replace: true })
+    } catch (err) {
+      if (err instanceof HttpError && (err.status === 401 || err.status === 422)) {
+        setError('E-mail ou senha inválidos.')
+      } else {
+        setError('Não foi possível entrar agora. Tenta de novo em instantes.')
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -98,6 +124,12 @@ export default function Login() {
               </button>
             </div>
           </div>
+
+          {error && (
+            <p className="login-form__error" role="alert">
+              {error}
+            </p>
+          )}
 
           <button className="login-button" type="submit" disabled={loading}>
             {loading ? (
