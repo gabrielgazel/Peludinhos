@@ -1,15 +1,53 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=DM+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Averia+Libre:wght@300;400;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --font-display: 'Archivo Black', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  /* Tipografia */
+  --font-display: 'Averia Libre', cursive;
+  --font-body: 'Nunito', sans-serif;
 
-  --nb-yellow: #ffe500;
-  --nb-pink: #ff3cac;
-  --nb-black: #0a0a0a;
-  --nb-white: #fafafa;
-  --nb-orange: #ff6b35;
-  --nb-muted: #666666;
+  /* Paleta base */
+  --color-cream: #F5EBE6;
+  --color-orange: #E08A4E;
+  --color-brown: #6B5B52;
+  --color-dark: #2B2927;
+  --color-green: #7BAE7F;
+
+  /* Tokens semânticos */
+  --bg: var(--color-cream);
+  --surface: #FFFFFF;
+  --text: var(--color-dark);
+  --text-muted: var(--color-brown);
+  --border: #E4D8D0;
+
+  --accent: var(--color-orange);
+  --accent-hover: #C97638;
+  --accent-contrast: #FFFFFF;
+
+  --success: var(--color-green);
+  --danger: #C0503D;
+  --danger-bg: #F6E1DA;
+
+  /* Raio de borda — GNOME HIG usa cantos consistentemente arredondados */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* Escala de espaçamento */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Sombras suaves (estilo libadwaita: leves, em camadas) */
+  --shadow-sm: 0 1px 2px rgba(43, 41, 39, 0.08);
+  --shadow-md: 0 4px 12px rgba(43, 41, 39, 0.1);
+  --shadow-lg: 0 12px 32px rgba(43, 41, 39, 0.14);
+
+  /* Anel de foco (acessibilidade) */
+  --focus-ring: 0 0 0 3px rgba(224, 138, 78, 0.35);
 }
 
 * {
@@ -19,17 +57,27 @@
 body {
   margin: 0;
   font-family: var(--font-body);
-  background-color: var(--nb-yellow);
-  color: var(--nb-black);
+  background-color: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  margin: 0;
+}
+
+button, input {
+  font-family: inherit;
 }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px var(--nb-white) inset;
-  -webkit-text-fill-color: var(--nb-black);
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color: var(--text);
   transition: background-color 5000s ease-in-out 0s;
 }
 
