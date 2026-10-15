@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Averia+Libre:wght@300;400;700&display=swap');
+
+/*
+ * Tokens e componentes base das páginas públicas.
+ * Paleta: #F5EBE6 · #E08A4E · #6B5B52 · #2B2927 · #7BAE7F
+ * Se o design system global já tiver variáveis equivalentes,
+ * basta apontar as --pub-* abaixo para elas.
+ */
+.pub {
+  --pub-bg: #f5ebe6;
+  --pub-surface: #fffaf6;
+  --pub-accent: #e08a4e;
+  --pub-accent-hover: #d27a3d;
+  --pub-accent-soft: #f6dcc8;
+  --pub-green: #7bae7f;
+  --pub-green-soft: #dcebdc;
+  --pub-muted: #6b5b52;
+  --pub-text: #2b2927;
+  --pub-danger: #b3261e;
+  --pub-border: rgba(107, 91, 82, 0.28);
+  --pub-radius: 14px;
+
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Averia Libre', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--pub-text);
+  background-color: var(--pub-bg);
+}
+
+.pub h1,
+.pub h2,
+.pub h3 {
+  margin: 0;
+  line-height: 1.15;
+  font-weight: 700;
+}
+
+.pub p {
+  margin: 0;
+}
+
+.pub a {
+  color: inherit;
+}
+
+.pub-container {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.pub-main {
+  flex: 1;
+}
+
+/* Cabeçalho */
+.pub-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--pub-surface);
+  border-bottom: 1px solid var(--pub-border);
+}
+
+.pub-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 64px;
+}
+
+.pub-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--pub-text);
+}
+
+.pub-brand svg {
+  color: var(--pub-accent);
+}
+
+.pub-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pub-nav__link {
+  padding: 8px 12px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+}
+
+.pub-nav__link:hover {
+  background-color: var(--pub-accent-soft);
+}
+
+.pub-nav__link[aria-current='page'] {
+  text-decoration: underline;
+  text-decoration-color: var(--pub-accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
+
+@media (max-width: 560px) {
+  .pub-nav__link {
+    display: none;
+  }
+}
+
+/* Rodapé */
+.pub-footer {
+  margin-top: 48px;
+  color: var(--pub-bg);
+  background-color: var(--pub-text);
+}
+
+.pub-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  font-size: 15px;
+}
+
+.pub-footer__link {
+  color: var(--pub-bg);
+}
+
+/* Botões */
+.pub-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  color: var(--pub-text);
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.pub-btn--primary {
+  background-color: var(--pub-accent);
+}
+
+.pub-btn--primary:hover {
+  background-color: var(--pub-accent-hover);
+}
+
+.pub-btn--secondary {
+  background-color: var(--pub-surface);
+  border-color: var(--pub-border);
+}
+
+.pub-btn--secondary:hover {
+  background-color: var(--pub-accent-soft);
+}
+
+.pub-btn--ghost {
+  border-color: var(--pub-border);
+}
+
+.pub-btn--ghost:hover {
+  background-color: var(--pub-accent-soft);
+}
+
+.pub-btn--sm {
+  min-height: 40px;
+  padding: 8px 14px;
+  font-size: 16px;
+}
+
+.pub-btn--lg {
+  min-height: 56px;
+  padding: 14px 32px;
+  font-size: 22px;
+}
+
+.pub-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pub-btn:focus-visible,
+.pub-nav__link:focus-visible,
+.pub-brand:focus-visible,
+.pub-footer__link:focus-visible {
+  outline: 3px solid var(--pub-text);
+  outline-offset: 2px;
+}
+
+/* Elementos de página compartilhados */
+.pub-page {
+  padding-top: 40px;
+}
+
+.pub-page__title {
+  font-size: 36px;
+}
+
+.pub-page__lead {
+  margin-top: 8px;
+  max-width: 60ch;
+  color: var(--pub-muted);
+}
+
+.pub-badge {
+  display: inline-block;
+  padding: 2px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  background-color: var(--pub-green-soft);
+  border-radius: 999px;
+}
+
+.pub-badge--accent {
+  background-color: var(--pub-accent-soft);
+}
+
+.pub-state {
+  padding: 48px 0;
+  text-align: center;
+  color: var(--pub-muted);
+}
+
+.pub-back {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-weight: 700;
+}

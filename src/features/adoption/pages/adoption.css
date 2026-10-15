@@ -1,0 +1,95 @@
+.intent-animal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 560px;
+  margin-top: 24px;
+  padding: 12px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.intent-animal__photo {
+  width: 96px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.intent-animal__photo svg {
+  width: 40px;
+  height: 40px;
+}
+
+.intent-animal__label {
+  font-size: 14px;
+  color: var(--pub-muted);
+}
+
+.intent-animal__name {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.intent-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 560px;
+  margin-top: 28px;
+}
+
+.intent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 20px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.intent-section legend {
+  padding: 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.intent-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.intent-row--street {
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+}
+
+@media (max-width: 520px) {
+  .intent-row,
+  .intent-row--street {
+    grid-template-columns: 1fr;
+  }
+}
+
+.intent-form__error {
+  font-weight: 700;
+  color: var(--pub-danger);
+}
+
+.intent-success {
+  max-width: 560px;
+  padding: 32px 0;
+}
+
+.intent-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}

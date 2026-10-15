@@ -1,0 +1,189 @@
+/* Foto / ilustração */
+.animal-photo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  object-fit: cover;
+  color: var(--pub-text);
+}
+
+.animal-photo--card {
+  aspect-ratio: 4 / 3;
+}
+
+.animal-photo--hero {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--pub-radius);
+}
+
+.animal-photo--tone-0 {
+  background-color: var(--pub-accent-soft);
+}
+
+.animal-photo--tone-1 {
+  background-color: var(--pub-green-soft);
+}
+
+.animal-photo--tone-2 {
+  background-color: #e9ddd5;
+}
+
+.animal-photo svg {
+  opacity: 0.55;
+}
+
+/* Grade e card */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.animal-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.animal-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.animal-card__name {
+  font-size: 24px;
+}
+
+.animal-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.animal-card__info {
+  color: var(--pub-muted);
+  font-size: 15px;
+}
+
+.animal-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.animal-card__actions .pub-btn {
+  flex: 1 1 auto;
+}
+
+/* Filtros da lista */
+.animal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.animal-filters__search {
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.animal-filters__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.animal-chip {
+  min-height: 44px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--pub-text);
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.animal-chip:hover {
+  background-color: var(--pub-accent-soft);
+}
+
+.animal-chip[aria-pressed='true'] {
+  background-color: var(--pub-green);
+  border-color: var(--pub-text);
+}
+
+.animal-chip:focus-visible {
+  outline: 3px solid var(--pub-text);
+  outline-offset: 2px;
+}
+
+.animal-count {
+  margin-top: 16px;
+  color: var(--pub-muted);
+}
+
+/* Detalhe */
+.animal-detail {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 32px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .animal-detail {
+    grid-template-columns: 1fr;
+  }
+}
+
+.animal-detail__name {
+  font-size: 44px;
+}
+
+.animal-detail__facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 24px 0;
+}
+
+.animal-fact {
+  padding: 12px 14px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: 12px;
+}
+
+.animal-fact dt {
+  font-size: 14px;
+  color: var(--pub-muted);
+}
+
+.animal-fact dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+}
+
+.animal-detail__notes {
+  margin-bottom: 28px;
+}
+
+.animal-detail__notes h2 {
+  margin-bottom: 6px;
+  font-size: 22px;
+}

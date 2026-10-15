@@ -1,0 +1,122 @@
+.home-hero {
+  background-color: var(--pub-accent-soft);
+  border-bottom: 1px solid var(--pub-border);
+}
+
+.home-hero__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: center;
+  gap: 32px;
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+
+@media (max-width: 760px) {
+  .home-hero__inner {
+    grid-template-columns: 1fr;
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+
+  .home-hero__art {
+    display: none;
+  }
+}
+
+.home-hero__eyebrow {
+  font-weight: 700;
+  color: var(--pub-muted);
+}
+
+.home-hero__title {
+  margin-top: 8px;
+  font-size: clamp(36px, 6vw, 56px);
+}
+
+.home-hero__lead {
+  margin-top: 16px;
+  max-width: 48ch;
+  font-size: 20px;
+}
+
+.home-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.home-hero__art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  max-width: 320px;
+  margin: 0 auto;
+  width: 100%;
+  color: var(--pub-text);
+  background-color: var(--pub-green);
+  border-radius: 50%;
+}
+
+.home-hero__art svg {
+  opacity: 0.8;
+}
+
+.home-section {
+  padding-top: 48px;
+}
+
+.home-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-section__title {
+  font-size: 30px;
+}
+
+.home-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-step {
+  padding: 20px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.home-step h3 {
+  margin: 12px 0 6px;
+  font-size: 21px;
+}
+
+.home-step p {
+  color: var(--pub-muted);
+}
+
+.home-step__number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  font-weight: 700;
+  background-color: var(--pub-green);
+  border-radius: 50%;
+}
+
+.home-about p {
+  max-width: 65ch;
+  margin-top: 12px;
+}
