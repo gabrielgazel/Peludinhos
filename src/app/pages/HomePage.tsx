@@ -4,7 +4,7 @@
  */
 export function HomePage() {
   return (
-    <main>
+    <main className="status-page">
       <h1>Peludinhos</h1>
       <p>Shell autenticado de verdade chega na S02.</p>
     </main>

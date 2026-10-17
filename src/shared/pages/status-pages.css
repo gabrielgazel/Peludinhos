@@ -1,0 +1,16 @@
+/*
+ * Páginas simples sem layout próprio (404, não autorizado e o
+ * placeholder do painel). O preflight do Tailwind zera o tamanho dos
+ * títulos e o respiro dos parágrafos; aqui ficam as métricas que antes
+ * vinham do navegador. Escopo por classe para não afetar os componentes
+ * gerados pelo Tailwind.
+ */
+@layer components {
+  .status-page h1 {
+    font-size: 2em;
+  }
+
+  .status-page p {
+    margin-block: 1em;
+  }
+}

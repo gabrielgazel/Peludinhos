@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Arquivos locais de ferramentas de agente (vivem só no nível do usuário)
+.agents/
+.opencode/
+opencode.json
+skills-lock.json

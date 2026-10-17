@@ -6,6 +6,8 @@
  * Se o design system global já tiver variáveis equivalentes,
  * basta apontar as --pub-* abaixo para elas.
  */
+@layer components {
+
 .pub {
   --pub-bg: #f5ebe6;
   --pub-surface: #fffaf6;
@@ -45,6 +47,15 @@
 
 .pub a {
   color: inherit;
+}
+
+/*
+ * O preflight do Tailwind faz <a> herdar a decoração do elemento pai;
+ * aqui mantém o sublinhado padrão dos links (como vinha do navegador),
+ * sem atingir botões/marca que já definem `text-decoration: none`.
+ */
+:where(.pub) a {
+  text-decoration: underline;
 }
 
 .pub-container {
@@ -243,6 +254,12 @@
   background-color: var(--pub-accent-soft);
 }
 
+.pub-badge--outline {
+  background-color: transparent;
+  border: 1px solid var(--pub-border);
+  color: var(--pub-muted);
+}
+
 .pub-state {
   padding: 48px 0;
   text-align: center;
@@ -253,4 +270,5 @@
   display: inline-block;
   margin-bottom: 20px;
   font-weight: 700;
+}
 }

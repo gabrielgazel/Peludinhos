@@ -24,14 +24,14 @@ export function PublicLayout() {
           </Link>
 
           <nav className="pub-nav" aria-label="Principal">
-            <NavLink to="/" end className="pub-nav__link">
-              Início
+            <NavLink to="/sobre" className="pub-nav__link">
+              Sobre o projeto
             </NavLink>
             <NavLink to="/adocao" className="pub-btn pub-btn--primary pub-btn--sm">
-              Adoção
+              Quero adotar
             </NavLink>
             <Link to="/login" className="pub-btn pub-btn--ghost pub-btn--sm">
-              Acesso da equipe
+              Login
             </Link>
           </nav>
         </div>

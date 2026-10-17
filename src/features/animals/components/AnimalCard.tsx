@@ -28,7 +28,7 @@ export function AnimalCard({ animal }: { animal: Animal }) {
             to={`/adocao/${animal.id}`}
             className="pub-btn pub-btn--secondary pub-btn--sm"
           >
-            Ver detalhes
+            Ver mais
           </Link>
           <Link
             to={`/adocao/${animal.id}/intencao`}

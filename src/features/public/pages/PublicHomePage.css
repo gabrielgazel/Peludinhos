@@ -1,3 +1,5 @@
+@layer components {
+
 .home-hero {
   background-color: var(--pub-accent-soft);
   border-bottom: 1px solid var(--pub-border);
@@ -5,11 +7,11 @@
 
 .home-hero__inner {
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  gap: 32px;
-  padding-top: 56px;
-  padding-bottom: 56px;
+  gap: clamp(32px, 5vw, 56px);
+  padding-top: clamp(48px, 7vw, 96px);
+  padding-bottom: clamp(48px, 7vw, 96px);
 }
 
 @media (max-width: 760px) {
@@ -19,49 +21,78 @@
     padding-bottom: 36px;
   }
 
-  .home-hero__art {
+  .home-hero__mosaic {
     display: none;
   }
 }
 
-.home-hero__eyebrow {
-  font-weight: 700;
-  color: var(--pub-muted);
+.home-hero__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
 }
 
 .home-hero__title {
-  margin-top: 8px;
-  font-size: clamp(36px, 6vw, 56px);
+  max-width: 520px;
+  font-size: clamp(40px, 6vw, 68px);
+  letter-spacing: -0.02em;
 }
 
 .home-hero__lead {
-  margin-top: 16px;
-  max-width: 48ch;
+  max-width: 46ch;
   font-size: 20px;
+  color: var(--pub-muted);
 }
 
 .home-hero__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 28px;
+  gap: 16px;
+  margin-top: 8px;
 }
 
-.home-hero__art {
+/* Mosaico decorativo do hero (referência: grade 2 colunas,
+   coluna direita com um bloco que ocupa as duas linhas) */
+.home-hero__mosaic {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2.5vw, 28px);
+}
+
+.home-hero__tile {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1 / 1;
-  max-width: 320px;
-  margin: 0 auto;
-  width: 100%;
-  color: var(--pub-text);
-  background-color: var(--pub-green);
-  border-radius: 50%;
+  border-radius: var(--pub-radius);
 }
 
-.home-hero__art svg {
+.home-hero__tile svg {
   opacity: 0.8;
+}
+
+.home-hero__tile--square {
+  aspect-ratio: 1 / 1;
+}
+
+.home-hero__tile--tall {
+  grid-row: span 2;
+}
+
+.home-hero__tile--surface {
+  background-color: var(--pub-surface);
+  color: var(--pub-accent);
+}
+
+.home-hero__tile--green {
+  background-color: var(--pub-green);
+  color: var(--pub-surface);
+}
+
+.home-hero__tile--green-soft {
+  background-color: var(--pub-green-soft);
+  color: var(--pub-green);
+}
 }
 
 .home-section {

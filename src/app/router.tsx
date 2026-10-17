@@ -5,6 +5,7 @@ import { AdoptionIntentPage } from '../features/adoption/pages/AdoptionIntentPag
 import { AnimalDetailPage } from '../features/animals/pages/AnimalDetailPage';
 import { AnimalListPage } from '../features/animals/pages/AnimalListPage';
 import { PublicHomePage } from '../features/public/pages/PublicHomePage';
+import { AboutPeludinhosPage } from '../features/public/pages/AboutPeludinhosPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
 import { ProtectedRoute } from '../shared/routes/ProtectedRoute.tsx';
 import { NotAuthorizedPage } from '../shared/pages/NotAuthorizedPage.tsx';
@@ -19,6 +20,7 @@ export function AppRouter() {
           {/* Rotas públicas — visitantes, sem login */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<PublicHomePage />} />
+            <Route path="/sobre" element={<AboutPeludinhosPage />} />
             <Route path="/adocao" element={<AnimalListPage />} />
             <Route path="/adocao/:id" element={<AnimalDetailPage />} />
             <Route path="/adocao/:id/intencao" element={<AdoptionIntentPage />} />
