@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { AnimalPhoto } from '../../animals/components/AnimalPhoto';
 import { useAnimal } from '../../animals/hooks/useAnimals';
 import { CheckboxField } from '../../../shared/components/CheckboxField';
 import { TextField } from '../../../shared/components/TextField';
+import { HttpError } from '../../../shared/api/httpsClient';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { adoptionService } from '../services/adoptionService';
 import {
   formatCep,
@@ -12,7 +14,7 @@ import {
   isValidCpf,
   isValidEmail,
   onlyDigits,
-} from '../utils/validators';
+} from '../../../shared/utils/validators';
 import './adoption.css';
 
 interface FormValues {
@@ -20,6 +22,7 @@ interface FormValues {
   email: string;
   birthDate: string;
   cpf: string;
+  password: string;
   isUfopaMember: boolean;
   hasPet: boolean;
   cep: string;
@@ -37,6 +40,7 @@ const INITIAL_VALUES: FormValues = {
   email: '',
   birthDate: '',
   cpf: '',
+  password: '',
   isUfopaMember: false,
   hasPet: false,
   cep: '',
@@ -51,6 +55,7 @@ const INITIAL_VALUES: FormValues = {
 const FIELD_ORDER: (keyof FormValues)[] = [
   'name',
   'email',
+  'password',
   'birthDate',
   'cpf',
   'cep',
@@ -61,36 +66,43 @@ const FIELD_ORDER: (keyof FormValues)[] = [
 ];
 
 const MIN_MOTIVATION_LENGTH = 20;
+const MIN_PASSWORD_LENGTH = 8;
 
-function validate(values: FormValues): FormErrors {
+function validate(values: FormValues, needsRegistration: boolean): FormErrors {
   const errors: FormErrors = {};
 
-  if (values.name.trim().length < 3) {
-    errors.name = 'Informe seu nome completo.';
+  if (needsRegistration) {
+    if (values.name.trim().length < 3) {
+      errors.name = 'Informe seu nome completo.';
+    }
+    if (!isValidEmail(values.email)) {
+      errors.email = 'Informe um e-mail válido.';
+    }
+    if (values.password.length < MIN_PASSWORD_LENGTH) {
+      errors.password = `Use ao menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+    }
+    if (!values.birthDate) {
+      errors.birthDate = 'Informe sua data de nascimento.';
+    } else if (!isAdult(values.birthDate)) {
+      errors.birthDate = 'É preciso ter 18 anos ou mais para adotar.';
+    }
+    if (!isValidCpf(values.cpf)) {
+      errors.cpf = 'Informe um CPF válido.';
+    }
+    if (onlyDigits(values.cep).length !== 8) {
+      errors.cep = 'Informe um CEP com 8 dígitos.';
+    }
+    if (values.street.trim() === '') {
+      errors.street = 'Informe a rua.';
+    }
+    if (values.number.trim() === '') {
+      errors.number = 'Informe o número.';
+    }
+    if (values.neighborhood.trim() === '') {
+      errors.neighborhood = 'Informe o bairro.';
+    }
   }
-  if (!isValidEmail(values.email)) {
-    errors.email = 'Informe um e-mail válido.';
-  }
-  if (!values.birthDate) {
-    errors.birthDate = 'Informe sua data de nascimento.';
-  } else if (!isAdult(values.birthDate)) {
-    errors.birthDate = 'É preciso ter 18 anos ou mais para adotar.';
-  }
-  if (!isValidCpf(values.cpf)) {
-    errors.cpf = 'Informe um CPF válido.';
-  }
-  if (onlyDigits(values.cep).length !== 8) {
-    errors.cep = 'Informe um CEP com 8 dígitos.';
-  }
-  if (values.street.trim() === '') {
-    errors.street = 'Informe a rua.';
-  }
-  if (values.number.trim() === '') {
-    errors.number = 'Informe o número.';
-  }
-  if (values.neighborhood.trim() === '') {
-    errors.neighborhood = 'Informe o bairro.';
-  }
+
   if (values.motivation.trim().length < MIN_MOTIVATION_LENGTH) {
     errors.motivation = `Conte um pouco mais (mínimo de ${MIN_MOTIVATION_LENGTH} caracteres).`;
   }
@@ -102,12 +114,18 @@ export function AdoptionIntentPage() {
   const { id } = useParams();
   const animalId = Number(id);
   const { animal, loading, failed } = useAnimal(animalId);
+  const { user, isAuthenticated, register } = useAuth();
+  const location = useLocation();
 
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  // Visitante já logado não precisa repassar os dados pessoais/endereço.
+  const isVisitor = isAuthenticated && user?.role === 'visitante';
+  const needsRegistration = !isVisitor;
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -118,7 +136,7 @@ export function AdoptionIntentPage() {
     event.preventDefault();
     if (!animal) return;
 
-    const found = validate(values);
+    const found = validate(values, needsRegistration);
     setErrors(found);
 
     const firstInvalid = FIELD_ORDER.find((field) => found[field]);
@@ -130,30 +148,52 @@ export function AdoptionIntentPage() {
     setSubmitError(null);
     setSubmitting(true);
 
+    let didRegister = false;
     try {
-      await adoptionService.submitIntent({
-        animalId: animal.id,
-        visitor: {
-          name: values.name.trim(),
+      if (needsRegistration) {
+        await register({
           email: values.email.trim(),
+          password: values.password,
+          name: values.name.trim(),
           birthDate: values.birthDate,
           cpf: onlyDigits(values.cpf),
           isUfopaMember: values.isUfopaMember,
           hasPet: values.hasPet,
-        },
-        address: {
-          cep: onlyDigits(values.cep),
-          street: values.street.trim(),
-          number: values.number.trim(),
-          neighborhood: values.neighborhood.trim(),
-          referencePoint: values.referencePoint.trim(),
-        },
+          address: {
+            cep: onlyDigits(values.cep),
+            street: values.street.trim(),
+            number: values.number.trim(),
+            neighborhood: values.neighborhood.trim(),
+            referencePoint: values.referencePoint.trim(),
+          },
+        });
+        didRegister = true;
+      }
+
+      await adoptionService.submitIntent({
+        animalId: animal.id,
         motivation: values.motivation.trim(),
       });
       setSent(true);
       window.scrollTo(0, 0);
-    } catch {
-      setSubmitError('Não foi possível enviar agora. Tente de novo em instantes.');
+    } catch (err) {
+      if (err instanceof HttpError && err.status === 409 && didRegister) {
+        setSubmitError(
+          'Sua conta foi criada, mas você já tem um pedido pendente para este animal.',
+        );
+      } else if (err instanceof HttpError && err.status === 409 && needsRegistration) {
+        setSubmitError(
+          'Já existe uma conta com este e-mail. Entre para continuar o pedido.',
+        );
+      } else if (err instanceof HttpError && err.status === 409) {
+        setSubmitError(err.message || 'Você já tem um pedido pendente para este animal.');
+      } else if (err instanceof HttpError && err.status === 404) {
+        setSubmitError('Este animal não está mais disponível para adoção.');
+      } else if (err instanceof HttpError && err.status === 422) {
+        setSubmitError(err.message || 'Confira os dados informados.');
+      } else {
+        setSubmitError('Não foi possível enviar agora. Tente de novo em instantes.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +207,7 @@ export function AdoptionIntentPage() {
     );
   }
 
-  if (failed || animal === null || animal.status !== 'disponivel') {
+  if (failed || animal === null || animal.status !== 'disponivel' || animal.isDeceased) {
     return (
       <div className="pub-container pub-page">
         <p className="pub-state" role="alert">
@@ -207,6 +247,24 @@ export function AdoptionIntentPage() {
     );
   }
 
+  // Membros da equipe não manifestam intenção (a API só aceita visitantes).
+  if (isAuthenticated && !isVisitor) {
+    return (
+      <div className="pub-container pub-page">
+        <p className="pub-state" role="alert">
+          A manifestação de interesse é feita pelo próprio adotante (conta de
+          visitante). Como membro da equipe, use o painel para acompanhar os
+          pedidos.
+        </p>
+        <p className="pub-state">
+          <Link to="/painel" className="pub-btn pub-btn--primary">
+            Ir para o painel
+          </Link>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="pub-container pub-page">
       <Link to={`/adocao/${animal.id}`} className="pub-back">
@@ -229,117 +287,146 @@ export function AdoptionIntentPage() {
         </div>
       </div>
 
+      {isVisitor && (
+        <p className="intent-form__note">
+          Você está logado como <strong>{user?.name}</strong>. Vamos usar os
+          dados da sua conta para registrar o pedido.
+        </p>
+      )}
+
       <form className="intent-form" onSubmit={handleSubmit} noValidate>
-        <fieldset className="intent-section">
-          <legend>Seus dados</legend>
+        {needsRegistration && (
+          <>
+            <fieldset className="intent-section">
+              <legend>Seus dados</legend>
 
-          <TextField
-            id="name"
-            label="Nome completo"
-            autoComplete="name"
-            required
-            value={values.name}
-            error={errors.name}
-            onChange={(value) => setField('name', value)}
-          />
-          <TextField
-            id="email"
-            label="E-mail"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            required
-            value={values.email}
-            error={errors.email}
-            onChange={(value) => setField('email', value)}
-          />
-          <div className="intent-row">
-            <TextField
-              id="birthDate"
-              label="Data de nascimento"
-              type="date"
-              autoComplete="bday"
-              required
-              value={values.birthDate}
-              error={errors.birthDate}
-              onChange={(value) => setField('birthDate', value)}
-            />
-            <TextField
-              id="cpf"
-              label="CPF"
-              inputMode="numeric"
-              placeholder="000.000.000-00"
-              required
-              value={values.cpf}
-              error={errors.cpf}
-              onChange={(value) => setField('cpf', formatCpf(value))}
-            />
-          </div>
-          <CheckboxField
-            id="isUfopaMember"
-            label="Faço parte da comunidade da Ufopa"
-            checked={values.isUfopaMember}
-            onChange={(checked) => setField('isUfopaMember', checked)}
-          />
-          <CheckboxField
-            id="hasPet"
-            label="Já tenho outro animal em casa"
-            checked={values.hasPet}
-            onChange={(checked) => setField('hasPet', checked)}
-          />
-        </fieldset>
+              <TextField
+                id="name"
+                label="Nome completo"
+                autoComplete="name"
+                required
+                value={values.name}
+                error={errors.name}
+                onChange={(value) => setField('name', value)}
+              />
+              <TextField
+                id="email"
+                label="E-mail"
+                type="email"
+                autoComplete="email"
+                required
+                value={values.email}
+                error={errors.email}
+                onChange={(value) => setField('email', value)}
+              />
+              <TextField
+                id="password"
+                label="Crie uma senha de acesso"
+                type="password"
+                autoComplete="new-password"
+                required
+                hint={`Você usará esta senha para acompanhar seus pedidos. Mínimo de ${MIN_PASSWORD_LENGTH} caracteres.`}
+                value={values.password}
+                error={errors.password}
+                onChange={(value) => setField('password', value)}
+              />
+              <div className="intent-row">
+                <TextField
+                  id="birthDate"
+                  label="Data de nascimento"
+                  type="date"
+                  autoComplete="bday"
+                  required
+                  value={values.birthDate}
+                  error={errors.birthDate}
+                  onChange={(value) => setField('birthDate', value)}
+                />
+                <TextField
+                  id="cpf"
+                  label="CPF"
+                  inputMode="numeric"
+                  placeholder="000.000.000-00"
+                  required
+                  value={values.cpf}
+                  error={errors.cpf}
+                  onChange={(value) => setField('cpf', formatCpf(value))}
+                />
+              </div>
+              <CheckboxField
+                id="isUfopaMember"
+                label="Faço parte da comunidade da Ufopa"
+                checked={values.isUfopaMember}
+                onChange={(checked) => setField('isUfopaMember', checked)}
+              />
+              <CheckboxField
+                id="hasPet"
+                label="Já tenho outro animal em casa"
+                checked={values.hasPet}
+                onChange={(checked) => setField('hasPet', checked)}
+              />
 
-        <fieldset className="intent-section">
-          <legend>Onde o animal vai morar</legend>
+              <p className="intent-form__note">
+                Já tem uma conta?{' '}
+                <Link to="/login" state={{ from: location }}>
+                  Entre para enviar seu pedido
+                </Link>
+                .
+              </p>
+            </fieldset>
 
-          <div className="intent-row">
-            <TextField
-              id="cep"
-              label="CEP"
-              inputMode="numeric"
-              autoComplete="postal-code"
-              placeholder="00000-000"
-              required
-              value={values.cep}
-              error={errors.cep}
-              onChange={(value) => setField('cep', formatCep(value))}
-            />
-            <TextField
-              id="neighborhood"
-              label="Bairro"
-              required
-              value={values.neighborhood}
-              error={errors.neighborhood}
-              onChange={(value) => setField('neighborhood', value)}
-            />
-          </div>
-          <div className="intent-row intent-row--street">
-            <TextField
-              id="street"
-              label="Rua"
-              autoComplete="address-line1"
-              required
-              value={values.street}
-              error={errors.street}
-              onChange={(value) => setField('street', value)}
-            />
-            <TextField
-              id="number"
-              label="Número"
-              required
-              value={values.number}
-              error={errors.number}
-              onChange={(value) => setField('number', value)}
-            />
-          </div>
-          <TextField
-            id="referencePoint"
-            label="Ponto de referência"
-            optional
-            value={values.referencePoint}
-            onChange={(value) => setField('referencePoint', value)}
-          />
-        </fieldset>
+            <fieldset className="intent-section">
+              <legend>Onde o animal vai morar</legend>
+
+              <div className="intent-row">
+                <TextField
+                  id="cep"
+                  label="CEP"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  placeholder="00000-000"
+                  required
+                  value={values.cep}
+                  error={errors.cep}
+                  onChange={(value) => setField('cep', formatCep(value))}
+                />
+                <TextField
+                  id="neighborhood"
+                  label="Bairro"
+                  required
+                  value={values.neighborhood}
+                  error={errors.neighborhood}
+                  onChange={(value) => setField('neighborhood', value)}
+                />
+              </div>
+              <div className="intent-row intent-row--street">
+                <TextField
+                  id="street"
+                  label="Rua"
+                  autoComplete="address-line1"
+                  required
+                  value={values.street}
+                  error={errors.street}
+                  onChange={(value) => setField('street', value)}
+                />
+                <TextField
+                  id="number"
+                  label="Número"
+                  required
+                  value={values.number}
+                  error={errors.number}
+                  onChange={(value) => setField('number', value)}
+                />
+              </div>
+              <TextField
+                id="referencePoint"
+                label="Ponto de referência"
+                optional
+                value={values.referencePoint}
+                onChange={(value) => setField('referencePoint', value)}
+              />
+            </fieldset>
+          </>
+        )}
 
         <fieldset className="intent-section">
           <legend>Sobre a adoção</legend>

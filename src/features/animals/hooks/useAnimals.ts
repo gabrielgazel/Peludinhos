@@ -14,9 +14,9 @@ export function useAvailableAnimals() {
     let cancelled = false;
 
     animalService
-      .listAvailable()
-      .then((animals) => {
-        if (!cancelled) setResult({ animals, failed: false });
+      .list({ limit: 200 })
+      .then((page) => {
+        if (!cancelled) setResult({ animals: page.items, failed: false });
       })
       .catch(() => {
         if (!cancelled) setResult({ animals: [], failed: true });
@@ -44,6 +44,8 @@ export function useAnimal(id: number) {
   const [result, setResult] = useState<DetailResult | null>(null);
 
   useEffect(() => {
+    if (!Number.isFinite(id) || id <= 0) return;
+
     let cancelled = false;
 
     animalService
@@ -60,12 +62,13 @@ export function useAnimal(id: number) {
     };
   }, [id]);
 
-  // Só vale o resultado do id atual; ao trocar de id volta a "carregando".
-  const current = result !== null && result.id === id ? result : null;
+  // Vale apenas o resultado do id atual; ids inválidos nunca carregam.
+  const validId = Number.isFinite(id) && id > 0;
+  const current = validId && result !== null && result.id === id ? result : null;
 
   return {
     animal: current?.animal ?? null,
-    loading: current === null,
+    loading: validId && current === null,
     failed: current?.failed ?? false,
   };
 }

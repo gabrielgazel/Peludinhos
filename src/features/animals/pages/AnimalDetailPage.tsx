@@ -34,7 +34,7 @@ export function AnimalDetailPage() {
     );
   }
 
-  const available = animal.status === 'disponivel';
+  const available = animal.status === 'disponivel' && !animal.isDeceased;
 
   return (
     <div className="pub-container pub-page">
@@ -55,11 +55,11 @@ export function AnimalDetailPage() {
             </div>
             <div className="animal-fact">
               <dt>Idade</dt>
-              <dd>{animal.age}</dd>
+              <dd>{animal.age ?? 'Não informada'}</dd>
             </div>
             <div className="animal-fact">
               <dt>Cor</dt>
-              <dd>{animal.colorDescription}</dd>
+              <dd>{animal.colorDescription ?? 'Não informada'}</dd>
             </div>
             <div className="animal-fact">
               <dt>Castrado</dt>
@@ -67,14 +67,16 @@ export function AnimalDetailPage() {
             </div>
             <div className="animal-fact">
               <dt>Comportamento</dt>
-              <dd>{BEHAVIOR_LABEL[animal.behavior]}</dd>
+              <dd>{animal.behavior ? BEHAVIOR_LABEL[animal.behavior] : 'Não informado'}</dd>
             </div>
           </dl>
 
-          <section className="animal-detail__notes">
-            <h2>Sobre {animal.name}</h2>
-            <p>{animal.notes}</p>
-          </section>
+          {animal.notes && (
+            <section className="animal-detail__notes">
+              <h2>Sobre {animal.name}</h2>
+              <p>{animal.notes}</p>
+            </section>
+          )}
 
           {available ? (
             <Link

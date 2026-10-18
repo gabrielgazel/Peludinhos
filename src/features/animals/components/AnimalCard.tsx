@@ -5,6 +5,8 @@ import { AnimalPhoto } from './AnimalPhoto';
 import './animals.css';
 
 export function AnimalCard({ animal }: { animal: Animal }) {
+  const info = [animal.age, animal.colorDescription].filter(Boolean).join(' · ');
+
   return (
     <article className="animal-card">
       <AnimalPhoto animal={animal} />
@@ -14,14 +16,14 @@ export function AnimalCard({ animal }: { animal: Animal }) {
 
         <div className="animal-card__badges">
           <span className="pub-badge">{SEX_LABEL[animal.sex]}</span>
-          <span className="pub-badge pub-badge--accent">
-            {BEHAVIOR_LABEL[animal.behavior]}
-          </span>
+          {animal.behavior && (
+            <span className="pub-badge pub-badge--accent">
+              {BEHAVIOR_LABEL[animal.behavior]}
+            </span>
+          )}
         </div>
 
-        <p className="animal-card__info">
-          {animal.age} · {animal.colorDescription}
-        </p>
+        {info && <p className="animal-card__info">{info}</p>}
 
         <div className="animal-card__actions">
           <Link

@@ -1,10 +1,14 @@
 /**
  * Cliente HTTP centralizado para comunicação com a peludinhos-api.
- * Envolve o fetch nativo pra padronizar base URL, headers,
- * injeção do token de autenticação e tratamento de erros.
+ * Envolve o fetch nativo para padronizar base URL, headers, injeção do
+ * token de autenticação, renovação automática de sessão e tratamento de
+ * erros no formato da API (FastAPI: `{"detail": ...}`).
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api').replace(
+  /\/+$/,
+  '',
+);
 
 export class HttpError extends Error {
   status: number;
@@ -18,73 +22,141 @@ export class HttpError extends Error {
   }
 }
 
-type TokenGetter = () => string | null;
 type UnauthorizedHandler = () => void;
+type TokenRefresher = () => Promise<string | null>;
 
-let getToken: TokenGetter = () => null;
+let accessToken: string | null = null;
 let onUnauthorized: UnauthorizedHandler = () => {};
+let refreshAccessToken: TokenRefresher = async () => null;
+
+/** Rotas de autenticação que não devem disparar tentativa de refresh. */
+const NO_REFRESH_PATHS = ['/auth/login', '/auth/refresh', '/auth/register'];
+
+/** Atualiza o token usado nas requisições (chamado pelo AuthContext). */
+export function setAccessToken(token: string | null) {
+  accessToken = token;
+}
+
+export function getAccessToken(): string | null {
+  return accessToken;
+}
 
 /**
- * O AuthContext registra aqui como obter o token atual e o que fazer
- * quando a API retornar 401 (ex: limpar sessão e redirecionar pro
- * login). Isso evita import circular entre httpClient <-> AuthContext.
+ * O AuthContext registra aqui como renovar a sessão (via refresh token)
+ * e o que fazer quando ela é realmente inválida (limpar sessão e mandar
+ * o usuário para o login). Evita import circular httpClient <-> AuthContext.
  */
 export function configureHttpClient(options: {
-  getToken: TokenGetter;
+  refresh: TokenRefresher;
   onUnauthorized: UnauthorizedHandler;
 }) {
-  getToken = options.getToken;
+  refreshAccessToken = options.refresh;
   onUnauthorized = options.onUnauthorized;
 }
 
-interface RequestOptions extends Omit<RequestInit, 'body'> {
-  body?: unknown;
+/** Extrai a mensagem de erro do formato da API. */
+function extractErrorMessage(status: number, body: unknown): string {
+  if (body && typeof body === 'object') {
+    const detail = (body as { detail?: unknown }).detail;
+    if (typeof detail === 'string' && detail.trim()) {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map((item) =>
+          item && typeof item === 'object' && 'msg' in item
+            ? String((item as { msg: unknown }).msg)
+            : null,
+        )
+        .filter((message): message is string => !!message);
+      if (messages.length > 0) {
+        return messages.join(' ');
+      }
+    }
+  }
+  return `Erro ${status}`;
 }
 
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const token = getToken();
+// Renovação "single-flight": requisições concorrentes compartilham a
+// mesma promessa de refresh em vez de dispararem vários POSTs.
+let refreshPromise: Promise<string | null> | null = null;
 
+async function tryRefresh(): Promise<string | null> {
+  if (!refreshPromise) {
+    refreshPromise = refreshAccessToken().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+type RequestOptions = {
+  method?: string;
+  body?: unknown;
+  headers?: HeadersInit;
+  signal?: AbortSignal;
+};
+
+async function request<T>(path: string, options: RequestOptions = {}, allowRetry = true): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
   if (options.body !== undefined) {
     headers.set('Content-Type', 'application/json');
   }
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`);
+  if (accessToken) {
+    headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
+    method: options.method ?? 'GET',
     headers,
+    signal: options.signal,
     body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
   });
 
-  if (response.status === 401) {
+  // Access token expirado: tenta renovar uma vez e repetir a requisição.
+  if (
+    response.status === 401 &&
+    allowRetry &&
+    !NO_REFRESH_PATHS.some((noRefresh) => path.startsWith(noRefresh))
+  ) {
+    const renewed = await tryRefresh();
+    if (renewed) {
+      return request<T>(path, options, false);
+    }
     onUnauthorized();
   }
 
-  const isJson = response.headers.get('content-type')?.includes('application/json');
-  const data = isJson ? await response.json().catch(() => null) : null;
-
-  if (!response.ok) {
-    const message =
-      (data && typeof data === 'object' && 'message' in data && String((data as { message: unknown }).message)) ||
-      `Erro ${response.status} ao acessar ${path}`;
-    throw new HttpError(response.status, message, data);
+  if (response.status === 204) {
+    return undefined as T;
   }
 
-  return data as T;
+  const text = await response.text();
+  let body: unknown = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text;
+    }
+  }
+
+  if (!response.ok) {
+    throw new HttpError(response.status, extractErrorMessage(response.status, body), body);
+  }
+
+  return body as T;
 }
 
 export const httpClient = {
-  get: <T>(path: string, options?: RequestOptions) =>
+  get: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'GET' }),
-  post: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+  post: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     request<T>(path, { ...options, method: 'POST', body }),
-  put: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+  put: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     request<T>(path, { ...options, method: 'PUT', body }),
-  patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+  patch: <T>(path: string, body?: unknown, options?: Omit<RequestOptions, 'method'>) =>
     request<T>(path, { ...options, method: 'PATCH', body }),
-  delete: <T>(path: string, options?: RequestOptions) =>
+  delete: <T>(path: string, options?: Omit<RequestOptions, 'method' | 'body'>) =>
     request<T>(path, { ...options, method: 'DELETE' }),
 };

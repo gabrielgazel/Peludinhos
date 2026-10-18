@@ -1,3 +1,5 @@
+/** Utilitários de validação/formatação compartilhados entre features. */
+
 export function onlyDigits(value: string): string {
   return value.replace(/\D/g, '');
 }

@@ -44,15 +44,19 @@ export function LoginPage() {
     setLoading(true)
 
     try {
-      await login({ email, password })
+      const user = await login({ email, password })
 
-      // Volta pra rota que o usuário tentou acessar antes de cair
-      // no /login (guardada pelo ProtectedRoute); sem isso, vai pra home.
+      // Volta pra rota que o usuário tentou acessar antes de cair no
+      // /login (guardada pelo ProtectedRoute). Sem isso, a equipe vai
+      // pro painel e o visitante para a home pública.
       const state = location.state as LocationState | null
-      navigate(state?.from?.pathname ?? '/', { replace: true })
+      const fallback = user.role === 'visitante' ? '/' : '/painel'
+      navigate(state?.from?.pathname ?? fallback, { replace: true })
     } catch (err) {
       if (err instanceof HttpError && (err.status === 401 || err.status === 422)) {
         setError('E-mail ou senha inválidos.')
+      } else if (err instanceof HttpError && err.status === 403) {
+        setError('E-mail ainda não confirmado. Fale com a equipe.')
       } else {
         setError('Não foi possível entrar agora. Tenta de novo em instantes.')
       }

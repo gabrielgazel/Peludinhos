@@ -1,75 +1,92 @@
-# React + TypeScript + Vite
+# Peludinhos (frontend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface web do projeto Peludinhos: vitrine pública de animais para adoção e
+área interna para a equipe gerenciar animais, intenções de adoção e membros.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript + Vite
+- React Router
+- CSS próprio com tokens globais (sem framework de UI)
 
-## React Compiler
+## Como rodar
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Instale as dependências:
 
-## Expanding the ESLint configuration
+   ```bash
+   bun install
+   ```
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+2. Configure a URL da API. Copie `.env.example` para `.env` e ajuste se
+   necessário:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+   ```bash
+   cp .env.example .env
+   ```
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+   ```env
+   VITE_API_URL=http://127.0.0.1:8000/api
+   ```
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+3. Suba o servidor de desenvolvimento:
+
+   ```bash
+   bun run dev
+   ```
+
+A API provisória precisa estar rodando em `http://127.0.0.1:8000` (recursos
+sob `/api`).
+
+## Scripts
+
+| Script           | Descrição                              |
+| ---------------- | -------------------------------------- |
+| `bun run dev`    | Servidor de desenvolvimento (Vite)     |
+| `bun run build`  | Checagem de tipos + build de produção  |
+| `bun run lint`   | ESLint em todo o projeto               |
+| `bun run preview`| Pré-visualiza o build de produção      |
+
+## Rotas
+
+Públicas (layout `PublicLayout`):
+
+- `/` — início
+- `/sobre` — sobre o projeto
+- `/adocao` — listagem de animais disponíveis
+- `/adocao/:id` — detalhe do animal
+- `/adocao/:id/intencao` — manifestação de interesse
+
+Autenticação:
+
+- `/login` — acesso (redireciona: visitante → `/`, equipe → `/painel`)
+
+Área da equipe (`/painel`, exige `membro`; sub-rotas admin exigem
+`administrador`):
+
+- `/painel` — painel geral
+- `/painel/animais` — gestão de animais
+- `/painel/animais/novo`, `/painel/animais/:id/editar` — cadastro/edição
+- `/painel/intencoes` — avaliação das intenções de adoção
+- `/painel/membros`, `/painel/membros/:id` — gestão de membros (admin)
+
+## Integração com a API
+
+- Cliente HTTP em `src/shared/api/httpsClient.ts`: injeta o token de acesso,
+  trata erros `{ detail }` do FastAPI, responde a 204 e renova o token
+  automaticamente em respostas `401` com `refresh token`.
+- Tokens (`access`/`refresh`) são persistidos em `localStorage` e renovados no
+  `AuthContext`.
+- Fluxo de intenção de adoção: visitante não autenticado registra conta
+  (visitante + endereço) e envia a intenção em uma única tela; visitante já
+  autenticado envia apenas a motivação.
+- Mapeamento entre os contratos da API (snake_case) e os tipos do app está nos
+  `services` de cada feature.
+
+## Estrutura
 
 ```
-
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+src/
+  app/            # roteador e composição
+  features/       # auth, animals, adoption, staff, public
+  shared/         # api, components, hooks, layouts, routes, types, utils
 ```

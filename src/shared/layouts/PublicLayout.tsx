@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { PawIcon } from '../components/PawIcon';
 import './PublicLayout.css';
 
@@ -9,6 +10,7 @@ import './PublicLayout.css';
  */
 export function PublicLayout() {
   const { pathname } = useLocation();
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -30,9 +32,26 @@ export function PublicLayout() {
             <NavLink to="/adocao" className="pub-btn pub-btn--primary pub-btn--sm">
               Quero adotar
             </NavLink>
-            <Link to="/login" className="pub-btn pub-btn--ghost pub-btn--sm">
-              Login
-            </Link>
+            {isAuthenticated && user ? (
+              <>
+                {user.role !== 'visitante' && (
+                  <Link to="/painel" className="pub-btn pub-btn--secondary pub-btn--sm">
+                    Painel
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  className="pub-btn pub-btn--ghost pub-btn--sm"
+                  onClick={() => void logout()}
+                >
+                  Sair
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="pub-btn pub-btn--ghost pub-btn--sm">
+                Login
+              </Link>
+            )}
           </nav>
         </div>
       </header>
