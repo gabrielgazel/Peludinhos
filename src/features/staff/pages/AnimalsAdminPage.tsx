@@ -8,6 +8,7 @@ import {
   SEX_LABEL,
 } from '../../animals/constants/animal.labels';
 import type { Animal, AnimalStatus } from '../../animals/types/animal.types';
+import { AnimalPhoto } from '../../animals/components/AnimalPhoto';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
@@ -130,6 +131,7 @@ export function AnimalsAdminPage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>Foto</th>
                   <th>Nome</th>
                   <th>Sexo</th>
                   <th>Status</th>
@@ -141,6 +143,9 @@ export function AnimalsAdminPage() {
               <tbody>
                 {filtered.map((animal) => (
                   <tr key={animal.id}>
+                    <td>
+                      <AnimalPhoto animal={animal} size="thumb" />
+                    </td>
                     <td>
                       <strong>{animal.name}</strong>
                       {animal.isDeceased && (

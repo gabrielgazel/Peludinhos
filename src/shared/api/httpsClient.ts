@@ -100,7 +100,10 @@ type RequestOptions = {
 async function request<T>(path: string, options: RequestOptions = {}, allowRetry = true): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set('Accept', 'application/json');
-  if (options.body !== undefined) {
+  // FormData (upload de arquivo) não pode ter Content-Type manual: o
+  // navegador precisa gerar o boundary do multipart.
+  const isFormData = options.body instanceof FormData;
+  if (options.body !== undefined && !isFormData) {
     headers.set('Content-Type', 'application/json');
   }
   if (accessToken) {
@@ -111,7 +114,11 @@ async function request<T>(path: string, options: RequestOptions = {}, allowRetry
     method: options.method ?? 'GET',
     headers,
     signal: options.signal,
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: isFormData
+      ? (options.body as FormData)
+      : options.body !== undefined
+        ? JSON.stringify(options.body)
+        : undefined,
   });
 
   // Access token expirado: tenta renovar uma vez e repetir a requisição.

@@ -25,7 +25,7 @@ export interface Animal {
   behavior: AnimalBehavior | null;
   notes: string | null;
   isDeceased: boolean;
-  /** Ainda não existe no modelo; reservado para quando houver upload de fotos. */
+  /** URL pública da foto (Supabase Storage) ou null quando não há foto. */
   photoUrl: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -57,6 +57,8 @@ export interface ApiAnimal {
   behavior: AnimalBehavior | null;
   notes: string | null;
   is_deceased: boolean;
+  photo_path: string | null;
+  photo_url: string | null;
   fk_administrator_member_id: number | null;
   fk_mother: number | null;
   created_at: string | null;

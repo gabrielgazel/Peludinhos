@@ -19,6 +19,13 @@
   border-radius: var(--pub-radius);
 }
 
+.animal-photo--thumb {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 8px;
+}
+
 .animal-photo--tone-0 {
   background-color: var(--pub-accent-soft);
 }

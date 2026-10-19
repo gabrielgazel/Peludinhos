@@ -20,7 +20,7 @@ export function mapAnimal(row: ApiAnimal): Animal {
     behavior: row.behavior,
     notes: row.notes,
     isDeceased: row.is_deceased,
-    photoUrl: null,
+    photoUrl: row.photo_url ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -62,4 +62,15 @@ export const animalService = {
 
   markDeceased: (id: number) =>
     httpClient.post<ApiAnimal>(`/animals/${id}/deceased`).then(mapAnimal),
+
+  /** Envia/substitui a foto do animal (multipart). Somente administração. */
+  uploadPhoto: (id: number, file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return httpClient.post<ApiAnimal>(`/animals/${id}/photo`, form).then(mapAnimal);
+  },
+
+  /** Remove a foto do animal. Somente administração. */
+  removePhoto: (id: number) =>
+    httpClient.delete<ApiAnimal>(`/animals/${id}/photo`).then(mapAnimal),
 };

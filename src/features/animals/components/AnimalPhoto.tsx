@@ -1,26 +1,34 @@
+import { useState } from 'react';
 import type { Animal } from '../types/animal.types';
 import { PawIcon } from '../../../shared/components/PawIcon';
 import './animals.css';
 
+type PhotoSize = 'thumb' | 'card' | 'hero';
+
 interface AnimalPhotoProps {
   animal: Animal;
-  size?: 'card' | 'hero';
+  size?: PhotoSize;
 }
 
+const PAW_SIZE: Record<PhotoSize, number> = { thumb: 22, card: 72, hero: 120 };
+
 /**
- * Foto do animal. Enquanto o modelo não tem foto, mostra uma
- * ilustração com uma cor de fundo que varia por animal.
+ * Foto do animal. Se o animal ainda não tem foto (ou a imagem falha ao
+ * carregar), mostra uma ilustração com cor de fundo que varia por animal.
  */
 export function AnimalPhoto({ animal, size = 'card' }: AnimalPhotoProps) {
+  const [brokenUrl, setBrokenUrl] = useState<string | null>(null);
   const tone = animal.id % 3;
+  const url = animal.photoUrl;
 
-  if (animal.photoUrl) {
+  if (url && url !== brokenUrl) {
     return (
       <img
         className={`animal-photo animal-photo--${size}`}
-        src={animal.photoUrl}
+        src={url}
         alt={`Foto de ${animal.name}`}
         loading="lazy"
+        onError={() => setBrokenUrl(url)}
       />
     );
   }
@@ -30,7 +38,7 @@ export function AnimalPhoto({ animal, size = 'card' }: AnimalPhotoProps) {
       className={`animal-photo animal-photo--${size} animal-photo--tone-${tone}`}
       aria-hidden="true"
     >
-      <PawIcon size={size === 'hero' ? 120 : 72} />
+      <PawIcon size={PAW_SIZE[size]} />
     </div>
   );
 }

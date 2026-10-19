@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { animalService } from '../../animals/services/animalService';
 import {
@@ -12,6 +12,10 @@ import type {
   AnimalSex,
   AnimalStatus,
 } from '../../animals/types/animal.types';
+import {
+  AnimalPhotoInput,
+  type PhotoChange,
+} from '../components/AnimalPhotoInput';
 import { CheckboxField } from '../../../shared/components/CheckboxField';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
@@ -50,10 +54,18 @@ export function AnimalFormPage() {
   const isEdit = id !== undefined;
   const animalId = Number(id);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [values, setValues] = useState<FormValues>(INITIAL_VALUES);
   const [loadedId, setLoadedId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [currentPhotoUrl, setCurrentPhotoUrl] = useState<string | null>(null);
+  const [photoChange, setPhotoChange] = useState<PhotoChange>({
+    file: null,
+    remove: false,
+  });
+  const [error, setError] = useState<string | null>(
+    () => (location.state as { photoError?: string } | null)?.photoError ?? null,
+  );
   const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -77,6 +89,7 @@ export function AnimalFormPage() {
           isNeutered: animal.isNeutered,
           notes: animal.notes ?? '',
         });
+        setCurrentPhotoUrl(animal.photoUrl);
         setLoadedId(animalId);
       })
       .catch((err: unknown) => {
@@ -119,11 +132,30 @@ export function AnimalFormPage() {
 
     setSaving(true);
     try {
+      let targetId = animalId;
       if (isEdit) {
         await animalService.update(animalId, payload);
       } else {
-        await animalService.create(payload);
+        const created = await animalService.create(payload);
+        targetId = created.id;
       }
+
+      const photoError = await savePhoto(targetId);
+      if (photoError) {
+        if (isEdit) {
+          setError(photoError);
+          return;
+        }
+        // O animal já foi criado; leva para a edição para tentar a foto de novo.
+        navigate(`/painel/animais/${targetId}/editar`, {
+          replace: true,
+          state: {
+            photoError: `Animal cadastrado, mas a foto não foi enviada: ${photoError}`,
+          },
+        });
+        return;
+      }
+
       navigate('/painel/animais');
     } catch (err) {
       setError(
@@ -133,6 +165,23 @@ export function AnimalFormPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  /** Envia/remove a foto conforme a escolha; devolve a mensagem de erro, se houver. */
+  async function savePhoto(targetId: number): Promise<string | null> {
+    if (!photoChange.file && !photoChange.remove) return null;
+    try {
+      if (photoChange.file) {
+        await animalService.uploadPhoto(targetId, photoChange.file);
+      } else {
+        await animalService.removePhoto(targetId);
+      }
+      return null;
+    } catch (err) {
+      return err instanceof HttpError
+        ? err.message
+        : 'Não foi possível enviar a foto. Tente novamente.';
     }
   }
 
@@ -167,6 +216,14 @@ export function AnimalFormPage() {
       ) : (
         <form className="panel" onSubmit={handleSubmit} noValidate>
           <div className="form-grid">
+            <div className="form-grid--full">
+              <AnimalPhotoInput
+                currentUrl={currentPhotoUrl}
+                onChange={setPhotoChange}
+                disabled={saving}
+              />
+            </div>
+
             <div className="form-grid--full">
               <TextField
                 id="animal-name"
