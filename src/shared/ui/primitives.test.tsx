@@ -23,6 +23,13 @@ describe('Button', () => {
     render(<Button disabled>Enviar</Button>);
     expect(screen.getByRole('button', { name: 'Enviar' })).toBeDisabled();
   });
+
+  it('usa link com texto ink', () => {
+    render(<Button variant="link">Saiba mais</Button>);
+    const link = screen.getByRole('button', { name: 'Saiba mais' });
+    expect(link).toHaveClass('text-ink');
+    expect(link).not.toHaveClass('text-primary');
+  });
 });
 
 describe('Badge', () => {
