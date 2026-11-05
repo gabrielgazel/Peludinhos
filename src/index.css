@@ -3,6 +3,49 @@
 @import "./shared/pages/status-pages.css";
 
 /*
+ * Tema do Tailwind v4 (top-level, fora de @layer): gera utilities como
+ * bg-paper, text-ink, font-display, rounded-home, etc.
+ * Tokens shadcn (background, primary, border, ring...) para os componentes ui.
+ */
+@theme {
+  --color-paper: #F5EBE6;
+  --color-card: #FFFAF6;
+  --color-ink: #2B2927;
+  --color-ink-soft: #4A3C35;
+  --color-muted: #6B5B52;
+  --color-marker: #E08A4E;
+  --color-marker-hover: #C97638;
+  --color-marker-soft: #F6DCC8;
+  --color-leaf: #7BAE7F;
+  --color-leaf-soft: #DCEBDC;
+  --color-line: rgba(107, 91, 82, 0.28);
+
+  --font-display: 'Averia Libre', cursive;
+  --font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --radius-home: 20px;
+
+  /* Tokens que os componentes shadcn/ui consomem */
+  --color-background: #F5EBE6;
+  --color-foreground: #2B2927;
+  --color-primary: #E08A4E;
+  --color-primary-foreground: #2B2927;
+  --color-secondary: #FFFAF6;
+  --color-secondary-foreground: #2B2927;
+  --color-muted-foreground: #6B5B52;
+  --color-accent: #F6DCC8;
+  --color-accent-foreground: #2B2927;
+  --color-destructive: #B3261E;
+  --color-destructive-foreground: #FFFFFF;
+  --color-border: rgba(107, 91, 82, 0.28);
+  --color-input: rgba(107, 91, 82, 0.28);
+  --color-ring: #2B2927;
+  --color-card-foreground: #2B2927;
+  --color-popover: #FFFAF6;
+  --color-popover-foreground: #2B2927;
+}
+
+/*
  * Camadas do Tailwind: theme < base < components < utilities.
  * O CSS preexistente vive em base/components para que os utilitários
  * do Tailwind gerados para componentes novos vençam em conflitos,
@@ -93,6 +136,12 @@
 
   ::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Foco visível global para páginas públicas (escopado por .pub) */
+  :where(.pub) :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 2px;
   }
 
   @media (prefers-reduced-motion: reduce) {
