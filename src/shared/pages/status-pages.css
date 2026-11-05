@@ -1,16 +1,33 @@
 /*
- * Páginas simples sem layout próprio (404, não autorizado e o
- * placeholder do painel). O preflight do Tailwind zera o tamanho dos
- * títulos e o respiro dos parágrafos; aqui ficam as métricas que antes
- * vinham do navegador. Escopo por classe para não afetar os componentes
- * gerados pelo Tailwind.
+ * Páginas simples de status (404, não autorizado e o placeholder do
+ * painel). O preflight do Tailwind zera o tamanho dos títulos e o
+ * respiro dos parágrafos; aqui ficam as métricas que antes vinham do
+ * navegador. Escopo por classe para não afetar os componentes gerados
+ * pelo Tailwind. As ações usam os botões .pub-* porque estas páginas
+ * são renderizadas dentro do PublicLayout.
  */
 @layer components {
+  .status-page {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 72px 20px 96px;
+    text-align: center;
+  }
+
   .status-page h1 {
     font-size: 2em;
   }
 
   .status-page p {
     margin-block: 1em;
+    color: var(--pub-muted);
+  }
+
+  .status-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 24px;
   }
 }

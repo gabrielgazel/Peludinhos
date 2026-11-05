@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Averia+Libre:wght@300;400;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Averia+Libre:wght@300;400;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap');
 @import "tailwindcss";
 @import "./shared/pages/status-pages.css";
 
@@ -10,9 +10,10 @@
  */
 @layer base {
   :root {
-    /* Tipografia */
+    /* Tipografia: display (Averia Libre) só em títulos/textos em destaque;
+       corpo (Source Sans 3, sóbria) em todo o texto corrido. */
     --font-display: 'Averia Libre', cursive;
-    --font-body: 'Nunito', sans-serif;
+    --font-body: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
     /* Paleta base */
     --color-cream: #F5EBE6;

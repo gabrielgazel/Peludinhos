@@ -50,11 +50,11 @@ sob `/api`).
 
 Públicas (layout `PublicLayout`):
 
-- `/` — início
-- `/sobre` — sobre o projeto
+- `/` — início (apresenta o projeto: hero, pilares, adoção e contato)
 - `/adocao` — listagem de animais disponíveis
 - `/adocao/:id` — detalhe do animal
 - `/adocao/:id/intencao` — manifestação de interesse
+- `/sobre` — redireciona para `/#projeto` (rota antiga, sem página própria)
 
 Autenticação:
 
@@ -79,6 +79,10 @@ Autenticação:
 - Fluxo de intenção de adoção: visitante não autenticado registra conta
   (visitante + endereço) e envia a intenção em uma única tela; visitante já
   autenticado envia apenas a motivação.
+- Fotografias dos animais: o upload é feito no cadastro/edição (somente
+  administração) via `POST /animals/{id}/photo` (multipart) e a remoção via
+  `DELETE`; a URL pública chega em `Animal.photoUrl` e é exibida no catálogo, no
+  detalhe e na listagem do painel.
 - Mapeamento entre os contratos da API (snake_case) e os tipos do app está nos
   `services` de cada feature.
 

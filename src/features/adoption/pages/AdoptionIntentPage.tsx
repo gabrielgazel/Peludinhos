@@ -4,6 +4,7 @@ import { AnimalPhoto } from '../../animals/components/AnimalPhoto';
 import { useAnimal } from '../../animals/hooks/useAnimals';
 import { CheckboxField } from '../../../shared/components/CheckboxField';
 import { TextField } from '../../../shared/components/TextField';
+import { Breadcrumbs } from '../../../shared/components/Breadcrumbs';
 import { HttpError } from '../../../shared/api/httpsClient';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { adoptionService } from '../services/adoptionService';
@@ -267,9 +268,13 @@ export function AdoptionIntentPage() {
 
   return (
     <div className="pub-container pub-page">
-      <Link to={`/adocao/${animal.id}`} className="pub-back">
-        ← Voltar para {animal.name}
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: 'Adoção', to: '/adocao' },
+          { label: animal.name, to: `/adocao/${animal.id}` },
+          { label: 'Intenção de adoção' },
+        ]}
+      />
 
       <h1 className="pub-page__title">Intenção de adoção</h1>
       <p className="pub-page__lead">

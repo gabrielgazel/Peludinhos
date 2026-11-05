@@ -1,5 +1,6 @@
 @layer components {
 
+/* Hero */
 .home-hero {
   background-color: var(--pub-accent-soft);
   border-bottom: 1px solid var(--pub-border);
@@ -7,23 +8,11 @@
 
 .home-hero__inner {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
   align-items: center;
   gap: clamp(32px, 5vw, 56px);
   padding-top: clamp(48px, 7vw, 96px);
   padding-bottom: clamp(48px, 7vw, 96px);
-}
-
-@media (max-width: 760px) {
-  .home-hero__inner {
-    grid-template-columns: 1fr;
-    padding-top: 36px;
-    padding-bottom: 36px;
-  }
-
-  .home-hero__mosaic {
-    display: none;
-  }
 }
 
 .home-hero__text {
@@ -40,8 +29,8 @@
 }
 
 .home-hero__lead {
-  max-width: 46ch;
-  font-size: 20px;
+  max-width: 52ch;
+  font-size: 19px;
   color: var(--pub-muted);
 }
 
@@ -52,68 +41,84 @@
   margin-top: 8px;
 }
 
-/* Mosaico decorativo do hero (referência: grade 2 colunas,
-   coluna direita com um bloco que ocupa as duas linhas) */
-.home-hero__mosaic {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(16px, 2.5vw, 28px);
+/*
+ * Painel com pontos-chave do projeto (substitui o antigo mosaico
+ * decorativo: texto explicativo no lugar de ilustração vazia).
+ */
+.home-hero__panel {
+  padding: clamp(20px, 3vw, 28px);
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+  box-shadow: var(--shadow-md);
 }
 
-.home-hero__tile {
+.home-hero__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.home-fact__icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--pub-radius);
-}
-
-.home-hero__tile svg {
-  opacity: 0.8;
-}
-
-.home-hero__tile--square {
-  aspect-ratio: 1 / 1;
-}
-
-.home-hero__tile--tall {
-  grid-row: span 2;
-}
-
-.home-hero__tile--surface {
-  background-color: var(--pub-surface);
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
   color: var(--pub-accent);
+  background-color: var(--pub-accent-soft);
+  border-radius: 12px;
 }
 
-.home-hero__tile--green {
-  background-color: var(--pub-green);
-  color: var(--pub-surface);
+.home-fact__title {
+  font-size: 16px;
+  font-weight: 700;
 }
 
-.home-hero__tile--green-soft {
-  background-color: var(--pub-green-soft);
-  color: var(--pub-green);
-}
+.home-fact__text {
+  margin-top: 2px;
+  font-size: 15px;
+  color: var(--pub-muted);
 }
 
+/* Seções da página */
 .home-section {
-  padding-top: 48px;
+  padding-top: clamp(40px, 6vw, 64px);
 }
 
 .home-section__head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 .home-section__title {
   font-size: 30px;
 }
 
+.home-section__lead {
+  max-width: 72ch;
+  margin-top: 10px;
+  font-size: 18px;
+  color: var(--pub-muted);
+}
+
+/* Passos da adoção */
 .home-steps {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 20px;
   margin: 24px 0 0;
   padding: 0;
@@ -121,33 +126,139 @@
 }
 
 .home-step {
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
   background-color: var(--pub-surface);
   border: 1px solid var(--pub-border);
   border-radius: var(--pub-radius);
 }
 
-.home-step h3 {
-  margin: 12px 0 6px;
-  font-size: 21px;
-}
-
-.home-step p {
-  color: var(--pub-muted);
-}
-
 .home-step__number {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  font-size: 16px;
   font-weight: 700;
-  background-color: var(--pub-green);
-  border-radius: 50%;
+  color: var(--pub-accent);
+  background-color: var(--pub-accent-soft);
+  border-radius: 999px;
 }
 
-.home-about p {
-  max-width: 65ch;
-  margin-top: 12px;
+.home-step h3 {
+  font-size: 19px;
+}
+
+.home-step p {
+  font-size: 15.5px;
+  color: var(--pub-muted);
+}
+
+/* Pilares do projeto */
+.home-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 20px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-pillar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.home-pillar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--pub-green);
+  background-color: var(--pub-green-soft);
+  border-radius: 12px;
+}
+
+.home-pillar h3 {
+  font-size: 19px;
+}
+
+.home-pillar p {
+  font-size: 15.5px;
+  color: var(--pub-muted);
+}
+
+/* Contato e informações */
+.home-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.home-info__card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  background-color: var(--pub-surface);
+  border: 1px solid var(--pub-border);
+  border-radius: var(--pub-radius);
+}
+
+.home-info__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: var(--pub-accent);
+  background-color: var(--pub-accent-soft);
+  border-radius: 10px;
+}
+
+.home-info__card h3 {
+  font-size: 19px;
+}
+
+.home-info__card p {
+  font-size: 15.5px;
+  color: var(--pub-muted);
+}
+
+.home-info__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--pub-text);
+  text-decoration-color: var(--pub-accent);
+  text-underline-offset: 3px;
+}
+
+.home-info__link:hover {
+  color: var(--pub-accent-hover);
+}
+
+/* Grade de animais em destaque na home */
+.home-section .animal-grid {
+  margin-top: 24px;
+}
+
+@media (max-width: 760px) {
+  .home-hero__inner {
+    grid-template-columns: 1fr;
+    padding-top: 36px;
+    padding-bottom: 36px;
+  }
+}
 }

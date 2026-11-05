@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { AnimalPhoto } from '../components/AnimalPhoto';
 import { BEHAVIOR_LABEL, SEX_LABEL } from '../constants/animal.labels';
 import { useAnimal } from '../hooks/useAnimals';
+import { Breadcrumbs } from '../../../shared/components/Breadcrumbs';
 import '../components/animals.css';
 
 export function AnimalDetailPage() {
@@ -38,9 +39,9 @@ export function AnimalDetailPage() {
 
   return (
     <div className="pub-container pub-page">
-      <Link to="/adocao" className="pub-back">
-        ← Voltar para a lista
-      </Link>
+      <Breadcrumbs
+        items={[{ label: 'Adoção', to: '/adocao' }, { label: animal.name }]}
+      />
 
       <div className="animal-detail">
         <AnimalPhoto animal={animal} size="hero" />

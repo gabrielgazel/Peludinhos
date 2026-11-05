@@ -7,66 +7,106 @@
 }
 
 .tf__label {
+  font-size: 16px;
   font-weight: 700;
 }
 
 .tf__optional {
   font-weight: 400;
-  color: var(--pub-muted);
+  color: var(--pub-muted, var(--text-muted));
 }
 
+/*
+ * Campos: fundo claro sólido + borda marrom translúcida (visível tanto
+ * no creme das páginas públicas quanto no branco do painel). Os tokens
+ * --pub-* valem no escopo público; o fallback global cobre a área da
+ * equipe, que não os define.
+ */
 .tf__input {
   width: 100%;
   padding: 10px 14px;
   font-family: inherit;
   font-size: 17px;
-  color: var(--pub-text);
-  background-color: var(--pub-surface);
-  border: 1px solid var(--pub-border);
+  color: var(--pub-text, var(--text));
+  background-color: var(--pub-surface, var(--surface));
+  border: 1px solid rgba(107, 91, 82, 0.4);
   border-radius: 10px;
   transition:
     border-color 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.tf__input:hover:not(:focus):not(:disabled) {
+  border-color: rgba(107, 91, 82, 0.65);
 }
 
 .tf__input:focus {
   outline: none;
-  border-color: var(--pub-text);
-  box-shadow: 0 0 0 3px var(--pub-accent-soft);
+  border-color: var(--pub-accent, var(--accent));
+  box-shadow: var(--focus-ring);
 }
 
+.tf__input:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: rgba(107, 91, 82, 0.08);
+}
+
+/* Erro: borda vermelha + fundo levemente tingido + anel no foco. */
 .tf__input[aria-invalid='true'] {
-  border-color: var(--pub-danger);
+  border-color: var(--pub-danger, var(--danger));
+  background-color: var(--danger-bg);
+}
+
+.tf__input[aria-invalid='true']:hover:not(:focus) {
+  border-color: var(--pub-danger, var(--danger));
+}
+
+.tf__input[aria-invalid='true']:focus {
+  border-color: var(--pub-danger, var(--danger));
+  box-shadow: 0 0 0 3px rgba(192, 80, 61, 0.25);
 }
 
 textarea.tf__input {
   resize: vertical;
 }
 
+/* Select: chevron SVG em vez dos dois degradês de triângulo. */
 select.tf__select {
   cursor: pointer;
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
-    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
-  background-position:
-    calc(100% - 20px) calc(50% + 2px),
-    calc(100% - 15px) calc(50% + 2px);
-  background-size: 5px 5px, 5px 5px;
+  padding-right: 42px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b5b52' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-position: right 14px center;
+  background-size: 16px 16px;
   background-repeat: no-repeat;
-  padding-right: 40px;
+}
+
+select.tf__select:disabled {
+  cursor: not-allowed;
 }
 
 .tf__hint {
   font-size: 14px;
-  color: var(--pub-muted);
+  color: var(--pub-muted, var(--text-muted));
 }
 
 .tf__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   font-size: 14px;
   font-weight: 700;
-  color: var(--pub-danger);
+  color: var(--pub-danger, var(--danger));
 }
 
+.tf__error svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Checkbox / rádio com rótulo clicável */
 .cf {
   display: flex;
   align-items: center;
@@ -79,7 +119,12 @@ select.tf__select {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-  accent-color: var(--pub-green);
+  accent-color: var(--pub-green, #7bae7f);
   cursor: pointer;
+}
+
+.cf__input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 }

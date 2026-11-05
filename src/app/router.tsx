@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../features/auth/context/AuthContext';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 import { AdoptionIntentPage } from '../features/adoption/pages/AdoptionIntentPage';
 import { AnimalDetailPage } from '../features/animals/pages/AnimalDetailPage';
 import { AnimalListPage } from '../features/animals/pages/AnimalListPage';
 import { PublicHomePage } from '../features/public/pages/PublicHomePage';
-import { AboutPeludinhosPage } from '../features/public/pages/AboutPeludinhosPage';
 import { StaffLayout } from '../features/staff/components/StaffLayout';
 import { DashboardPage } from '../features/staff/pages/DashboardPage';
 import { AnimalsAdminPage } from '../features/staff/pages/AnimalsAdminPage';
@@ -27,15 +26,23 @@ export function AppRouter() {
           {/* Páginas públicas (visitantes) */}
           <Route element={<PublicLayout />}>
             <Route path="/" element={<PublicHomePage />} />
-            <Route path="/sobre" element={<AboutPeludinhosPage />} />
+
+            {/* A home explica o projeto; "/sobre" levava a uma página
+                própria que foi descontinuada. */}
+            <Route path="/sobre" element={<Navigate to="/#projeto" replace />} />
+
             <Route path="/adocao" element={<AnimalListPage />} />
             <Route path="/adocao/:id" element={<AnimalDetailPage />} />
             <Route path="/adocao/:id/intencao" element={<AdoptionIntentPage />} />
+
+            {/* Páginas de status ficam no layout público para não ser
+                um beco sem saída (sempre há cabeçalho e rodapé). */}
+            <Route path="/nao-autorizado" element={<NotAuthorizedPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
 
           {/* Acesso da equipe */}
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/nao-autorizado" element={<NotAuthorizedPage />} />
 
           {/* Painel da equipe (membros do projeto) */}
           <Route element={<ProtectedRoute allowedRoles={MEMBER_ROLES} />}>
@@ -54,8 +61,6 @@ export function AppRouter() {
               </Route>
             </Route>
           </Route>
-
-          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

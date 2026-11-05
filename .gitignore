@@ -30,6 +30,10 @@ dist-ssr
 
 # Arquivos locais de ferramentas de agente (vivem só no nível do usuário)
 .agents/
+.claude/
 .opencode/
+.superpowers/
 opencode.json
 skills-lock.json
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

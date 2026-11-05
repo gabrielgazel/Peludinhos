@@ -1,4 +1,5 @@
 import type { HTMLInputTypeAttribute } from 'react';
+import { CircleAlert } from 'lucide-react';
 import './form-controls.css';
 
 interface TextFieldProps {
@@ -88,6 +89,7 @@ export function TextField({
       )}
       {error && (
         <p className="tf__error" id={`${id}-error`} role="alert">
+          <CircleAlert size={15} aria-hidden="true" />
           {error}
         </p>
       )}

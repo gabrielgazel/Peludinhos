@@ -1,3 +1,4 @@
+import { CircleAlert } from 'lucide-react';
 import './form-controls.css';
 
 export interface SelectOption {
@@ -71,6 +72,7 @@ export function SelectField({
       )}
       {error && (
         <p className="tf__error" id={`${id}-error`} role="alert">
+          <CircleAlert size={15} aria-hidden="true" />
           {error}
         </p>
       )}
