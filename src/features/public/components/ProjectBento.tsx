@@ -75,7 +75,7 @@ export function ProjectBento() {
                 ? 'border-transparent bg-marker-soft text-ink'
                 : 'bg-card text-ink',
               tall && 'min-[900px]:col-span-2 min-[900px]:row-span-2',
-              wide && 'min-[600px]:col-span-2',
+              wide && 'min-[900px]:col-span-2',
             )}
           >
             <span

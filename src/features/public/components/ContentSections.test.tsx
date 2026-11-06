@@ -31,4 +31,13 @@ describe('ProjectBento', () => {
     render(<ProjectBento />);
     expect(screen.getByText(/9\.605\/98/)).toBeInTheDocument();
   });
+
+  it('estende somente no desktop: Conscientização só tem col-span-2 a partir de 900px', () => {
+    render(<ProjectBento />);
+    const tile = screen
+      .getByRole('heading', { level: 3, name: 'Conscientização' })
+      .closest('article');
+    expect(tile).toHaveClass('min-[900px]:col-span-2');
+    expect(tile).not.toHaveClass('min-[600px]:col-span-2');
+  });
 });
