@@ -33,4 +33,16 @@ describe('ContactPanel', () => {
     );
     expect(screen.getByRole('link', { name: /Quero adotar/ })).toHaveAttribute('href', '/adocao');
   });
+
+  it('mantém o foco do CTA visível sobre o card escuro', () => {
+    render(
+      <MemoryRouter>
+        <ContactPanel />
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('link', { name: /Quero adotar/ })).toHaveClass(
+      'focus-visible:outline-2',
+      'focus-visible:outline-solid',
+    );
+  });
 });

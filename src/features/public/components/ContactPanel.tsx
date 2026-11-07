@@ -68,7 +68,7 @@ export function ContactPanel() {
           <Button
             asChild
             size="lg"
-            className="focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-paper"
+            className="focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-4 focus-visible:outline-paper"
           >
             <Link to="/adocao">Quero adotar</Link>
           </Button>
