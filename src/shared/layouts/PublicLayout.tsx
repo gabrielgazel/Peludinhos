@@ -80,6 +80,9 @@ export function PublicLayout() {
             <Link to="/#projeto" className="pub-nav__link">
               O projeto
             </Link>
+            <Link to="/adocao" className="pub-nav__link">
+              Animais
+            </Link>
             <NavLink to="/adocao" className="pub-btn pub-btn--primary pub-btn--sm">
               Quero adotar
             </NavLink>

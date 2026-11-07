@@ -1,264 +1,204 @@
 @layer components {
 
-/* Hero */
-.home-hero {
-  background-color: var(--pub-accent-soft);
-  border-bottom: 1px solid var(--pub-border);
+/*
+ * Movimento e textura da home. O layout das seções vive nos utilitários
+ * Tailwind dos componentes; aqui ficam apenas o papel pontilhado, a colagem
+ * de fotos da hero, a fita de cuidados, a linha da timeline e o reveal.
+ */
+
+/* Textura de papel: pontos de 1px a ~6% de opacidade. */
+.home-paper {
+  background-color: var(--color-paper);
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(43, 41, 39, 0.06) 1px,
+    transparent 0
+  );
+  background-size: 18px 18px;
 }
 
-.home-hero__inner {
+/* Colagem de fotos da hero: pilha simples no mobile. */
+.hero-photo-stack {
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-  align-items: center;
-  gap: clamp(32px, 5vw, 56px);
-  padding-top: clamp(48px, 7vw, 96px);
-  padding-bottom: clamp(48px, 7vw, 96px);
-}
-
-.home-hero__text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+  width: 100%;
+  max-width: 320px;
+  margin-inline: auto;
 }
 
-.home-hero__title {
-  max-width: 520px;
-  font-size: clamp(40px, 6vw, 68px);
-  letter-spacing: -0.02em;
+.hero-photo-stack__figure {
+  margin: 0;
 }
 
-.home-hero__lead {
-  max-width: 52ch;
-  font-size: 19px;
-  color: var(--pub-muted);
+/* A partir de 768px as três figuras se sobrepõem como um mural pregado. */
+@media (min-width: 768px) {
+  .hero-photo-stack {
+    position: relative;
+    display: block;
+    max-width: 520px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .hero-photo-stack__figure {
+    position: absolute;
+    width: min(58%, 280px);
+  }
+
+  .hero-photo-stack__figure:nth-child(1) {
+    top: 0;
+    left: 0;
+    z-index: 2;
+  }
+
+  .hero-photo-stack__figure:nth-child(2) {
+    top: 30%;
+    right: 0;
+    z-index: 1;
+  }
+
+  .hero-photo-stack__figure:nth-child(3) {
+    bottom: 0;
+    left: 18%;
+    z-index: 3;
+  }
 }
 
-.home-hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 8px;
+/* Linha tracejada da timeline: vertical no mobile... */
+.home-timeline::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  bottom: 22px;
+  left: 21px;
+  border-left: 1px dashed var(--color-line);
+}
+
+.home-timeline__number {
+  position: relative;
+  z-index: 1;
+}
+
+/* ...e horizontal no desktop, passando pelo centro dos círculos. */
+@media (min-width: 1024px) {
+  .home-timeline::before {
+    top: 21px;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    border-top: 1px dashed var(--color-line);
+    border-left: 0;
+  }
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes stack-settle {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes ticker {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: -50% 0;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Entrada da coluna de texto da hero, com stagger entre os blocos. */
+  .home-paper .pub-container > div:first-child > * {
+    animation: hero-in 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .home-paper .pub-container > div:first-child > *:nth-child(2) {
+    animation-delay: 80ms;
+  }
+
+  .home-paper .pub-container > div:first-child > *:nth-child(3) {
+    animation-delay: 160ms;
+  }
+
+  .home-paper .pub-container > div:first-child > *:nth-child(4) {
+    animation-delay: 240ms;
+  }
+
+  .home-paper .pub-container > div:first-child > *:nth-child(5) {
+    animation-delay: 320ms;
+  }
+
+  /* As fotos sempre carregam data-visible="true": assentam uma única vez. */
+  .hero-photo-stack__figure[data-visible='true'] {
+    animation: stack-settle 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .hero-photo-stack__figure[data-visible='true']:nth-child(2) {
+    animation-delay: 70ms;
+  }
+
+  .hero-photo-stack__figure[data-visible='true']:nth-child(3) {
+    animation-delay: 140ms;
+  }
+
+  /*
+   * Reveal de seção: escondido até o observer marcar data-visible="true".
+   * Anima opacity/translate (não transform) para preservar rotações Tailwind.
+   */
+  .home-reveal {
+    opacity: 0;
+    translate: 0 12px;
+    transition:
+      opacity 400ms ease-out,
+      translate 400ms ease-out;
+  }
+
+  .home-reveal[data-visible='true'] {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 
 /*
- * Painel com pontos-chave do projeto (substitui o antigo mosaico
- * decorativo: texto explicativo no lugar de ilustração vazia).
+ * Fita de cuidados: marquee contínuo só a partir de 640px. Abaixo disso a
+ * lista permanece um trilho rolável horizontal, sem animação.
  */
-.home-hero__panel {
-  padding: clamp(20px, 3vw, 28px);
-  background-color: var(--pub-surface);
-  border: 1px solid var(--pub-border);
-  border-radius: var(--pub-radius);
-  box-shadow: var(--shadow-md);
-}
+@media (min-width: 640px) and (prefers-reduced-motion: no-preference) {
+  .care-ticker__track {
+    animation: ticker 40s linear infinite;
+  }
 
-.home-hero__facts {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-fact {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-}
-
-.home-fact__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 42px;
-  height: 42px;
-  flex-shrink: 0;
-  color: var(--pub-accent);
-  background-color: var(--pub-accent-soft);
-  border-radius: 12px;
-}
-
-.home-fact__title {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.home-fact__text {
-  margin-top: 2px;
-  font-size: 15px;
-  color: var(--pub-muted);
-}
-
-/* Seções da página */
-.home-section {
-  padding-top: clamp(40px, 6vw, 64px);
-}
-
-.home-section__head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.home-section__title {
-  font-size: 30px;
-}
-
-.home-section__lead {
-  max-width: 72ch;
-  margin-top: 10px;
-  font-size: 18px;
-  color: var(--pub-muted);
-}
-
-/* Passos da adoção */
-.home-steps {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 20px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-step {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 24px;
-  background-color: var(--pub-surface);
-  border: 1px solid var(--pub-border);
-  border-radius: var(--pub-radius);
-}
-
-.home-step__number {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--pub-accent);
-  background-color: var(--pub-accent-soft);
-  border-radius: 999px;
-}
-
-.home-step h3 {
-  font-size: 19px;
-}
-
-.home-step p {
-  font-size: 15.5px;
-  color: var(--pub-muted);
-}
-
-/* Pilares do projeto */
-.home-pillars {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 20px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-pillar {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 22px;
-  background-color: var(--pub-surface);
-  border: 1px solid var(--pub-border);
-  border-radius: var(--pub-radius);
-}
-
-.home-pillar__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  color: var(--pub-green);
-  background-color: var(--pub-green-soft);
-  border-radius: 12px;
-}
-
-.home-pillar h3 {
-  font-size: 19px;
-}
-
-.home-pillar p {
-  font-size: 15.5px;
-  color: var(--pub-muted);
-}
-
-/* Contato e informações */
-.home-info {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-}
-
-.home-info__card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 22px;
-  background-color: var(--pub-surface);
-  border: 1px solid var(--pub-border);
-  border-radius: var(--pub-radius);
-}
-
-.home-info__icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  color: var(--pub-accent);
-  background-color: var(--pub-accent-soft);
-  border-radius: 10px;
-}
-
-.home-info__card h3 {
-  font-size: 19px;
-}
-
-.home-info__card p {
-  font-size: 15.5px;
-  color: var(--pub-muted);
-}
-
-.home-info__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 700;
-  color: var(--pub-text);
-  text-decoration-color: var(--pub-accent);
-  text-underline-offset: 3px;
-}
-
-.home-info__link:hover {
-  color: var(--pub-accent-hover);
-}
-
-/* Grade de animais em destaque na home */
-.home-section .animal-grid {
-  margin-top: 24px;
-}
-
-@media (max-width: 760px) {
-  .home-hero__inner {
-    grid-template-columns: 1fr;
-    padding-top: 36px;
-    padding-bottom: 36px;
+  .care-ticker__track:hover,
+  .care-ticker__track:focus-within {
+    animation-play-state: paused;
   }
 }
-}
+
+} /* @layer components */
