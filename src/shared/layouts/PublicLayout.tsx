@@ -15,7 +15,7 @@ function prefersReducedMotion() {
  * acesso da equipe e rodapé com atalhos de navegação.
  */
 export function PublicLayout() {
-  const { pathname, hash } = useLocation();
+  const { pathname, hash, key } = useLocation();
   const { user, isAuthenticated, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -41,7 +41,7 @@ export function PublicLayout() {
       }
     }
     window.scrollTo(0, 0);
-  }, [pathname, hash]);
+  }, [pathname, hash, key]);
 
   function scrollToTop() {
     window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });

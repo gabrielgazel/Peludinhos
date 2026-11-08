@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 export function NotFoundPage() {
   return (
-    <main className="status-page">
+    <section className="status-page">
       <h1>404</h1>
       <p>A página que você procura não existe ou foi movida.</p>
       <div className="status-page__actions">
@@ -13,6 +13,6 @@ export function NotFoundPage() {
           Ver animais para adoção
         </Link>
       </div>
-    </main>
+    </section>
   );
 }

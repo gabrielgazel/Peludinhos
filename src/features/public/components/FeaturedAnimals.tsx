@@ -125,13 +125,13 @@ function FeaturedAnimalsEmpty() {
  */
 export function FeaturedAnimals({ animals, loading, failed }: FeaturedAnimalsProps) {
   const displayed = animals.slice(0, MAX_FEATURED);
-  const total = displayed.length;
-  const counter = `${total} ${total === 1 ? 'disponível' : 'disponíveis'}`;
+  const totalAvailable = animals.length;
+  const counter = `${totalAvailable} ${totalAvailable === 1 ? 'disponível' : 'disponíveis'}`;
 
   return (
     <section
       aria-labelledby="animais-titulo"
-      className="mx-auto w-full max-w-6xl px-4 py-[clamp(56px,8vw,96px)]"
+      className="pub-container py-[clamp(56px,8vw,96px)]"
     >
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
@@ -153,9 +153,9 @@ export function FeaturedAnimals({ animals, loading, failed }: FeaturedAnimalsPro
 
       {!loading && failed && <FeaturedAnimalsError />}
 
-      {!loading && !failed && total === 0 && <FeaturedAnimalsEmpty />}
+      {!loading && !failed && totalAvailable === 0 && <FeaturedAnimalsEmpty />}
 
-      {!loading && !failed && total > 0 && (
+      {!loading && !failed && displayed.length > 0 && (
         <Carousel
           aria-label="Peludinhos disponíveis para adoção"
           className="mt-8 pb-12"
@@ -164,7 +164,7 @@ export function FeaturedAnimals({ animals, loading, failed }: FeaturedAnimalsPro
             {displayed.map((animal) => (
               <CarouselItem
                 key={animal.id}
-                aria-label={`${animal.name} de ${total}`}
+                aria-label={`${animal.name} de ${displayed.length}`}
                 className="basis-full sm:basis-1/2 lg:basis-1/3"
               >
                 <FeaturedAnimalCard animal={animal} />

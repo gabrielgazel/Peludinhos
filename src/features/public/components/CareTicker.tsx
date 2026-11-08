@@ -44,7 +44,7 @@ function CareList({ hidden = false }: CareListProps) {
 export function CareTicker() {
   return (
     <section aria-label="Cuidados do projeto" className="overflow-hidden bg-ink text-paper">
-      <div className="mx-auto flex h-11 max-w-6xl items-center overflow-x-auto [scrollbar-width:none] sm:overflow-hidden [&::-webkit-scrollbar]:hidden">
+      <div className="mx-auto flex h-11 max-w-[1120px] items-center overflow-x-auto [scrollbar-width:none] sm:overflow-hidden [&::-webkit-scrollbar]:hidden">
         <div
           className={cn(
             'care-ticker__track',

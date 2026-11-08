@@ -60,9 +60,17 @@
 
 .pub-container {
   width: 100%;
-  max-width: 1080px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
+}
+
+/*
+ * O cabeçalho sticky (64px) cobriria o título do alvo de uma âncora.
+ * Reserva 80px acima de qualquer elemento com id dentro do layout público.
+ */
+:where(.pub) [id] {
+  scroll-margin-top: 5rem;
 }
 
 .pub-main {

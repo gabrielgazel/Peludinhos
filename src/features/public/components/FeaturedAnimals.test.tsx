@@ -25,6 +25,13 @@ describe('FeaturedAnimals', () => {
     expect(screen.getAllByRole('group', { name: /Animal \d+ de 8/ })).toHaveLength(8);
   });
 
+  it('conta o total real de animais, mas mantém no máximo oito slides', () => {
+    const many = Array.from({ length: 12 }, (_, i) => animal(i + 1, `Animal ${i + 1}`));
+    renderSection(many);
+    expect(screen.getByText('12 disponíveis')).toBeInTheDocument();
+    expect(screen.getAllByRole('group', { name: /Animal \d+ de 8/ })).toHaveLength(8);
+  });
+
   it('mostra skeletons durante o carregamento', () => {
     renderSection([], true);
     expect(screen.getAllByTestId('animal-skeleton')).toHaveLength(3);

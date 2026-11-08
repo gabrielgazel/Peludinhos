@@ -29,7 +29,7 @@ export function ContactPanel() {
   return (
     <section
       aria-labelledby="contato-titulo"
-      className="mx-auto w-full max-w-6xl px-4 py-[clamp(56px,8vw,96px)]"
+      className="pub-container py-[clamp(56px,8vw,96px)]"
     >
       <div className="rounded-[28px] bg-ink-soft p-7 text-paper sm:p-10 lg:p-12">
         <h2 id="contato-titulo" className="font-display text-3xl text-paper">
