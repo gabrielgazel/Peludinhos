@@ -35,4 +35,14 @@ describe('PublicHomePage', () => {
     expect(screen.queryByText('Bidu')).not.toBeInTheDocument();
     expect(screen.getByText('1 peludinho esperando agora')).toBeInTheDocument();
   });
+
+  it('aplica o espaçamento de seção da spec em todas as seções', () => {
+    render(<MemoryRouter><PublicHomePage /></MemoryRouter>);
+    ['O projeto', 'Como funciona a adoção', 'Quem está esperando', 'Venha nos visitar'].forEach(
+      (title) =>
+        expect(screen.getByRole('heading', { name: title }).closest('section')).toHaveClass(
+          'py-[clamp(56px,8vw,96px)]',
+        ),
+    );
+  });
 });

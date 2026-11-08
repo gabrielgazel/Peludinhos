@@ -44,7 +44,7 @@ export function ProjectBento() {
     <section
       id="projeto"
       aria-labelledby="projeto-titulo"
-      className="mx-auto w-full max-w-6xl px-4 py-14"
+      className="mx-auto w-full max-w-6xl px-4 py-[clamp(56px,8vw,96px)]"
     >
       <h2 id="projeto-titulo" className="font-display text-3xl text-ink">
         O projeto

@@ -71,4 +71,18 @@ describe('FeaturedAnimals', () => {
     expect(screen.queryByRole('img', { name: 'Foto de Mel' })).not.toBeInTheDocument();
     expect(container.querySelector('.animal-photo--card')).not.toBeNull();
   });
+
+  it('posiciona as setas do carrossel abaixo das fotos', () => {
+    renderSection([animal(1, 'Mel')]);
+    const region = screen.getByRole('region', { name: 'Peludinhos disponíveis para adoção' });
+    expect(region).toHaveClass('pb-12');
+    expect(screen.getByRole('button', { name: 'Animais anteriores' })).toHaveClass(
+      'bottom-0',
+      'left-[calc(50%-3rem)]',
+    );
+    expect(screen.getByRole('button', { name: 'Próximos animais' })).toHaveClass(
+      'bottom-0',
+      'right-[calc(50%-3rem)]',
+    );
+  });
 });
