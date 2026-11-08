@@ -43,6 +43,18 @@
   --color-card-foreground: #2B2927;
   --color-popover: #FFFAF6;
   --color-popover-foreground: #2B2927;
+
+  /* Tokens staff (painel da equipe) — "cinza quente da casa" */
+  --color-staff-bg: #FAF7F4;
+  --color-staff-surface: #FFFFFF;
+  --color-staff-line: #E4D8D0;
+  --color-staff-ink: #2B2927;
+  --color-staff-muted: #6B5B52;
+  --color-staff-faint: #A8978B;
+  --color-staff-accent: #C97638;
+  --color-staff-accent-soft: #F6DCC8;
+  --color-staff-success: #7BAE7F;
+  --color-staff-danger: #B3261E;
 }
 
 /*
