@@ -16,6 +16,10 @@ import {
   isValidEmail,
   onlyDigits,
 } from '../../../shared/utils/validators';
+import { PageHead } from '../components/PageHead';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
+import { EmptyState } from '../components/EmptyState';
 import '../staff.css';
 
 interface FormValues {
@@ -183,138 +187,144 @@ export function MemberFormPage() {
   }
 
   return (
-    <>
-      <Link to="/painel/membros" className="btn btn--sm" style={{ marginBottom: 16 }}>
-        <ArrowLeft size={16} aria-hidden="true" />
-        Voltar
-      </Link>
+    <div className="space-y-6">
+      <div className="mb-4">
+        <Link
+          to="/painel/membros"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar
+        </Link>
+      </div>
 
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">
-            {isEdit ? 'Editar membro' : 'Novo membro'}
-          </h1>
-          <p className="page-head__subtitle">
-            {isEdit
-              ? 'Atualize os dados ou o papel do membro.'
-              : 'Cadastre um novo voluntário, bolsista ou coordenador.'}
-          </p>
-        </div>
-      </header>
+      <PageHead
+        title={isEdit ? 'Editar membro' : 'Novo membro'}
+        subtitle={
+          isEdit
+            ? 'Atualize os dados ou o papel do membro.'
+            : 'Cadastre um novo voluntário, bolsista ou coordenador.'
+        }
+      />
 
-      {error && (
-        <p className="alert alert--error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <Alert variant="danger">{error}</Alert>}
 
       {loading ? (
-        <p className="empty-state">Carregando membro...</p>
+        <EmptyState>Carregando membro...</EmptyState>
       ) : (
-        <form className="panel" onSubmit={handleSubmit} noValidate>
-          <div className="form-grid">
-            <div className="form-grid--full">
+        <Panel>
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <TextField
+                  id="member-name"
+                  label="Nome completo"
+                  required
+                  value={values.name}
+                  error={errors.name}
+                  onChange={(value) => setFieldWrapper('name', value)}
+                />
+              </div>
+
+              {!isEdit && (
+                <TextField
+                  id="member-email"
+                  label="E-mail"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={values.email}
+                  error={errors.email}
+                  onChange={(value) => setFieldWrapper('email', value)}
+                />
+              )}
+              <SelectField
+                id="member-role"
+                label="Papel"
+                value={values.role}
+                onChange={(value) => setFieldWrapper('role', value as StaffRole)}
+                options={ROLE_OPTIONS}
+              />
+
               <TextField
-                id="member-name"
-                label="Nome completo"
-                required
-                value={values.name}
-                error={errors.name}
-                onChange={(value) => setFieldWrapper('name', value)}
+                id="member-password"
+                label={isEdit ? 'Nova senha' : 'Senha de acesso'}
+                type="password"
+                autoComplete="new-password"
+                optional={isEdit}
+                required={!isEdit}
+                hint={
+                  isEdit
+                    ? 'Deixe em branco para manter a senha atual.'
+                    : `Mínimo de ${MIN_PASSWORD_LENGTH} caracteres.`
+                }
+                value={values.password}
+                error={errors.password}
+                onChange={(value) => setFieldWrapper('password', value)}
+              />
+              <TextField
+                id="member-cpf"
+                label="CPF"
+                optional
+                inputMode="numeric"
+                placeholder="000.000.000-00"
+                value={values.cpf}
+                error={errors.cpf}
+                onChange={(value) => setFieldWrapper('cpf', formatCpf(value))}
+              />
+
+              <TextField
+                id="member-birthDate"
+                label="Data de nascimento"
+                optional
+                type="date"
+                value={values.birthDate}
+                onChange={(value) => setFieldWrapper('birthDate', value)}
+              />
+              <TextField
+                id="member-ufopaRegistration"
+                label="Matrícula Ufopa"
+                optional
+                value={values.ufopaRegistration}
+                onChange={(value) => setFieldWrapper('ufopaRegistration', value)}
+              />
+
+              <TextField
+                id="member-projectEntryDate"
+                label="Entrada no projeto"
+                optional
+                type="date"
+                value={values.projectEntryDate}
+                onChange={(value) => setFieldWrapper('projectEntryDate', value)}
+              />
+              <TextField
+                id="member-feedingDays"
+                label="Dias de alimentação"
+                optional
+                hint="Separe por vírgula. Ex.: segunda, quarta, sexta"
+                value={values.feedingDays}
+                onChange={(value) => setFieldWrapper('feedingDays', value)}
               />
             </div>
 
-            {!isEdit && (
-              <TextField
-                id="member-email"
-                label="E-mail"
-                type="email"
-                autoComplete="email"
-                required
-                value={values.email}
-                error={errors.email}
-                onChange={(value) => setFieldWrapper('email', value)}
-              />
-            )}
-            <SelectField
-              id="member-role"
-              label="Papel"
-              value={values.role}
-              onChange={(value) => setFieldWrapper('role', value as StaffRole)}
-              options={ROLE_OPTIONS}
-            />
-
-            <TextField
-              id="member-password"
-              label={isEdit ? 'Nova senha' : 'Senha de acesso'}
-              type="password"
-              autoComplete="new-password"
-              optional={isEdit}
-              required={!isEdit}
-              hint={
-                isEdit
-                  ? 'Deixe em branco para manter a senha atual.'
-                  : `Mínimo de ${MIN_PASSWORD_LENGTH} caracteres.`
-              }
-              value={values.password}
-              error={errors.password}
-              onChange={(value) => setFieldWrapper('password', value)}
-            />
-            <TextField
-              id="member-cpf"
-              label="CPF"
-              optional
-              inputMode="numeric"
-              placeholder="000.000.000-00"
-              value={values.cpf}
-              error={errors.cpf}
-              onChange={(value) => setFieldWrapper('cpf', formatCpf(value))}
-            />
-
-            <TextField
-              id="member-birthDate"
-              label="Data de nascimento"
-              optional
-              type="date"
-              value={values.birthDate}
-              onChange={(value) => setFieldWrapper('birthDate', value)}
-            />
-            <TextField
-              id="member-ufopaRegistration"
-              label="Matrícula Ufopa"
-              optional
-              value={values.ufopaRegistration}
-              onChange={(value) => setFieldWrapper('ufopaRegistration', value)}
-            />
-
-            <TextField
-              id="member-projectEntryDate"
-              label="Entrada no projeto"
-              optional
-              type="date"
-              value={values.projectEntryDate}
-              onChange={(value) => setFieldWrapper('projectEntryDate', value)}
-            />
-            <TextField
-              id="member-feedingDays"
-              label="Dias de alimentação"
-              optional
-              hint="Separe por vírgula. Ex.: segunda, quarta, sexta"
-              value={values.feedingDays}
-              onChange={(value) => setFieldWrapper('feedingDays', value)}
-            />
-          </div>
-
-          <div className="form-actions">
-            <button type="submit" className="btn btn--primary" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
-            <Link to="/painel/membros" className="btn">
-              Cancelar
-            </Link>
-          </div>
-        </form>
+            <div className="flex flex-wrap gap-3 border-t border-staff-line pt-4">
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                disabled={saving}
+              >
+                {saving ? 'Salvando...' : 'Salvar'}
+              </button>
+              <Link
+                to="/painel/membros"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+              >
+                Cancelar
+              </Link>
+            </div>
+          </form>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }
