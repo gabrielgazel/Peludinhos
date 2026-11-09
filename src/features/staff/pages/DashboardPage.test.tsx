@@ -149,9 +149,6 @@ describe('DashboardPage', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Não foi possível carregar o resumo: rede indisponível',
     );
-    expect(screen.getByRole('alert')).toHaveTextContent(
-      'Não foi possível carregar o resumo: rede indisponível',
-    );
   });
 
   it('usa a moldura nova (PageHead, StatCard, Panel e Alert) sem classes legadas', () => {

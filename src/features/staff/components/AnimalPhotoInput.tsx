@@ -111,7 +111,7 @@ export function AnimalPhotoInput({
       </p>
 
       <div className="flex flex-wrap gap-2">
-        <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-staff-accent motion-reduce:transition-none">
+        <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg has-[input:disabled]:opacity-60 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-staff-accent motion-reduce:transition-none">
           {hasPhoto ? 'Trocar foto' : 'Escolher foto'}
           <input
             ref={inputRef}

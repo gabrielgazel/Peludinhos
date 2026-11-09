@@ -150,7 +150,7 @@ export function StaffLayout() {
 
           <nav aria-label="Painel">
             <div>
-              <h2 className="px-3 pt-1 font-body text-[11px] font-bold tracking-[0.08em] text-staff-faint uppercase">
+              <h2 className="px-3 pt-1 font-body text-[11px] font-bold tracking-[0.08em] text-staff-muted uppercase">
                 Geral
               </h2>
               <ul className="mt-2 flex flex-col gap-1">{GERAL_ITEMS.map(renderNavItem)}</ul>
@@ -158,7 +158,7 @@ export function StaffLayout() {
 
             {isAdmin(user?.role) && (
               <div className="mt-5">
-                <h2 className="px-3 pt-1 font-body text-[11px] font-bold tracking-[0.08em] text-staff-faint uppercase">
+                <h2 className="px-3 pt-1 font-body text-[11px] font-bold tracking-[0.08em] text-staff-muted uppercase">
                   Equipe
                 </h2>
                 <ul className="mt-2 flex flex-col gap-1">{renderNavItem(MEMBROS_ITEM)}</ul>
