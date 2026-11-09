@@ -10,8 +10,12 @@ import {
   INTENT_STATUS_LABEL,
   INTENT_STATUS_OPTIONS,
   INTENT_STATUS_TONE,
-  type BadgeTone,
 } from '../utils/badges';
+import { PageHead } from '../components/PageHead';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
+import { EmptyState } from '../components/EmptyState';
+import { StatusBadge } from '../components/StatusBadge';
 import '../staff.css';
 
 type StatusFilter = 'todas' | IntentStatus;
@@ -20,10 +24,6 @@ const FILTER_OPTIONS = [
   { value: 'todas', label: 'Todas as intenções' },
   ...INTENT_STATUS_OPTIONS,
 ];
-
-function toneClass(tone: BadgeTone) {
-  return `badge badge--${tone}`;
-}
 
 export function IntentsAdminPage() {
   const [status, setStatus] = useState<StatusFilter>('pendente');
@@ -58,74 +58,72 @@ export function IntentsAdminPage() {
   }
 
   return (
-    <>
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">Intenções de adoção</h1>
-          <p className="page-head__subtitle">
-            Avalie os pedidos manifestados pelos visitantes.
-          </p>
-        </div>
-      </header>
+    <div className="space-y-6">
+      <PageHead
+        title="Intenções de adoção"
+        subtitle="Avalie os pedidos manifestados pelos visitantes."
+      />
 
       {(error || actionError) && (
-        <p className="alert alert--error" role="alert">
-          {actionError ?? error}
-        </p>
+        <Alert variant="danger">{actionError ?? error}</Alert>
       )}
 
-      <div className="panel">
-        <div className="filter-bar">
-          <div className="filter-bar__field">
-            <SelectField
-              id="intents-status"
-              label="Status"
-              value={status}
-              onChange={(value) => setStatus(value as StatusFilter)}
-              options={FILTER_OPTIONS}
-            />
-          </div>
+      <Panel>
+        <div className="grid gap-4 sm:max-w-xs mb-4">
+          <SelectField
+            id="intents-status"
+            label="Status"
+            value={status}
+            onChange={(value) => setStatus(value as StatusFilter)}
+            options={FILTER_OPTIONS}
+          />
         </div>
 
         {loading ? (
-          <p className="empty-state">Carregando intenções...</p>
+          <EmptyState>Carregando intenções...</EmptyState>
         ) : intents.length === 0 ? (
-          <p className="empty-state">Nenhuma intenção encontrada para este filtro.</p>
+          <EmptyState>Nenhuma intenção encontrada para este filtro.</EmptyState>
         ) : (
-          <div className="stack">
+          <div className="space-y-3">
             {intents.map((intent) => (
-              <article key={intent.id} className="intent-card">
-                <div className="intent-card__head">
+              <article
+                key={intent.id}
+                className="space-y-3 rounded-xl border border-staff-line bg-staff-surface p-5"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="intent-card__who">
+                    <p className="font-semibold text-staff-ink">
                       {intent.visitor?.name ?? `Visitante #${intent.visitorId}`}
                     </p>
-                    <p className="intent-card__meta">
+                    <p className="text-sm text-staff-muted">
                       {intent.visitor?.email ?? '—'}
                       {intent.visitor?.isUfopaMember ? ' · comunidade Ufopa' : ''}
                       {intent.visitor?.hasPet ? ' · já tem animal' : ''}
                     </p>
                   </div>
-                  <span className={toneClass(INTENT_STATUS_TONE[intent.status])}>
+                  <StatusBadge tone={INTENT_STATUS_TONE[intent.status]}>
                     {INTENT_STATUS_LABEL[intent.status]}
-                  </span>
+                  </StatusBadge>
                 </div>
 
-                <p className="intent-card__meta">
+                <p className="text-sm text-staff-muted">
                   Quer adotar{' '}
-                  <Link to={`/adocao/${intent.animalId}`}>
+                  <Link
+                    to={`/adocao/${intent.animalId}`}
+                    className="text-staff-ink underline decoration-staff-line underline-offset-2 hover:decoration-staff-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent"
+                  >
                     <strong>{intent.animal?.name ?? `Animal #${intent.animalId}`}</strong>
                   </Link>{' '}
                   · pedido em {formatDateTime(intent.createdAt)}
                 </p>
 
-                <p className="intent-card__motivation">{intent.motivation}</p>
+                <p className="whitespace-pre-line text-staff-ink">{intent.motivation}</p>
 
                 {intent.status === 'pendente' && (
-                  <div className="intent-card__actions">
+                  <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
-                      className="btn btn--primary btn--sm"
+                      className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
                       disabled={busyId === intent.id}
                       onClick={() => void handleReview(intent.id, 'aprovada')}
                     >
@@ -133,7 +131,7 @@ export function IntentsAdminPage() {
                     </button>
                     <button
                       type="button"
-                      className="btn btn--danger btn--sm"
+                      className="inline-flex min-h-11 items-center rounded-xl border border-staff-danger/40 px-4 text-sm font-bold text-staff-danger transition-colors hover:bg-staff-danger/10 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
                       disabled={busyId === intent.id}
                       onClick={() => void handleReview(intent.id, 'rejeitada')}
                     >
@@ -145,7 +143,7 @@ export function IntentsAdminPage() {
             ))}
           </div>
         )}
-      </div>
-    </>
+      </Panel>
+    </div>
   );
 }
