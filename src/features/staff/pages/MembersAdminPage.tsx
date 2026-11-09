@@ -18,7 +18,6 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/ui/table';
-import '../staff.css';
 
 type RoleFilter = 'todos' | StaffRole;
 

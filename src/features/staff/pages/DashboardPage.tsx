@@ -10,7 +10,6 @@ import { PageHead } from '../components/PageHead';
 import { StatCard } from '../components/StatCard';
 import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
-import '../staff.css';
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -74,7 +73,7 @@ export function DashboardPage() {
       </div>
 
       <Panel>
-        <h2 className="mb-3 text-lg font-bold text-staff-ink">Ações rápidas</h2>
+        <h2 className="mb-3 font-body text-lg font-bold text-staff-ink">Ações rápidas</h2>
         <div className="flex flex-wrap gap-3">
           <Link
             to="/painel/animais"

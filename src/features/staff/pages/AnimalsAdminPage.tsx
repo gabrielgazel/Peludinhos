@@ -27,7 +27,6 @@ import {
   TableHeader,
   TableRow,
 } from '../../../shared/ui/table';
-import '../staff.css';
 
 type StatusFilter = 'todos' | AnimalStatus;
 
@@ -104,7 +103,7 @@ export function AnimalsAdminPage() {
       )}
 
       <Panel>
-        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="mb-4 grid gap-4 sm:grid-cols-[1fr_auto]">
           <TextField
             id="animals-search"
             label="Buscar por nome"

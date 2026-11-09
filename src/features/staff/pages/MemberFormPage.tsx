@@ -20,7 +20,6 @@ import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
 import { EmptyState } from '../components/EmptyState';
-import '../staff.css';
 
 interface FormValues {
   name: string;

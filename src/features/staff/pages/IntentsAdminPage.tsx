@@ -16,7 +16,6 @@ import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
 import { EmptyState } from '../components/EmptyState';
 import { StatusBadge } from '../components/StatusBadge';
-import '../staff.css';
 
 type StatusFilter = 'todas' | IntentStatus;
 
