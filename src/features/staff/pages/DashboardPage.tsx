@@ -6,6 +6,10 @@ import { animalService } from '../../animals/services/animalService';
 import { adoptionService } from '../../adoption/services/adoptionService';
 import { memberService } from '../services/memberService';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
+import { PageHead } from '../components/PageHead';
+import { StatCard } from '../components/StatCard';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
 import '../staff.css';
 
 export function DashboardPage() {
@@ -27,74 +31,73 @@ export function DashboardPage() {
   }, [admin]);
 
   return (
-    <>
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">
-            Olá, {user?.name?.split(' ')[0] ?? 'equipe'}!
-          </h1>
-          <p className="page-head__subtitle">
-            Você está conectado como {roleLabel(user?.role)}.
-          </p>
-        </div>
-        {admin && (
-          <div className="page-head__actions">
-            <Link to="/painel/animais/novo" className="btn btn--primary">
+    <div className="space-y-6">
+      <PageHead
+        title={`Olá, ${user?.name?.split(' ')[0] ?? 'equipe'}!`}
+        subtitle={`Você está conectado como ${roleLabel(user?.role)}.`}
+        actions={
+          admin ? (
+            <Link
+              to="/painel/animais/novo"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-staff-accent px-4 text-sm font-bold text-white transition-colors hover:bg-staff-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+            >
               <Plus size={16} aria-hidden="true" />
               Novo animal
             </Link>
-          </div>
-        )}
-      </header>
+          ) : undefined
+        }
+      />
 
-      {error && (
-        <p className="alert alert--error" role="alert">
-          Não foi possível carregar o resumo: {error}
-        </p>
-      )}
+      {error && <Alert variant="danger">Não foi possível carregar o resumo: {error}</Alert>}
 
-      <div className="stat-grid">
-        <Link to="/painel/animais" className="stat-card">
-          <PawPrint size={22} aria-hidden="true" />
-          <span className="stat-card__value">{loading ? '…' : (data?.animals ?? 0)}</span>
-          <span className="stat-card__label">Animais cadastrados</span>
-        </Link>
-
-        <Link to="/painel/intencoes" className="stat-card">
-          <ClipboardList size={22} aria-hidden="true" />
-          <span className="stat-card__value">
-            {loading ? '…' : (data?.pendingIntents ?? 0)}
-          </span>
-          <span className="stat-card__label">Intenções pendentes</span>
-        </Link>
-
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <StatCard
+          to="/painel/animais"
+          label="Animais cadastrados"
+          value={loading ? '…' : (data?.animals ?? 0)}
+          icon={<PawPrint size={22} aria-hidden="true" />}
+        />
+        <StatCard
+          to="/painel/intencoes"
+          label="Intenções pendentes"
+          value={loading ? '…' : (data?.pendingIntents ?? 0)}
+          icon={<ClipboardList size={22} aria-hidden="true" />}
+        />
         {admin && (
-          <Link to="/painel/membros" className="stat-card">
-            <Users size={22} aria-hidden="true" />
-            <span className="stat-card__value">
-              {loading ? '…' : (data?.members ?? 0)}
-            </span>
-            <span className="stat-card__label">Membros da equipe</span>
-          </Link>
+          <StatCard
+            to="/painel/membros"
+            label="Membros da equipe"
+            value={loading ? '…' : (data?.members ?? 0)}
+            icon={<Users size={22} aria-hidden="true" />}
+          />
         )}
       </div>
 
-      <section className="panel" style={{ marginTop: 24 }}>
-        <h2 className="panel__title">Ações rápidas</h2>
-        <div className="page-head__actions">
-          <Link to="/painel/animais" className="btn">
+      <Panel>
+        <h2 className="mb-3 text-lg font-bold text-staff-ink">Ações rápidas</h2>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            to="/painel/animais"
+            className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+          >
             Ver animais
           </Link>
-          <Link to="/painel/intencoes" className="btn">
+          <Link
+            to="/painel/intencoes"
+            className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+          >
             Avaliar intenções
           </Link>
           {admin && (
-            <Link to="/painel/membros" className="btn">
+            <Link
+              to="/painel/membros"
+              className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+            >
               Gerenciar membros
             </Link>
           )}
         </div>
-      </section>
-    </>
+      </Panel>
+    </div>
   );
 }
