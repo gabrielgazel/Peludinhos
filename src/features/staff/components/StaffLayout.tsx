@@ -34,7 +34,7 @@ const FOCUS_CLASSES =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent';
 
 const NAV_LINK_BASE_CLASSES =
-  'flex min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-[15px] font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent';
+  'flex min-h-[44px] items-center gap-2.5 rounded-lg border-l-2 border-transparent px-3 py-2 text-[15px] font-semibold transition-colors motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent';
 
 export function StaffLayout() {
   const { user, logout } = useAuth();
@@ -47,7 +47,7 @@ export function StaffLayout() {
     cn(
       NAV_LINK_BASE_CLASSES,
       isActive
-        ? 'bg-staff-accent-soft text-staff-accent'
+        ? 'border-staff-accent bg-staff-accent-soft text-staff-ink'
         : 'text-staff-muted hover:bg-staff-bg hover:text-staff-ink',
     );
 
@@ -68,7 +68,7 @@ export function StaffLayout() {
             <button
               type="button"
               className={cn(
-                'grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-staff-muted transition-colors hover:bg-staff-bg hover:text-staff-ink motion-reduce:transition-none',
+                'grid min-h-[44px] min-w-[44px] place-items-center rounded-lg text-staff-muted transition-colors hover:bg-staff-bg hover:text-staff-ink motion-reduce:transition-none lg:hidden',
                 FOCUS_CLASSES,
               )}
               aria-expanded={menuOpen}
@@ -91,7 +91,7 @@ export function StaffLayout() {
             >
               <PawPrint size={22} aria-hidden="true" className="text-staff-accent" />
               <span>Peludinhos</span>
-              <span className="rounded-full bg-staff-accent-soft px-2 py-0.5 text-[11px] font-bold tracking-[0.08em] text-staff-accent uppercase">
+              <span className="rounded-full bg-staff-accent-soft px-2 py-0.5 font-body text-[11px] font-bold tracking-[0.08em] text-staff-ink uppercase">
                 Painel
               </span>
             </Link>
@@ -129,7 +129,7 @@ export function StaffLayout() {
         <aside
           id="painel-navegacao"
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-[220px] shrink-0 overflow-y-auto border-r border-staff-line bg-staff-surface p-4 transition-transform duration-200 motion-reduce:transition-none',
+            'fixed inset-y-0 left-0 z-40 w-[220px] shrink-0 overflow-y-auto border-r border-staff-line bg-staff-surface p-4 transition-[transform,visibility] duration-200 motion-reduce:transition-none',
             menuOpen ? 'translate-x-0' : '-translate-x-full',
             menuOpen ? 'visible' : 'invisible',
             'lg:sticky lg:top-16 lg:right-auto lg:bottom-auto lg:left-auto lg:z-auto lg:h-[calc(100svh-4rem)] lg:visible lg:translate-x-0 lg:self-start',

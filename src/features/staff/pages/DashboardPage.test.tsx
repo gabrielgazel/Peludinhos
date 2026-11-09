@@ -164,9 +164,9 @@ describe('DashboardPage', () => {
     expect(container.querySelector('.space-y-6')).not.toBeNull();
     expect(screen.getByRole('heading', { name: 'Ações rápidas' })).toBeInTheDocument();
 
-    // CTA primário com o acento do painel, sem o Button legado
+    // CTA primário neutro (tinta sobre superfície) para contraste AA, sem o Button legado
     const novo = screen.getByRole('link', { name: /Novo animal/ });
-    expect(novo).toHaveClass('bg-staff-accent');
+    expect(novo).toHaveClass('bg-staff-ink');
     expect(novo).not.toHaveClass('btn');
 
     // Cards novos

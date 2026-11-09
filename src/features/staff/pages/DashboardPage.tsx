@@ -39,7 +39,7 @@ export function DashboardPage() {
           admin ? (
             <Link
               to="/painel/animais/novo"
-              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-staff-accent px-4 text-sm font-bold text-white transition-colors hover:bg-staff-accent/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
             >
               <Plus size={16} aria-hidden="true" />
               Novo animal
