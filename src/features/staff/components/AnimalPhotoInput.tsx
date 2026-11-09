@@ -82,16 +82,23 @@ export function AnimalPhotoInput({
   const hasPhoto = Boolean(shownUrl);
 
   return (
-    <div className="photo-field">
+    <div className="space-y-3">
       <p className="tf__label" id="animal-photo-label">
         Foto do animal
       </p>
 
-      <div className="photo-field__preview" aria-hidden={!hasPhoto}>
+      <div
+        className="flex h-40 w-full max-w-xs items-center justify-center overflow-hidden rounded-xl border border-staff-line bg-staff-bg"
+        aria-hidden={!hasPhoto}
+      >
         {shownUrl ? (
-          <img src={shownUrl} alt="Pré-visualização da foto do animal" />
+          <img
+            src={shownUrl}
+            alt="Pré-visualização da foto do animal"
+            className="h-full w-full object-cover"
+          />
         ) : (
-          <span className="photo-field__empty">
+          <span className="flex flex-col items-center gap-1 text-sm text-staff-muted">
             <ImagePlus size={30} aria-hidden="true" />
             Sem foto
           </span>
@@ -103,8 +110,8 @@ export function AnimalPhotoInput({
         detalhes do animal.
       </p>
 
-      <div className="photo-field__actions">
-        <label className="btn btn--sm photo-field__pick">
+      <div className="flex flex-wrap gap-2">
+        <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-staff-accent motion-reduce:transition-none">
           {hasPhoto ? 'Trocar foto' : 'Escolher foto'}
           <input
             ref={inputRef}
@@ -113,13 +120,14 @@ export function AnimalPhotoInput({
             aria-labelledby="animal-photo-label"
             onChange={handleSelect}
             disabled={disabled}
+            className="sr-only"
           />
         </label>
 
         {hasPhoto && (
           <button
             type="button"
-            className="btn btn--sm btn--danger"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-danger/40 bg-staff-surface px-3 text-sm font-bold text-staff-danger transition-colors hover:bg-staff-danger/10 disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
             onClick={handleRemove}
             disabled={disabled}
           >
@@ -131,7 +139,7 @@ export function AnimalPhotoInput({
         {removed && currentUrl && (
           <button
             type="button"
-            className="btn btn--sm"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
             onClick={handleUndo}
             disabled={disabled}
           >

@@ -20,6 +20,10 @@ import { CheckboxField } from '../../../shared/components/CheckboxField';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { HttpError } from '../../../shared/api/httpsClient';
+import { PageHead } from '../components/PageHead';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
+import { EmptyState } from '../components/EmptyState';
 import '../staff.css';
 
 interface FormValues {
@@ -186,127 +190,133 @@ export function AnimalFormPage() {
   }
 
   return (
-    <>
-      <Link to="/painel/animais" className="btn btn--sm" style={{ marginBottom: 16 }}>
-        <ArrowLeft size={16} aria-hidden="true" />
-        Voltar
-      </Link>
+    <div className="space-y-6">
+      <div className="mb-4">
+        <Link
+          to="/painel/animais"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Voltar
+        </Link>
+      </div>
 
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">
-            {isEdit ? 'Editar animal' : 'Novo animal'}
-          </h1>
-          <p className="page-head__subtitle">
-            {isEdit
-              ? 'Atualize as informações do peludinho.'
-              : 'Cadastre um animal para a página de adoção.'}
-          </p>
-        </div>
-      </header>
+      <PageHead
+        title={isEdit ? 'Editar animal' : 'Novo animal'}
+        subtitle={
+          isEdit
+            ? 'Atualize as informações do peludinho.'
+            : 'Cadastre um animal para a página de adoção.'
+        }
+      />
 
-      {error && (
-        <p className="alert alert--error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <Alert variant="danger">{error}</Alert>}
 
       {loading ? (
-        <p className="empty-state">Carregando animal...</p>
+        <EmptyState>Carregando animal...</EmptyState>
       ) : (
-        <form className="panel" onSubmit={handleSubmit} noValidate>
-          <div className="form-grid">
-            <div className="form-grid--full">
-              <AnimalPhotoInput
-                currentUrl={currentPhotoUrl}
-                onChange={setPhotoChange}
-                disabled={saving}
+        <Panel>
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <AnimalPhotoInput
+                  currentUrl={currentPhotoUrl}
+                  onChange={setPhotoChange}
+                  disabled={saving}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <TextField
+                  id="animal-name"
+                  label="Nome"
+                  required
+                  value={values.name}
+                  error={nameError ?? undefined}
+                  onChange={(value) => setField('name', value)}
+                />
+              </div>
+
+              <SelectField
+                id="animal-sex"
+                label="Sexo"
+                value={values.sex}
+                onChange={(value) => setField('sex', value as AnimalSex)}
+                options={SEX_OPTIONS}
               />
-            </div>
-
-            <div className="form-grid--full">
-              <TextField
-                id="animal-name"
-                label="Nome"
-                required
-                value={values.name}
-                error={nameError ?? undefined}
-                onChange={(value) => setField('name', value)}
+              <SelectField
+                id="animal-status"
+                label="Status"
+                value={values.status}
+                onChange={(value) => setField('status', value as AnimalStatus)}
+                options={STATUS_OPTIONS}
               />
-            </div>
 
-            <SelectField
-              id="animal-sex"
-              label="Sexo"
-              value={values.sex}
-              onChange={(value) => setField('sex', value as AnimalSex)}
-              options={SEX_OPTIONS}
-            />
-            <SelectField
-              id="animal-status"
-              label="Status"
-              value={values.status}
-              onChange={(value) => setField('status', value as AnimalStatus)}
-              options={STATUS_OPTIONS}
-            />
-
-            <SelectField
-              id="animal-behavior"
-              label="Comportamento"
-              optional
-              placeholder="Não informado"
-              value={values.behavior}
-              onChange={(value) => setField('behavior', value as '' | AnimalBehavior)}
-              options={BEHAVIOR_OPTIONS}
-            />
-            <TextField
-              id="animal-age"
-              label="Idade aproximada"
-              optional
-              placeholder="ex.: 2 anos"
-              value={values.age}
-              onChange={(value) => setField('age', value)}
-            />
-
-            <TextField
-              id="animal-color"
-              label="Cor / pelagem"
-              optional
-              value={values.colorDescription}
-              onChange={(value) => setField('colorDescription', value)}
-            />
-            <div style={{ alignSelf: 'end' }}>
-              <CheckboxField
-                id="animal-neutered"
-                label="Castrado"
-                checked={values.isNeutered}
-                onChange={(checked) => setField('isNeutered', checked)}
-              />
-            </div>
-
-            <div className="form-grid--full">
-              <TextField
-                id="animal-notes"
-                label="Observações"
+              <SelectField
+                id="animal-behavior"
+                label="Comportamento"
                 optional
-                multiline
-                hint="Temperamento, saúde, história do animal..."
-                value={values.notes}
-                onChange={(value) => setField('notes', value)}
+                placeholder="Não informado"
+                value={values.behavior}
+                onChange={(value) => setField('behavior', value as '' | AnimalBehavior)}
+                options={BEHAVIOR_OPTIONS}
               />
-            </div>
-          </div>
+              <TextField
+                id="animal-age"
+                label="Idade aproximada"
+                optional
+                placeholder="ex.: 2 anos"
+                value={values.age}
+                onChange={(value) => setField('age', value)}
+              />
 
-          <div className="form-actions">
-            <button type="submit" className="btn btn--primary" disabled={saving}>
-              {saving ? 'Salvando...' : 'Salvar'}
-            </button>
-            <Link to="/painel/animais" className="btn">
-              Cancelar
-            </Link>
-          </div>
-        </form>
+              <TextField
+                id="animal-color"
+                label="Cor / pelagem"
+                optional
+                value={values.colorDescription}
+                onChange={(value) => setField('colorDescription', value)}
+              />
+              <div className="self-end">
+                <CheckboxField
+                  id="animal-neutered"
+                  label="Castrado"
+                  checked={values.isNeutered}
+                  onChange={(checked) => setField('isNeutered', checked)}
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <TextField
+                  id="animal-notes"
+                  label="Observações"
+                  optional
+                  multiline
+                  hint="Temperamento, saúde, história do animal..."
+                  value={values.notes}
+                  onChange={(value) => setField('notes', value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 border-t border-staff-line pt-4">
+              <button
+                type="submit"
+                className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                disabled={saving}
+              >
+                {saving ? 'Salvando...' : 'Salvar'}
+              </button>
+              <Link
+                to="/painel/animais"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+              >
+                Cancelar
+              </Link>
+            </div>
+          </form>
+        </Panel>
       )}
-    </>
+    </div>
   );
 }
