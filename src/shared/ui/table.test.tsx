@@ -99,4 +99,32 @@ describe('Table', () => {
     expect(source).toContain('border-staff-line');
     expect(source).toContain('text-staff-muted');
   });
+
+  it('repasse containerProps para o contêiner com rolagem e foco visível', () => {
+    render(
+      <Table
+        containerProps={{
+          role: 'region',
+          tabIndex: 0,
+          'aria-label': 'Tabela de animais — role horizontalmente para ver todas as colunas',
+        }}
+      >
+        <TableBody>
+          <TableRow>
+            <TableCell>Mel</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>,
+    );
+
+    const region = screen.getByRole('region', {
+      name: 'Tabela de animais — role horizontalmente para ver todas as colunas',
+    });
+    expect(region).toHaveAttribute('tabindex', '0');
+    expect(region).toHaveClass('focus-visible:outline-2');
+    expect(region).toHaveClass('focus-visible:outline-offset-2');
+    expect(region).toHaveClass('focus-visible:outline-staff-accent');
+    expect(region).toHaveAttribute('data-slot', 'table-container');
+    expect(screen.getByRole('table')).toBeInTheDocument();
+  });
 });

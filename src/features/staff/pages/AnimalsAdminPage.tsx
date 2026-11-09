@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { isAdmin } from '../../../shared/types/role.types';
 import { animalService } from '../../animals/services/animalService';
@@ -12,11 +13,20 @@ import { AnimalPhoto } from '../../animals/components/AnimalPhoto';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
+import { ANIMAL_STATUS_LABEL, ANIMAL_STATUS_TONE } from '../utils/badges';
+import { PageHead } from '../components/PageHead';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
+import { EmptyState } from '../components/EmptyState';
+import { StatusBadge } from '../components/StatusBadge';
 import {
-  ANIMAL_STATUS_LABEL,
-  ANIMAL_STATUS_TONE,
-  type BadgeTone,
-} from '../utils/badges';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../shared/ui/table';
 import '../staff.css';
 
 type StatusFilter = 'todos' | AnimalStatus;
@@ -28,10 +38,6 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'adotado', label: ANIMAL_STATUS_LABEL.adotado },
   { value: 'indisponivel', label: ANIMAL_STATUS_LABEL.indisponivel },
 ];
-
-function toneClass(tone: BadgeTone) {
-  return `badge badge--${tone}`;
-}
 
 export function AnimalsAdminPage() {
   const { user } = useAuth();
@@ -76,123 +82,123 @@ export function AnimalsAdminPage() {
   }
 
   return (
-    <>
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">Animais</h1>
-          <p className="page-head__subtitle">
-            Animais cadastrados no projeto, incluindo os que já encontraram um lar.
-          </p>
-        </div>
-        {admin && (
-          <div className="page-head__actions">
-            <Link to="/painel/animais/novo" className="btn btn--primary">
+    <div className="space-y-6">
+      <PageHead
+        title="Animais"
+        subtitle="Animais cadastrados no projeto, incluindo os que já encontraram um lar."
+        actions={
+          admin ? (
+            <Link
+              to="/painel/animais/novo"
+              className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+            >
+              <Plus size={16} aria-hidden="true" />
               Novo animal
             </Link>
-          </div>
-        )}
-      </header>
+          ) : undefined
+        }
+      />
 
       {(error || actionError) && (
-        <p className="alert alert--error" role="alert">
-          {actionError ?? error}
-        </p>
+        <Alert variant="danger">{actionError ?? error}</Alert>
       )}
 
-      <div className="panel">
-        <div className="filter-bar">
-          <div className="filter-bar__field">
-            <TextField
-              id="animals-search"
-              label="Buscar por nome"
-              type="search"
-              inputMode="search"
-              value={query}
-              onChange={setQuery}
-            />
-          </div>
-          <div className="filter-bar__field">
-            <SelectField
-              id="animals-status"
-              label="Status"
-              value={status}
-              onChange={(value) => setStatus(value as StatusFilter)}
-              options={STATUS_FILTER_OPTIONS}
-            />
-          </div>
+      <Panel>
+        <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+          <TextField
+            id="animals-search"
+            label="Buscar por nome"
+            type="search"
+            inputMode="search"
+            value={query}
+            onChange={setQuery}
+          />
+          <SelectField
+            id="animals-status"
+            label="Status"
+            value={status}
+            onChange={(value) => setStatus(value as StatusFilter)}
+            options={STATUS_FILTER_OPTIONS}
+          />
         </div>
 
         {loading ? (
-          <p className="empty-state">Carregando animais...</p>
+          <EmptyState>Carregando animais...</EmptyState>
         ) : filtered.length === 0 ? (
-          <p className="empty-state">Nenhum animal encontrado com esses filtros.</p>
+          <EmptyState>Nenhum animal encontrado com esses filtros.</EmptyState>
         ) : (
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Foto</th>
-                  <th>Nome</th>
-                  <th>Sexo</th>
-                  <th>Status</th>
-                  <th>Comportamento</th>
-                  <th>Castrado</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((animal) => (
-                  <tr key={animal.id}>
-                    <td>
-                      <AnimalPhoto animal={animal} size="thumb" />
-                    </td>
-                    <td>
-                      <strong>{animal.name}</strong>
+          <Table
+            containerProps={{
+              role: 'region',
+              tabIndex: 0,
+              'aria-label': 'Tabela de animais — role horizontalmente para ver todas as colunas',
+            }}
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Foto</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Sexo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Comportamento</TableHead>
+                <TableHead>Castrado</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((animal) => (
+                <TableRow key={animal.id}>
+                  <TableCell>
+                    <AnimalPhoto animal={animal} size="thumb" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-staff-ink">{animal.name}</span>
                       {animal.isDeceased && (
-                        <span className="badge badge--gray" style={{ marginLeft: 8 }}>
-                          Falecido
-                        </span>
+                        <StatusBadge tone="gray">Falecido</StatusBadge>
                       )}
-                    </td>
-                    <td>{SEX_LABEL[animal.sex]}</td>
-                    <td>
-                      <span className={toneClass(ANIMAL_STATUS_TONE[animal.status])}>
-                        {ANIMAL_STATUS_LABEL[animal.status]}
-                      </span>
-                    </td>
-                    <td className="data-table__muted">
-                      {animal.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'}
-                    </td>
-                    <td className="data-table__muted">{animal.isNeutered ? 'Sim' : 'Não'}</td>
-                    <td>
-                      <div className="data-table__actions">
-                        {admin && (
-                          <Link
-                            to={`/painel/animais/${animal.id}/editar`}
-                            className="btn btn--sm"
-                          >
-                            Editar
-                          </Link>
-                        )}
-                        {!animal.isDeceased && (
-                          <button
-                            type="button"
-                            className="btn btn--sm btn--danger"
-                            disabled={busyId === animal.id}
-                            onClick={() => void handleMarkDeceased(animal)}
-                          >
-                            {busyId === animal.id ? 'Registrando...' : 'Registrar morte'}
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>{SEX_LABEL[animal.sex]}</TableCell>
+                  <TableCell>
+                    <StatusBadge tone={ANIMAL_STATUS_TONE[animal.status]}>
+                      {ANIMAL_STATUS_LABEL[animal.status]}
+                    </StatusBadge>
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {animal.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'}
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {animal.isNeutered ? 'Sim' : 'Não'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {admin && (
+                        <Link
+                          to={`/painel/animais/${animal.id}/editar`}
+                          className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                        >
+                          Editar
+                        </Link>
+                      )}
+                      {!animal.isDeceased && (
+                        <button
+                          type="button"
+                          className="inline-flex min-h-11 items-center rounded-xl border border-staff-danger/40 bg-staff-surface px-3 text-sm font-bold text-staff-danger transition-colors hover:bg-staff-danger/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                          disabled={busyId === animal.id}
+                          onClick={() => void handleMarkDeceased(animal)}
+                        >
+                          {busyId === animal.id ? 'Registrando...' : 'Registrar morte'}
+                        </button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </div>
-    </>
+      </Panel>
+    </div>
   );
 }
