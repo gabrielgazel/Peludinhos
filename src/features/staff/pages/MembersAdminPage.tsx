@@ -6,6 +6,18 @@ import { ROLE_LABEL } from '../../../shared/types/role.types';
 import { SelectField } from '../../../shared/components/SelectField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { formatDate } from '../../../shared/utils/format';
+import { PageHead } from '../components/PageHead';
+import { Panel } from '../components/Panel';
+import { Alert } from '../components/Alert';
+import { EmptyState } from '../components/EmptyState';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../../shared/ui/table';
 import '../staff.css';
 
 type RoleFilter = 'todos' | StaffRole;
@@ -32,96 +44,97 @@ export function MembersAdminPage() {
   const members = data?.items ?? [];
 
   return (
-    <>
-      <header className="page-head">
-        <div>
-          <h1 className="page-head__title">Membros da equipe</h1>
-          <p className="page-head__subtitle">
-            Voluntários, bolsistas e administração do projeto.
-          </p>
-        </div>
-        <div className="page-head__actions">
-          <Link to="/painel/membros/novo" className="btn btn--primary">
+    <div className="space-y-6">
+      <PageHead
+        title="Membros da equipe"
+        subtitle="Voluntários, bolsistas e administração do projeto."
+        actions={
+          <Link
+            to="/painel/membros/novo"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+          >
             Novo membro
           </Link>
-        </div>
-      </header>
+        }
+      />
 
-      {error && (
-        <p className="alert alert--error" role="alert">
-          {error}
-        </p>
-      )}
+      {error && <Alert variant="danger">{error}</Alert>}
 
-      <div className="panel">
-        <div className="filter-bar">
-          <div className="filter-bar__field">
-            <SelectField
-              id="members-role"
-              label="Papel"
-              value={role}
-              onChange={(value) => setRole(value as RoleFilter)}
-              options={FILTER_OPTIONS}
-            />
-          </div>
+      <Panel>
+        <div className="grid gap-4 sm:max-w-xs mb-4">
+          <SelectField
+            id="members-role"
+            label="Papel"
+            value={role}
+            onChange={(value) => setRole(value as RoleFilter)}
+            options={FILTER_OPTIONS}
+          />
         </div>
 
         {loading ? (
-          <p className="empty-state">Carregando membros...</p>
+          <EmptyState>Carregando membros...</EmptyState>
         ) : members.length === 0 ? (
-          <p className="empty-state">Nenhum membro encontrado.</p>
+          <EmptyState>Nenhum membro encontrado.</EmptyState>
         ) : (
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>E-mail</th>
-                  <th>Papel</th>
-                  <th>Matrícula</th>
-                  <th>Entrada no projeto</th>
-                  <th>Dias de alimentação</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {members.map((member) => (
-                  <tr key={member.id ?? `${member.name}-${member.role}`}>
-                    <td>
-                      <strong>{member.name}</strong>
-                    </td>
-                    <td className="data-table__muted">{member.email ?? '—'}</td>
-                    <td>{ROLE_LABEL[member.role]}</td>
-                    <td className="data-table__muted">
-                      {member.ufopaRegistration ?? '—'}
-                    </td>
-                    <td className="data-table__muted">
-                      {formatDate(member.projectEntryDate)}
-                    </td>
-                    <td className="data-table__muted">
-                      {member.feedingDays && member.feedingDays.length > 0
-                        ? member.feedingDays.join(', ')
-                        : '—'}
-                    </td>
-                    <td>
-                      <div className="data-table__actions">
-                        {member.id !== null && (
-                          <Link
-                            to={`/painel/membros/${member.id}/editar`}
-                            className="btn btn--sm"
-                          >
-                            Editar
-                          </Link>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table
+            containerProps={{
+              role: 'region',
+              tabIndex: 0,
+              'aria-label': 'Tabela de membros — role horizontalmente para ver todas as colunas',
+            }}
+          >
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>E-mail</TableHead>
+                <TableHead>Papel</TableHead>
+                <TableHead>Matrícula</TableHead>
+                <TableHead>Entrada no projeto</TableHead>
+                <TableHead>Dias de alimentação</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {members.map((member) => (
+                <TableRow key={member.id ?? `${member.name}-${member.role}`}>
+                  <TableCell>
+                    <span className="font-semibold text-staff-ink">{member.name}</span>
+                  </TableCell>
+                  <TableCell className="text-staff-muted">{member.email ?? '—'}</TableCell>
+                  <TableCell className="text-staff-muted">
+                    <span className="inline-flex w-fit items-center rounded-full border border-staff-line bg-staff-bg px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-staff-muted">
+                      {ROLE_LABEL[member.role]}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {member.ufopaRegistration ?? '—'}
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {formatDate(member.projectEntryDate)}
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {member.feedingDays && member.feedingDays.length > 0
+                      ? member.feedingDays.join(', ')
+                      : '—'}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {member.id !== null && (
+                        <Link
+                          to={`/painel/membros/${member.id}/editar`}
+                          className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                        >
+                          Editar
+                        </Link>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
-      </div>
-    </>
+      </Panel>
+    </div>
   );
 }
