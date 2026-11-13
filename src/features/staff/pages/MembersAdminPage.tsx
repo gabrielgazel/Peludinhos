@@ -4,6 +4,7 @@ import { memberService } from '../services/memberService';
 import type { StaffRole } from '../../../shared/types/role.types';
 import { ROLE_LABEL } from '../../../shared/types/role.types';
 import { SelectField } from '../../../shared/components/SelectField';
+import { TextField } from '../../../shared/components/TextField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { formatDate } from '../../../shared/utils/format';
 import { PageHead } from '../components/PageHead';
@@ -31,6 +32,7 @@ const FILTER_OPTIONS = [
 
 export function MembersAdminPage() {
   const [role, setRole] = useState<RoleFilter>('todos');
+  const [search, setSearch] = useState('');
 
   const { data, loading, error } = useAsyncData(
     () =>
@@ -41,6 +43,23 @@ export function MembersAdminPage() {
     [role],
   );
   const members = data?.items ?? [];
+
+  const term = normalizeText(search);
+  const visibleMembers = term
+    ? members.filter((member) =>
+        [member.name, member.email ?? ''].some((value) =>
+          normalizeText(value).includes(term),
+        ),
+      )
+    : members;
+  const hasFilters = role !== 'todos' || term !== '';
+  const countLabel = term
+    ? `${visibleMembers.length} de ${members.length} ${members.length === 1 ? 'membro' : 'membros'}`
+    : `${members.length} ${members.length === 1 ? 'membro' : 'membros'}`;
+  const clearFilters = () => {
+    setSearch('');
+    setRole('todos');
+  };
 
   return (
     <div className="space-y-6">
@@ -60,7 +79,15 @@ export function MembersAdminPage() {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <Panel>
-        <div className="grid gap-4 sm:max-w-xs mb-4">
+        <div className="mb-4 grid gap-4 sm:max-w-2xl sm:grid-cols-2">
+          <TextField
+            id="members-search"
+            label="Buscar"
+            type="search"
+            placeholder="Nome ou e-mail"
+            value={search}
+            onChange={setSearch}
+          />
           <SelectField
             id="members-role"
             label="Papel"
@@ -69,11 +96,37 @@ export function MembersAdminPage() {
             options={FILTER_OPTIONS}
           />
         </div>
+        <p aria-live="polite" className="mb-4 text-sm text-staff-muted">
+          {countLabel}
+        </p>
 
         {loading ? (
           <EmptyState>Carregando membros...</EmptyState>
-        ) : members.length === 0 ? (
-          <EmptyState>Nenhum membro encontrado.</EmptyState>
+        ) : members.length === 0 && !hasFilters ? (
+          <EmptyState>
+            <p>Nenhum membro cadastrado ainda.</p>
+            <Link
+              to="/painel/membros/novo"
+              className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+            >
+              Cadastrar membro
+            </Link>
+          </EmptyState>
+        ) : visibleMembers.length === 0 ? (
+          <EmptyState>
+            <p>
+              {term !== ''
+                ? 'Nenhum membro encontrado para esta busca.'
+                : 'Nenhum membro encontrado com este papel.'}
+            </p>
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="mt-4 inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+            >
+              Limpar filtros
+            </button>
+          </EmptyState>
         ) : (
           <Table
             containerProps={{
@@ -94,10 +147,19 @@ export function MembersAdminPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
+              {visibleMembers.map((member) => (
                 <TableRow key={member.id ?? `${member.name}-${member.role}`}>
                   <TableCell>
-                    <span className="font-semibold text-staff-ink">{member.name}</span>
+                    {member.id !== null ? (
+                      <Link
+                        to={`/painel/membros/${member.id}`}
+                        className="font-semibold text-staff-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent"
+                      >
+                        {member.name}
+                      </Link>
+                    ) : (
+                      <span className="font-semibold text-staff-ink">{member.name}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-staff-muted">{member.email ?? '—'}</TableCell>
                   <TableCell className="text-staff-muted">
@@ -120,6 +182,14 @@ export function MembersAdminPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {member.id !== null && (
                         <Link
+                          to={`/painel/membros/${member.id}`}
+                          className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                        >
+                          Ver
+                        </Link>
+                      )}
+                      {member.id !== null && (
+                        <Link
                           to={`/painel/membros/${member.id}/editar`}
                           className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
                         >
@@ -136,4 +206,12 @@ export function MembersAdminPage() {
       </Panel>
     </div>
   );
+}
+
+function normalizeText(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
 }

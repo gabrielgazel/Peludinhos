@@ -136,12 +136,16 @@ describe('MembersAdminPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Carregando membros...');
   });
 
-  it('mostra o estado vazio com o texto exato quando não há membros', async () => {
+  it('mostra lista vazia com CTA de cadastro quando não há membros', async () => {
     vi.mocked(memberService.list).mockResolvedValue(page([]));
     renderPage();
 
-    expect(await screen.findByText('Nenhum membro encontrado.')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('Nenhum membro encontrado.');
+    expect(await screen.findByText('Nenhum membro cadastrado ainda.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Cadastrar membro' })).toHaveAttribute(
+      'href',
+      '/painel/membros/novo',
+    );
+    expect(screen.getByText('0 membros')).toBeInTheDocument();
     expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
@@ -220,5 +224,104 @@ describe('MembersAdminPage', () => {
     expect(screen.getByText('Ana Souza')).toHaveClass('font-semibold');
     expect(screen.getByText('Ana Souza')).toHaveClass('text-staff-ink');
     expect(screen.getByText('ana@peludinhos.example')).toHaveClass('text-staff-muted');
+  });
+
+  it('busca por nome e e-mail sem diferenciar caixa, ignorando espaços em branco', async () => {
+    renderPage();
+    await screen.findByText('Ana Souza');
+
+    const search = screen.getByLabelText(/Buscar/i);
+    fireEvent.change(search, { target: { value: 'ANA@PELUDINHOS' } });
+
+    expect(screen.getByText('Ana Souza')).toBeInTheDocument();
+    expect(screen.queryByText('Bruno Lima')).not.toBeInTheDocument();
+    expect(screen.queryByText('Carla Mendes')).not.toBeInTheDocument();
+    expect(screen.getByText('1 de 3 membros')).toBeInTheDocument();
+    expect(vi.mocked(memberService.list)).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(search, { target: { value: '   ' } });
+    expect(screen.getByText('Bruno Lima')).toBeInTheDocument();
+    expect(screen.getByText('Carla Mendes')).toBeInTheDocument();
+    expect(screen.getByText('3 membros')).toBeInTheDocument();
+  });
+
+  it('busca por nome ignorando acentos', async () => {
+    setupList([
+      makeMember({ id: 9, name: 'José Ávila', email: 'jose@peludinhos.example' }),
+      makeMember({ id: 10, name: 'Ana Souza' }),
+    ]);
+    renderPage();
+    await screen.findByText('Ana Souza');
+
+    fireEvent.change(screen.getByLabelText(/Buscar/i), { target: { value: 'JOSE avila' } });
+
+    expect(screen.getByText('José Ávila')).toBeInTheDocument();
+    expect(screen.queryByText('Ana Souza')).not.toBeInTheDocument();
+    expect(screen.getByText('1 de 2 membros')).toBeInTheDocument();
+  });
+
+  it('sem resultados mostra o estado de busca e Limpar filtros restaura a lista', async () => {
+    renderPage();
+    await screen.findByText('Ana Souza');
+
+    fireEvent.change(screen.getByLabelText(/Papel/i), { target: { value: 'bolsista' } });
+    await waitFor(() => {
+      expect(vi.mocked(memberService.list)).toHaveBeenCalledWith({
+        role: 'bolsista',
+        limit: 100,
+      });
+    });
+
+    fireEvent.change(screen.getByLabelText(/Buscar/i), { target: { value: 'zzz' } });
+    expect(screen.getByText('Nenhum membro encontrado para esta busca.')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }));
+
+    expect(screen.getByLabelText(/Buscar/i)).toHaveValue('');
+    expect(screen.getByLabelText(/Papel/i)).toHaveValue('todos');
+    await waitFor(() => {
+      expect(vi.mocked(memberService.list)).toHaveBeenCalledWith({
+        role: undefined,
+        limit: 100,
+      });
+    });
+    expect(await screen.findByText('Ana Souza')).toBeInTheDocument();
+  });
+
+  it('mostra a contagem no singular', async () => {
+    renderPage();
+    await screen.findByText('Ana Souza');
+    expect(screen.getByText('3 membros')).toBeInTheDocument();
+
+    setupList([makeMember({ id: 1, name: 'Ana Souza' })]);
+    fireEvent.change(screen.getByLabelText(/Papel/i), { target: { value: 'voluntario' } });
+
+    expect(await screen.findByText('1 membro')).toBeInTheDocument();
+  });
+
+  it('liga nome e ação Ver à ficha apenas quando há id', async () => {
+    renderPage();
+    await screen.findByText('Ana Souza');
+
+    expect(screen.getByRole('link', { name: 'Ana Souza' })).toHaveAttribute(
+      'href',
+      '/painel/membros/1',
+    );
+
+    const anaRow = (await screen.findByText('Ana Souza')).closest('tr') as HTMLElement;
+    expect(within(anaRow).getByRole('link', { name: 'Ver' })).toHaveAttribute(
+      'href',
+      '/painel/membros/1',
+    );
+    expect(within(anaRow).getByRole('link', { name: 'Editar' })).toHaveAttribute(
+      'href',
+      '/painel/membros/1/editar',
+    );
+
+    const carlaRow = (await screen.findByText('Carla Mendes')).closest('tr') as HTMLElement;
+    expect(within(carlaRow).queryByRole('link', { name: 'Ver' })).not.toBeInTheDocument();
+    expect(within(carlaRow).queryByRole('link', { name: 'Editar' })).not.toBeInTheDocument();
+    expect(within(carlaRow).queryByRole('link', { name: 'Carla Mendes' })).not.toBeInTheDocument();
   });
 });
