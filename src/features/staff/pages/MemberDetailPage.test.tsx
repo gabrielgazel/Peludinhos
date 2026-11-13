@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HttpError } from '../../../shared/api/httpsClient';
 import type { Member } from '../services/memberService';
 import { memberService } from '../services/memberService';
 import { MemberDetailPage } from './MemberDetailPage';
@@ -108,5 +109,26 @@ describe('MemberDetailPage', () => {
       'href',
       '/painel/membros',
     );
+  });
+
+  it('mostra o estado de não encontrado quando a API responde 404', async () => {
+    vi.mocked(memberService.getById).mockRejectedValue(
+      new HttpError(404, 'Membro não encontrado', null),
+    );
+    renderAt('999');
+
+    expect(await screen.findByText('Não encontramos este membro.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Voltar/ })).toHaveAttribute(
+      'href',
+      '/painel/membros',
+    );
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
+
+  it('trata ID não numérico como não encontrado sem chamar a API', async () => {
+    renderAt('abc');
+
+    expect(await screen.findByText('Não encontramos este membro.')).toBeInTheDocument();
+    expect(vi.mocked(memberService.getById)).not.toHaveBeenCalled();
   });
 });

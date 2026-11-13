@@ -1,7 +1,8 @@
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { memberService } from '../services/memberService';
+import { memberService, type Member } from '../services/memberService';
 import { ROLE_LABEL } from '../../../shared/types/role.types';
+import { HttpError } from '../../../shared/api/httpsClient';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { formatDate } from '../../../shared/utils/format';
 import { formatCpf } from '../../../shared/utils/validators';
@@ -42,8 +43,14 @@ export function MemberDetailPage() {
   const { id } = useParams();
   const memberId = Number(id);
 
-  const { data: member, loading, error } = useAsyncData(
-    () => memberService.getById(memberId),
+  const { data: member, loading, error } = useAsyncData<Member | null>(
+    () => {
+      if (!Number.isInteger(memberId) || memberId <= 0) return Promise.resolve(null);
+      return memberService.getById(memberId).catch((err: unknown) => {
+        if (err instanceof HttpError && err.status === 404) return null;
+        throw err;
+      });
+    },
     [memberId],
   );
 
