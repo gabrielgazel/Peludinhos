@@ -84,6 +84,7 @@ describe('MemberFormPage', () => {
       '/painel/membros',
     );
     expect(screen.getByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Ver ficha' })).not.toBeInTheDocument();
 
     expect(container.querySelector('form[noValidate]')).not.toBeNull();
     expect(screen.getByLabelText(/Nome completo/i)).toHaveAttribute('id', 'member-name');
@@ -112,6 +113,10 @@ describe('MemberFormPage', () => {
     expect(await screen.findByRole('heading', { name: 'Editar membro' })).toBeInTheDocument();
     expect(screen.getByText('Atualize os dados ou o papel do membro.')).toBeInTheDocument();
     await screen.findByLabelText(/Nome completo/i);
+    expect(screen.getByRole('link', { name: 'Ver ficha' })).toHaveAttribute(
+      'href',
+      '/painel/membros/5',
+    );
     expect(screen.getByLabelText(/Nova senha/i)).toBeInTheDocument();
     expect(screen.getByText('Deixe em branco para manter a senha atual.')).toBeInTheDocument();
     expect(screen.queryByLabelText(/E-mail/i)).not.toBeInTheDocument();
