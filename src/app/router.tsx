@@ -11,6 +11,7 @@ import { AnimalsAdminPage } from '../features/staff/pages/AnimalsAdminPage';
 import { AnimalFormPage } from '../features/staff/pages/AnimalFormPage';
 import { IntentsAdminPage } from '../features/staff/pages/IntentsAdminPage';
 import { MembersAdminPage } from '../features/staff/pages/MembersAdminPage';
+import { MemberDetailPage } from '../features/staff/pages/MemberDetailPage';
 import { MemberFormPage } from '../features/staff/pages/MemberFormPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
 import { ProtectedRoute } from '../shared/routes/ProtectedRoute';
@@ -57,6 +58,7 @@ export function AppRouter() {
                 <Route path="animais/:id/editar" element={<AnimalFormPage />} />
                 <Route path="membros" element={<MembersAdminPage />} />
                 <Route path="membros/novo" element={<MemberFormPage />} />
+                <Route path="membros/:id" element={<MemberDetailPage />} />
                 <Route path="membros/:id/editar" element={<MemberFormPage />} />
               </Route>
             </Route>
