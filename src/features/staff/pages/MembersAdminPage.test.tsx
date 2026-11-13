@@ -154,6 +154,23 @@ describe('MembersAdminPage', () => {
     renderPage();
 
     expect(await screen.findByRole('alert')).toHaveTextContent('rede indisponível');
+    expect(screen.queryByRole('link', { name: 'Cadastrar membro' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Nenhum membro cadastrado ainda.')).not.toBeInTheDocument();
+    expect(screen.queryByText('0 membros')).not.toBeInTheDocument();
+  });
+
+  it('mostra estado vazio específico quando o papel filtrado não tem membros', async () => {
+    renderPage();
+    await screen.findByText('Ana Souza');
+
+    vi.mocked(memberService.list).mockResolvedValue(page([]));
+    fireEvent.change(screen.getByLabelText(/Papel/i), { target: { value: 'bolsista' } });
+
+    expect(
+      await screen.findByText('Nenhum membro encontrado com este papel.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Limpar filtros' })).toBeInTheDocument();
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
   });
 
   it('Editar aparece só para member.id !== null, com os destinos corretos', async () => {
@@ -308,6 +325,7 @@ describe('MembersAdminPage', () => {
       'href',
       '/painel/membros/1',
     );
+    expect(screen.getByRole('link', { name: 'Ana Souza' })).toHaveClass('min-h-11');
 
     const anaRow = (await screen.findByText('Ana Souza')).closest('tr') as HTMLElement;
     expect(within(anaRow).getByRole('link', { name: 'Ver' })).toHaveAttribute(

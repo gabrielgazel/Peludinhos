@@ -97,12 +97,12 @@ export function MembersAdminPage() {
           />
         </div>
         <p aria-live="polite" className="mb-4 text-sm text-staff-muted">
-          {countLabel}
+          {!loading && !error && countLabel}
         </p>
 
         {loading ? (
           <EmptyState>Carregando membros...</EmptyState>
-        ) : members.length === 0 && !hasFilters ? (
+        ) : error ? null : members.length === 0 && !hasFilters ? (
           <EmptyState>
             <p>Nenhum membro cadastrado ainda.</p>
             <Link
@@ -153,7 +153,7 @@ export function MembersAdminPage() {
                     {member.id !== null ? (
                       <Link
                         to={`/painel/membros/${member.id}`}
-                        className="font-semibold text-staff-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent"
+                        className="inline-flex min-h-11 items-center font-semibold text-staff-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent"
                       >
                         {member.name}
                       </Link>
