@@ -12,13 +12,14 @@
 
 ### API temporária (TempDB)
 - **Caminho:** `C:\Users\gabri\OneDrive\Área de Trabalho\Code\TempDB`
-- **Servidor:** iniciado via `iniciar_api.bat` (uvicorn em `http://127.0.0.1:8000`).
-- **Smoke test:** `.venv\Scripts\python.exe scripts\smoke_test.py` → **1 PASS / 1 FAIL** (abortado).
-  - `[1] Infra` GET `/health`: PASS
-  - `[2] Login admin (F4.1)` `login admin 200`: **FAIL** → `500 Internal Server Error` ("sem token admin não há como continuar")
-  - **Asserções totais concluídas antes do aborto:** 2 verificações (1 passou, 1 falhou). Não atingiu o total esperado de 61 asserções/0 falhas.
-- **`.env` (chaves presentes, valores não registrados):** `SUPABASE_URL`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` presentes no `.env` da API. (Roadmap cita `SERVICE_ROLE_KEY`; no ambiente a chave está nomeada como `SUPABASE_SERVICE_ROLE_KEY`.)
-- **Status do aceite:** **parcial/bloqueado** — suíte frontend e `tsc -b` verdes e branch criada, porém smoke test da API não ficou com 0 falhas (500 no login admin). Requer investigação de ambiente/credenciais/seed do admin no banco de dev antes de considerar D0.1 concluída.
+- **Servidor:** uvicorn em `http://127.0.0.1:8000` (`.venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000` / `iniciar_api.bat`).
+- **Smoke test (inicial, bloqueado):** `.venv\Scripts\python.exe scripts\smoke_test.py` → **1 PASS / 1 FAIL** (abortado). `GET /health` PASS; `POST /api/auth/login` (admin) **FAIL** com `500 Internal Server Error` ("sem token admin não há como continuar").
+- **Causa raiz / resolução (diagnóstico, sem expor segredos):** projeto Supabase de dev (`testedb`, ref `rifohcttblmbnlmieblg`) estava **pausado (INACTIVE)**, causando falha de resolução/conexão no login (`httpx.ConnectError`/erro não mapeado → 500 genérico; `/health` não toca Supabase). Projeto restaurado até **ACTIVE_HEALTHY**; `GET /auth/v1/health` e `sign_in_with_password` voltaram a responder OK. Não houve alteração de código, schema/migrations nem seed de admin (admin e migrations 0001–0003 já presentes).
+- **Smoke test (final, verificado):** `.venv\Scripts\python.exe scripts\smoke_test.py` → **61 PASS / 0 FAIL** (exit code 0). Blocos: Infra, Login admin (F4.1), Membros, Animais, Visitante e intenção de adoção (F1.13/F1.25/F2.9), Morte de animal (F1.14), Sessão (refresh/logout/recuperação).
+- **`.env` (chaves presentes, valores não registrados):** `SUPABASE_URL`, `DATABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` presentes. (Roadmap cita `SERVICE_ROLE_KEY`; no ambiente a chave está nomeada como `SUPABASE_SERVICE_ROLE_KEY`.)
+- **Status do aceite:** **concluído** — branch criada, 165 testes verdes, `tsc -b` sem erros, smoke test com 0 falhas, linha de base registrada e API temporária versionada/backup via git.
+
+> **Risco/pêndencia operacional:** projetos Supabase no free tier podem pausar por inatividade e reproduzir o 500 no login; restaurar o projeto antes de rodar o smoke test se necessário. `DATABASE_URL` segue vazio (opcional; migrations já aplicadas). O smoke test cria dados de teste a cada execução (comportamento esperado). Hardening opcional (não aplicado): mapear erros de transporte/retry (`httpx.TransportError`/`AuthRetryableError`) para 502/503 em vez de 500 genérico.
 
 ### Versionamento/backup da API temporária
 - `git init` realizado em `TempDB` (não havia `.git`).
