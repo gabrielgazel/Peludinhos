@@ -21,4 +21,6 @@
 - **Status do aceite:** **parcial/bloqueado** — suíte frontend e `tsc -b` verdes e branch criada, porém smoke test da API não ficou com 0 falhas (500 no login admin). Requer investigação de ambiente/credenciais/seed do admin no banco de dev antes de considerar D0.1 concluída.
 
 ### Versionamento/backup da API temporária
-- (registrar ação realizada abaixo)
+- `git init` realizado em `TempDB` (não havia `.git`).
+- Criado `.gitignore` excluindo `.env`, `.venv/`, `__pycache__/` etc. (`.env.example` mantido).
+- Commit inicial: `9156933` — `chore: snapshot inicial da API temporaria (baseline D0.1)` (35 arquivos; `.env` não versionado).
