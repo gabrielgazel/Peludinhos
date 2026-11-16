@@ -25,3 +25,20 @@
 - `git init` realizado em `TempDB` (não havia `.git`).
 - Criado `.gitignore` excluindo `.env`, `.venv/`, `__pycache__/` etc. (`.env.example` mantido).
 - Commit inicial: `9156933` — `chore: snapshot inicial da API temporaria (baseline D0.1)` (35 arquivos; `.env` não versionado).
+
+## D1.2 — Aplicar migration e validar RLS/grants
+- **Data:** 2026-11-16
+- **Migration:** `migrations/0004_operacao.sql` (núcleo operacional) aplicada via Supabase MCP `apply_migration` no projeto de dev `testedb` (ref `rifohcttblmbnlmieblg`).
+
+### Validações
+- **Tabelas criadas (7):** `animal_feeding_points`, `events`, `feeding_points`, `food_movements`, `foods`, `shift_feeding_points`, `shifts` (confirmadas em `information_schema.tables`, schema `public`).
+- **Enum criado (1):** `public.food_movement_kind` com valores `compra`, `consumo`, `fim`.
+- **RLS/grants:** RLS habilitada e políticas/grants conforme `0004_operacao.sql`. Teste anônimo via PostgREST (`GET /rest/v1/feeding_points?select=*` com chave publishable/anon): **HTTP 200** com corpo `[]` (sem exposição de dados).
+- **Idempotência:** migration reaplicada com sucesso (segunda aplicação sem erro), SQL idempotente (`create table if not exists`, blocos `exception when duplicate_object`, `create index if not exists`, `notify pgrst`).
+
+### Advisors (Supabase)
+- **Security:** sem achados críticos introduzidos pela migration (sem `security definer` sem `search_path`, sem RLS desligada, sem grant amplo indevido). Permanece aviso preexistente de configuração de Auth: `auth_leaked_password_protection` (WARN) — não relacionado à migration.
+- **Performance:** corrigidos 2 achados de FK sem índice cobrindo na migration — adicionados `idx_food_movements_member_id` (`food_movements.member_id`) e `idx_shift_feeding_points_feeding_point_id` (`shift_feeding_points.feeding_point_id`). Demais achados de performance são `unused_index` (INFO), esperado para índices recém-criados sem carga.
+
+### Notas
+- `DATABASE_URL` no `.env` do TempDB segue vazio; aplicação feita via Supabase MCP (equivalente ao objetivo de aplicar/validar no dev). Nenhuma tabela existente alterada destrutivamente.
