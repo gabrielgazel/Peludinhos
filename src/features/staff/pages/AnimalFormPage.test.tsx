@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { HttpError } from '../../../shared/api/httpsClient';
 import type { Animal } from '../../animals/types/animal.types';
 import { animalService } from '../../animals/services/animalService';
+import { feedingPointService, type FeedingPoint } from '../services/feedingPointService';
 import { AnimalFormPage } from './AnimalFormPage';
 
 vi.mock('../../animals/services/animalService', () => ({
@@ -15,6 +16,13 @@ vi.mock('../../animals/services/animalService', () => ({
     uploadPhoto: vi.fn(),
     removePhoto: vi.fn(),
     markDeceased: vi.fn(),
+  },
+}));
+vi.mock('../services/feedingPointService', () => ({
+  feedingPointService: {
+    list: vi.fn(),
+    listByAnimal: vi.fn(),
+    setForAnimal: vi.fn(),
   },
 }));
 
@@ -48,6 +56,24 @@ const thor = makeAnimal({
   photoUrl: 'https://example.com/thor.jpg',
 });
 
+function makeFeedingPoint(
+  partial: Partial<FeedingPoint> & { id: number; name: string },
+): FeedingPoint {
+  return {
+    building: null,
+    description: null,
+    latitude: null,
+    longitude: null,
+    isActive: true,
+    createdAt: null,
+    updatedAt: null,
+    ...partial,
+  };
+}
+
+const blocoA = makeFeedingPoint({ id: 1, name: 'Bloco A', building: 'ICED' });
+const biblioteca = makeFeedingPoint({ id: 2, name: 'Biblioteca' });
+
 function renderAt(initialPath: string) {
   return render(
     <MemoryRouter initialEntries={[initialPath]}>
@@ -68,6 +94,14 @@ describe('AnimalFormPage', () => {
     vi.mocked(animalService.getById).mockResolvedValue(thor);
     vi.mocked(animalService.uploadPhoto).mockResolvedValue(thor);
     vi.mocked(animalService.removePhoto).mockResolvedValue(thor);
+    vi.mocked(feedingPointService.list).mockResolvedValue({
+      items: [blocoA, biblioteca],
+      total: 2,
+      limit: 200,
+      offset: 0,
+    });
+    vi.mocked(feedingPointService.listByAnimal).mockResolvedValue([]);
+    vi.mocked(feedingPointService.setForAnimal).mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -252,5 +286,84 @@ describe('AnimalFormPage', () => {
     expect(container.querySelector('.form-grid')).toBeNull();
     expect(container.querySelector('.form-actions')).toBeNull();
     expect(container.querySelector('.photo-field')).toBeNull();
+  });
+
+  it('cria o animal e envia os pontos de alimentação selecionados', async () => {
+    renderAt('/painel/animais/novo');
+
+    fireEvent.click(await screen.findByLabelText(/Bloco A/));
+    fireEvent.click(screen.getByLabelText(/Biblioteca/));
+    fireEvent.change(screen.getByLabelText(/Nome/i), { target: { value: 'Mel' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(vi.mocked(animalService.create)).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(feedingPointService.setForAnimal).toHaveBeenCalledWith(10, [1, 2]);
+    });
+    expect(await screen.findByText('Lista de animais')).toBeInTheDocument();
+  });
+
+  it('no modo edição carrega os vínculos atuais e envia a nova seleção', async () => {
+    vi.mocked(feedingPointService.listByAnimal).mockResolvedValue([blocoA]);
+    renderAt('/painel/animais/7/editar');
+
+    await screen.findByDisplayValue('Thor');
+    await waitFor(() => {
+      expect(feedingPointService.listByAnimal).toHaveBeenCalledWith(7);
+    });
+    const bloco = await screen.findByLabelText(/Bloco A/);
+    await waitFor(() => expect(bloco).toBeChecked());
+
+    fireEvent.click(screen.getByLabelText(/Biblioteca/));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(feedingPointService.setForAnimal).toHaveBeenCalledWith(7, [1, 2]);
+    });
+    expect(await screen.findByText('Lista de animais')).toBeInTheDocument();
+  });
+
+  it('falha no vínculo após criar leva para a edição sem recriar o animal', async () => {
+    vi.mocked(feedingPointService.setForAnimal).mockRejectedValueOnce(
+      new HttpError(500, 'Falha ao vincular', null),
+    );
+    renderAt('/painel/animais/novo');
+
+    fireEvent.click(await screen.findByLabelText(/Bloco A/));
+    fireEvent.change(screen.getByLabelText(/Nome/i), { target: { value: 'Mel' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Animal cadastrado, mas os pontos de alimentação não foram salvos/,
+    );
+    expect(await screen.findByRole('heading', { name: 'Editar animal' })).toBeInTheDocument();
+    expect(vi.mocked(animalService.create)).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.getByLabelText(/Bloco A/)).toBeChecked());
+  });
+
+  it('falha no vínculo em edição mostra alerta e permite tentar de novo', async () => {
+    vi.mocked(feedingPointService.setForAnimal).mockRejectedValueOnce(
+      new HttpError(500, 'Falha ao vincular', null),
+    );
+    renderAt('/painel/animais/7/editar');
+
+    await screen.findByDisplayValue('Thor');
+    await screen.findByLabelText(/Bloco A/);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      /Animal salvo, mas os pontos de alimentação não foram atualizados/,
+    );
+    expect(screen.getByRole('heading', { name: 'Editar animal' })).toBeInTheDocument();
+
+    vi.mocked(feedingPointService.setForAnimal).mockResolvedValueOnce([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => {
+      expect(feedingPointService.setForAnimal).toHaveBeenCalledTimes(2);
+    });
+    expect(await screen.findByText('Lista de animais')).toBeInTheDocument();
   });
 });
