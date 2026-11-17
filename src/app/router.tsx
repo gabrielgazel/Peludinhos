@@ -13,6 +13,7 @@ import { IntentsAdminPage } from '../features/staff/pages/IntentsAdminPage';
 import { MembersAdminPage } from '../features/staff/pages/MembersAdminPage';
 import { MemberDetailPage } from '../features/staff/pages/MemberDetailPage';
 import { MemberFormPage } from '../features/staff/pages/MemberFormPage';
+import { FeedingPointsAdminPage } from '../features/staff/pages/FeedingPointsAdminPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
 import { ProtectedRoute } from '../shared/routes/ProtectedRoute';
 import { ADMIN_ROLES, MEMBER_ROLES } from '../shared/types/role.types';
@@ -50,6 +51,7 @@ export function AppRouter() {
             <Route path="/painel" element={<StaffLayout />}>
               <Route index element={<DashboardPage />} />
               <Route path="animais" element={<AnimalsAdminPage />} />
+              <Route path="operacao/pontos" element={<FeedingPointsAdminPage />} />
               <Route path="intencoes" element={<IntentsAdminPage />} />
 
               {/* Somente administração */}

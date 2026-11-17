@@ -5,6 +5,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   LogOut,
+  MapPin,
   Menu,
   PawPrint,
   Users,
@@ -24,6 +25,7 @@ type NavItem = {
 const GERAL_ITEMS: NavItem[] = [
   { to: '/painel', label: 'Visão geral', icon: LayoutDashboard, end: true },
   { to: '/painel/animais', label: 'Animais', icon: PawPrint, end: false },
+  { to: '/painel/operacao/pontos', label: 'Pontos', icon: MapPin, end: false },
   { to: '/painel/intencoes', label: 'Intenções', icon: ClipboardList, end: false },
 ];
 
