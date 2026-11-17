@@ -13,6 +13,10 @@ import type {
   AnimalStatus,
 } from '../../animals/types/animal.types';
 import {
+  feedingPointService,
+  type FeedingPoint,
+} from '../services/feedingPointService';
+import {
   AnimalPhotoInput,
   type PhotoChange,
 } from '../components/AnimalPhotoInput';
@@ -66,11 +70,18 @@ export function AnimalFormPage() {
     file: null,
     remove: false,
   });
-  const [error, setError] = useState<string | null>(
-    () => (location.state as { photoError?: string } | null)?.photoError ?? null,
-  );
+  const [error, setError] = useState<string | null>(() => {
+    const state = location.state as { photoError?: string; linkError?: string } | null;
+    return state?.photoError ?? state?.linkError ?? null;
+  });
   const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const [feedingPoints, setFeedingPoints] = useState<FeedingPoint[]>([]);
+  const [pointsLoading, setPointsLoading] = useState(true);
+  const [pointsError, setPointsError] = useState<string | null>(null);
+  const [pointsRetry, setPointsRetry] = useState(0);
+  const [selectedPointIds, setSelectedPointIds] = useState<number[]>([]);
 
   const loading = isEdit && loadedId !== animalId;
 
@@ -106,6 +117,67 @@ export function AnimalFormPage() {
       cancelled = true;
     };
   }, [isEdit, animalId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPointsLoading(true);
+    setPointsError(null);
+
+    feedingPointService
+      .list({ limit: 200 })
+      .then((page) => {
+        if (!cancelled) setFeedingPoints(page.items);
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setPointsError(
+            err instanceof Error
+              ? err.message
+              : 'Não foi possível carregar os pontos de alimentação.',
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setPointsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pointsRetry]);
+
+  useEffect(() => {
+    if (!isEdit) return;
+
+    const statePointIds = (location.state as { feedingPointIds?: number[] } | null)
+      ?.feedingPointIds;
+    if (statePointIds) {
+      setSelectedPointIds(statePointIds);
+      return;
+    }
+
+    let cancelled = false;
+    feedingPointService
+      .listByAnimal(animalId)
+      .then((points) => {
+        if (!cancelled) setSelectedPointIds(points.map((point) => point.id));
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(
+            (current) =>
+              current ??
+              (err instanceof Error
+                ? `Não foi possível carregar os pontos do animal: ${err.message}`
+                : 'Não foi possível carregar os pontos do animal.'),
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, animalId, location.state]);
 
   function setField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
     setValues((current) => ({ ...current, [key]: value }));
@@ -159,6 +231,27 @@ export function AnimalFormPage() {
         return;
       }
 
+      const linkError = await saveLinks(targetId);
+      if (linkError) {
+        if (isEdit) {
+          setError(
+            `Animal salvo, mas os pontos de alimentação não foram atualizados: ${linkError}`,
+          );
+          return;
+        }
+        // O animal já foi criado; leva para a edição para tentar o vínculo de novo.
+        const message = `Animal cadastrado, mas os pontos de alimentação não foram salvos: ${linkError}`;
+        setError(message);
+        navigate(`/painel/animais/${targetId}/editar`, {
+          replace: true,
+          state: {
+            linkError: message,
+            feedingPointIds: selectedPointIds,
+          },
+        });
+        return;
+      }
+
       navigate('/painel/animais');
     } catch (err) {
       setError(
@@ -168,6 +261,27 @@ export function AnimalFormPage() {
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  function togglePoint(pointId: number, checked: boolean) {
+    setSelectedPointIds((current) => {
+      if (checked) {
+        return current.includes(pointId) ? current : [...current, pointId];
+      }
+      return current.filter((id) => id !== pointId);
+    });
+  }
+
+  /** Substitui os pontos vinculados; devolve a mensagem de erro, se houver. */
+  async function saveLinks(targetId: number): Promise<string | null> {
+    try {
+      await feedingPointService.setForAnimal(targetId, selectedPointIds);
+      return null;
+    } catch (err) {
+      return err instanceof HttpError
+        ? err.message
+        : 'Não foi possível salvar os pontos de alimentação. Tente novamente.';
     }
   }
 
@@ -297,6 +411,48 @@ export function AnimalFormPage() {
                 />
               </div>
             </div>
+
+            <fieldset className="space-y-3 border-t border-staff-line pt-4">
+              <legend className="text-base font-semibold text-staff-ink">
+                Pontos de alimentação
+              </legend>
+              <p className="text-sm text-staff-muted">
+                Selecione os pontos onde este animal é alimentado.
+              </p>
+
+              {pointsError ? (
+                <div className="space-y-3">
+                  <Alert variant="danger">{pointsError}</Alert>
+                  <button
+                    type="button"
+                    onClick={() => setPointsRetry((current) => current + 1)}
+                    className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : pointsLoading ? (
+                <p role="status" className="text-sm text-staff-muted">
+                  Carregando pontos de alimentação...
+                </p>
+              ) : feedingPoints.length === 0 ? (
+                <EmptyState>Nenhum ponto de alimentação cadastrado.</EmptyState>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {feedingPoints.map((point) => (
+                    <CheckboxField
+                      key={point.id}
+                      id={`animal-feeding-point-${point.id}`}
+                      label={`${point.name}${point.building ? ` — ${point.building}` : ''}${
+                        point.isActive ? '' : ' (inativo)'
+                      }`}
+                      checked={selectedPointIds.includes(point.id)}
+                      onChange={(checked) => togglePoint(point.id, checked)}
+                    />
+                  ))}
+                </div>
+              )}
+            </fieldset>
 
             <div className="flex flex-wrap gap-3 border-t border-staff-line pt-4">
               <button

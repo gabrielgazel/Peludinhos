@@ -125,4 +125,18 @@ export const feedingPointService = {
     httpClient
       .get<ApiFeedingPointAnimal[]>(`/feeding-points/${id}/animals`)
       .then((items) => items.map(mapFeedingPointAnimal)),
+
+  /** Pontos vinculados a um animal. */
+  listByAnimal: (animalId: number) =>
+    httpClient
+      .get<ApiFeedingPoint[]>(`/animals/${animalId}/feeding-points`)
+      .then((items) => items.map(mapFeedingPoint)),
+
+  /** Substitui o conjunto de pontos vinculados ao animal. */
+  setForAnimal: (animalId: number, feedingPointIds: number[]) =>
+    httpClient
+      .put<ApiFeedingPoint[]>(`/animals/${animalId}/feeding-points`, {
+        feeding_point_ids: feedingPointIds,
+      })
+      .then((items) => items.map(mapFeedingPoint)),
 };

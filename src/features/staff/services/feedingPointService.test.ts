@@ -125,6 +125,38 @@ describe('feedingPointService', () => {
     expect(result.isActive).toBe(false);
   });
 
+  it('listByAnimal busca os pontos do animal e mapeia', async () => {
+    vi.mocked(httpClient.get).mockResolvedValue([apiPoint]);
+
+    const result = await feedingPointService.listByAnimal(3);
+
+    expect(httpClient.get).toHaveBeenCalledWith('/animals/3/feeding-points');
+    expect(result).toEqual([
+      {
+        id: 7,
+        name: 'Bloco A',
+        building: 'ICED',
+        description: 'Próximo ao portão',
+        latitude: -2.417,
+        longitude: -54.721,
+        isActive: true,
+        createdAt: '2026-11-16T10:00:00Z',
+        updatedAt: '2026-11-16T11:00:00Z',
+      },
+    ]);
+  });
+
+  it('setForAnimal envia os ids em snake_case e mapeia o retorno', async () => {
+    vi.mocked(httpClient.put).mockResolvedValue([apiPoint]);
+
+    const result = await feedingPointService.setForAnimal(3, [7, 9]);
+
+    expect(httpClient.put).toHaveBeenCalledWith('/animals/3/feeding-points', {
+      feeding_point_ids: [7, 9],
+    });
+    expect(result[0].id).toBe(7);
+  });
+
   it('listAnimals busca e mapeia animais vinculados', async () => {
     vi.mocked(httpClient.get).mockResolvedValue([
       { animal_id: 1, name: 'Mel', status: 'disponivel' },
