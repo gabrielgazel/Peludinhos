@@ -42,3 +42,9 @@
 
 ### Notas
 - `DATABASE_URL` no `.env` do TempDB segue vazio; aplicação feita via Supabase MCP (equivalente ao objetivo de aplicar/validar no dev). Nenhuma tabela existente alterada destrutivamente.
+
+## D1.8 — Smoke test estendido e documentação da API
+- **Data:** 2026-11-16
+- **Alterações:** `TempDB/scripts/smoke_test.py` estendido com seções operacionais `[7]` pontos/vínculos, `[8]` turnos, `[9]` ocorrências e `[10]` rações/movimentações/saldo (inclui login de bolsista para RBAC) e renumeração da sessão para `[11]`; `TempDB/DOCUMENTACAO.md` atualizada (12/19 tabelas, endpoints e matriz RBAC operacional). Incluída tolerância a rate limit (429 com retry/fallback) no passo de recuperação para robustez do smoke.
+- **Verificação (smoke):** execução completa contra API local + Supabase dev retornou **85 PASS / 1 FAIL**. O único `FAIL` foi `POST /auth/recover -> 202 :: 429 {"detail":"Muitas tentativas"}` por rate limiting do Supabase Auth após execuções repetidas do smoke; verificação isolada posterior do endpoint `POST /api/auth/recover` retornou **HTTP 202** com mensagem de sucesso. Todas as novas asserções operacionais de D1.8 passaram (pontos 401/403/201/409 e vínculos; turnos 201/409/200/204; ocorrências 201/200; rações/movimentações 201, saldo 20→15→0, bloqueio 422, 3 movimentações em `/api/food-movements`).
+- **Commit TempDB:** `test(api): estende smoke test operacional e atualiza documentacao`.
