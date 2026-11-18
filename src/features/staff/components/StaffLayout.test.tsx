@@ -82,6 +82,15 @@ describe('StaffLayout', () => {
     expect(screen.getByRole('link', { name: 'Intenções' })).toBeInTheDocument();
   });
 
+  it('exibe o atalho de Ocorrências para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Ocorrências' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/ocorrencias',
+    );
+  });
+
   it('agrupa a navegação em Geral e Equipe', () => {
     renderLayout(adminUser);
 
