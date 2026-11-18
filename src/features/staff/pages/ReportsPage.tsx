@@ -45,6 +45,32 @@ const PRESET_DAYS: Record<Exclude<PeriodPreset, 'custom'>, number> = {
 
 const HIGH_LIMIT = 200;
 
+/**
+ * Relatórios 4-6 (D4.6): apenas comunicação do que falta. Cada item aponta
+ * para o item real do backlog e sua estimativa — sem service, sem botão e sem
+ * endpoint. Os números vieram de B1/B2/B4 do roadmap, não foram inventados.
+ */
+const UPCOMING_REPORTS: { title: string; missing: string; estimate: string }[] = [
+  {
+    title: 'Ocorrências mensais',
+    missing:
+      'Contagem e lista de ocorrências por mês com filtro de período; depende do histórico clínico e de vacinação.',
+    estimate: 'B4 · ~1 dia · S09 (depende de B1 e B2).',
+  },
+  {
+    title: 'Medicamentos',
+    missing:
+      'Substituir as fixtures por cadastro e estoque com API real e calcular consumo e estoque por período.',
+    estimate: 'B1 · ~1,5 dia · S07 + B4 · ~1 dia · S09.',
+  },
+  {
+    title: 'Produtos',
+    missing:
+      'Substituir as fixtures por cadastro e estoque com API real e calcular consumo e estoque por período.',
+    estimate: 'B1 · ~1,5 dia · S07 + B4 · ~1 dia · S09.',
+  },
+];
+
 const EXPORT_BUTTON =
   'inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
 
@@ -555,6 +581,45 @@ export function ReportsPage() {
           </ReportSection>
         </div>
       </div>
+
+      <section
+        aria-labelledby="proximos-relatorios"
+        className="rounded-xl border border-dashed border-staff-line bg-staff-bg/40 p-5"
+      >
+        <div className="min-w-0">
+          <h2
+            id="proximos-relatorios"
+            className="font-display text-lg font-semibold text-staff-ink"
+          >
+            Próximos relatórios
+          </h2>
+          <p className="mt-1 text-sm text-staff-muted">
+            Ainda não disponíveis: dependem de dados que não existem na API hoje. O que está aqui
+            é o plano do backlog, não um relatório pronto.
+          </p>
+        </div>
+        <ul className="mt-4 grid gap-4 md:grid-cols-3">
+          {UPCOMING_REPORTS.map((report) => (
+            <li
+              key={report.title}
+              className="flex flex-col gap-2 rounded-lg border border-dashed border-staff-line bg-staff-surface p-4"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-display text-base font-semibold text-staff-ink">
+                  {report.title}
+                </h3>
+                <StatusBadge tone="gray">Planejado</StatusBadge>
+              </div>
+              <p className="text-sm text-staff-muted">
+                <span className="font-semibold text-staff-ink">Falta:</span> {report.missing}
+              </p>
+              <p className="text-sm text-staff-muted">
+                <span className="font-semibold text-staff-ink">Estimativa:</span> {report.estimate}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <p className="flex items-center gap-2 text-sm text-staff-muted">
         <PawPrint size={16} aria-hidden="true" />

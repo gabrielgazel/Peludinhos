@@ -430,4 +430,54 @@ describe('ReportsPage', () => {
     expect(content).toContain('Ração;Ração premium;7,5');
     expect(content).toContain('Total;;11,5');
   });
+
+  it('mostra os três próximos relatórios com o que falta e a estimativa do backlog', async () => {
+    renderPage();
+    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
+
+    const titles = within(region).getAllByRole('heading', { level: 3 });
+    expect(titles.map((title) => title.textContent)).toEqual([
+      'Ocorrências mensais',
+      'Medicamentos',
+      'Produtos',
+    ]);
+
+    const items = within(region).getAllByRole('listitem');
+    expect(items).toHaveLength(3);
+    for (const item of items) {
+      expect(item.className).toContain('border-dashed');
+      expect(within(item).getByText(/planejado/i)).toBeInTheDocument();
+      expect(within(item).getByText(/^Falta:/i)).toBeInTheDocument();
+      expect(within(item).getByText(/^Estimativa:/i)).toBeInTheDocument();
+    }
+
+    // Estimativas reais do roadmap: B1 (S07), B2 (S07) e B4 (S09).
+    expect(within(items[0]).getByText(/B2/i)).toBeInTheDocument();
+    expect(within(items[0]).getByText(/B4/i)).toBeInTheDocument();
+    expect(within(items[0]).getByText(/S09/i)).toBeInTheDocument();
+    expect(within(items[1]).getByText(/B1/i)).toBeInTheDocument();
+    expect(within(items[1]).getByText(/S07/i)).toBeInTheDocument();
+    expect(within(items[2]).getByText(/B1/i)).toBeInTheDocument();
+    expect(within(items[2]).getByText(/S07/i)).toBeInTheDocument();
+  });
+
+  it('deixa os próximos relatórios como texto: nenhum botão ou link que não faz nada', async () => {
+    renderPage();
+    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
+
+    expect(within(region).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(region).queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('não implementa nem busca dados dos relatórios 4-6', async () => {
+    renderPage();
+    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
+    await screen.findByText('11,5 kg');
+
+    // A seção é puramente informativa: nenhum service novo é acionado por ela.
+    expect(vi.mocked(animalService.list)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(feedingPointService.list)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(foodService.listAllMovements)).toHaveBeenCalledTimes(1);
+    expect(within(region).queryByRole('alert')).not.toBeInTheDocument();
+  });
 });
