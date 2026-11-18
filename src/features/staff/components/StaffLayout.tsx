@@ -12,6 +12,7 @@ import {
   Menu,
   Package,
   PawPrint,
+  Pill,
   Users,
   X,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const GERAL_ITEMS: NavItem[] = [
   { to: '/painel/operacao/turnos', label: 'Turnos', icon: Clock, end: false },
   { to: '/painel/operacao/ocorrencias', label: 'Ocorrências', icon: CalendarDays, end: false },
   { to: '/painel/operacao/racao', label: 'Ração', icon: Package, end: false },
+  { to: '/painel/insumos', label: 'Insumos', icon: Pill, end: false },
   { to: '/painel/intencoes', label: 'Intenções', icon: ClipboardList, end: false },
   { to: '/painel/relatorios', label: 'Relatórios', icon: BarChart3, end: false },
 ];

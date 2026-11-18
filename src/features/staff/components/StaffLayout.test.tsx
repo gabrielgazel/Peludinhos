@@ -101,6 +101,15 @@ describe('StaffLayout', () => {
     );
   });
 
+  it('exibe o atalho de Insumos para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Insumos' })).toHaveAttribute(
+      'href',
+      '/painel/insumos',
+    );
+  });
+
   it('agrupa a navegação em Geral e Equipe', () => {
     renderLayout(adminUser);
 
