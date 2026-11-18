@@ -1,12 +1,14 @@
-import { useState, type FormEvent } from 'react';
-import { Package, Plus } from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { History, Package, Plus, Utensils } from 'lucide-react';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { isAdmin } from '../../../shared/types/role.types';
 import { HttpError } from '../../../shared/api/httpsClient';
+import type { Page } from '../../../shared/api/types';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { cn } from '../../../shared/lib/utils';
 import { formatDate } from '../../../shared/utils/format';
 import { TextField } from '../../../shared/components/TextField';
+import { SelectField } from '../../../shared/components/SelectField';
 import {
   Table,
   TableBody,
@@ -21,7 +23,16 @@ import { Alert } from '../components/Alert';
 import { EmptyState } from '../components/EmptyState';
 import { StatusBadge } from '../components/StatusBadge';
 import type { BadgeTone } from '../utils/badges';
-import { foodService, type Food } from '../services/foodService';
+import {
+  foodService,
+  type Food,
+  type FoodMovement,
+  type FoodMovementKind,
+} from '../services/foodService';
+import {
+  feedingPointService,
+  type FeedingPoint,
+} from '../services/feedingPointService';
 
 interface FormValues {
   name: string;
@@ -35,6 +46,43 @@ const FIELD_ID: Record<keyof FormValues, string> = {
   name: 'food-name',
   weight: 'food-weight',
   entryDate: 'food-entry-date',
+};
+
+type PanelKind = 'consumo' | 'fim' | 'historico';
+
+interface ConsumoValues {
+  quantity: string;
+  movementDate: string;
+  feedingPointId: string;
+  notes: string;
+}
+
+type ConsumoErrors = Partial<Record<'quantity' | 'movementDate', string>>;
+
+const EMPTY_MOVEMENTS_PAGE: Page<FoodMovement> = {
+  items: [],
+  total: 0,
+  limit: 200,
+  offset: 0,
+};
+
+const EMPTY_POINTS_PAGE: Page<FeedingPoint> = {
+  items: [],
+  total: 0,
+  limit: 200,
+  offset: 0,
+};
+
+const MOVEMENT_KIND_LABEL: Record<FoodMovementKind, string> = {
+  compra: 'Compra',
+  consumo: 'Consumo',
+  fim: 'Fim',
+};
+
+const MOVEMENT_KIND_TONE: Record<FoodMovementKind, BadgeTone> = {
+  compra: 'green',
+  consumo: 'gray',
+  fim: 'amber',
 };
 
 const PRIMARY_BUTTON =
@@ -52,6 +100,10 @@ function todayIso(): string {
 
 function emptyForm(): FormValues {
   return { name: '', weight: '', entryDate: todayIso() };
+}
+
+function emptyConsumo(): ConsumoValues {
+  return { quantity: '', movementDate: todayIso(), feedingPointId: '', notes: '' };
 }
 
 function parseWeight(value: string): number | 'invalid' {
@@ -93,13 +145,57 @@ export function FoodAdminPage() {
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [activeFood, setActiveFood] = useState<Food | null>(null);
+  const [panel, setPanel] = useState<PanelKind | null>(null);
+  const [consumoValues, setConsumoValues] = useState<ConsumoValues>(emptyConsumo);
+  const [consumoErrors, setConsumoErrors] = useState<ConsumoErrors>({});
+
   const { data, loading, error, reload } = useAsyncData(
     () => foodService.list({ limit: 200 }),
     [],
   );
   const foods = data?.items ?? [];
 
+  const {
+    data: movementsData,
+    loading: historyLoading,
+    error: historyError,
+    reload: reloadHistory,
+  } = useAsyncData(
+    () =>
+      activeFood
+        ? foodService.listMovements(activeFood.id, { limit: 200 })
+        : Promise.resolve(EMPTY_MOVEMENTS_PAGE),
+    [activeFood?.id],
+  );
+  const movements = movementsData?.items ?? [];
+
+  // Os pontos só são necessários quando um painel de movimentação está aberto.
+  const { data: pointsData, loading: pointsLoading } = useAsyncData(
+    () =>
+      panel
+        ? feedingPointService.list({ limit: 200 })
+        : Promise.resolve(EMPTY_POINTS_PAGE),
+    [panel],
+  );
+
+  const pointOptions = useMemo(
+    () => (pointsData?.items ?? []).map((point) => ({
+      value: String(point.id),
+      label: point.name,
+    })),
+    [pointsData],
+  );
+
+  const pointNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const point of pointsData?.items ?? []) map.set(point.id, point.name);
+    return map;
+  }, [pointsData]);
+
   function openCreate() {
+    setPanel(null);
+    setActiveFood(null);
     setValues(emptyForm());
     setErrors({});
     setActionError(null);
@@ -167,11 +263,120 @@ export function FoodAdminPage() {
     }
   }
 
+  function openConsumo(food: Food) {
+    setFormOpen(false);
+    setActiveFood(food);
+    setPanel('consumo');
+    setConsumoValues(emptyConsumo());
+    setConsumoErrors({});
+    setActionError(null);
+  }
+
+  function openEnd(food: Food) {
+    setFormOpen(false);
+    setActiveFood(food);
+    setPanel('fim');
+    setConsumoErrors({});
+    setActionError(null);
+  }
+
+  function openHistory(food: Food) {
+    setFormOpen(false);
+    setActiveFood(food);
+    setPanel('historico');
+    setConsumoErrors({});
+    setActionError(null);
+  }
+
+  function closePanel() {
+    if (saving) return;
+    setPanel(null);
+    setActiveFood(null);
+    setConsumoErrors({});
+    setActionError(null);
+  }
+
+  function setConsumoField<K extends keyof ConsumoValues>(
+    key: K,
+    value: ConsumoValues[K],
+  ) {
+    setConsumoValues((current) => ({ ...current, [key]: value }));
+    if (key === 'quantity' || key === 'movementDate') {
+      setConsumoErrors((current) => ({ ...current, [key]: undefined }));
+    }
+  }
+
+  function finishMovement() {
+    setPanel(null);
+    setActiveFood(null);
+    setConsumoValues(emptyConsumo());
+    setConsumoErrors({});
+    reload();
+    reloadHistory();
+  }
+
+  async function handleConsumo(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!activeFood) return;
+    setActionError(null);
+
+    const found: ConsumoErrors = {};
+    const quantity = parseWeight(consumoValues.quantity);
+    if (quantity === 'invalid') {
+      found.quantity = 'Informe uma quantidade maior que zero.';
+    }
+    if (!consumoValues.movementDate) {
+      found.movementDate = 'Informe a data.';
+    }
+    setConsumoErrors(found);
+    if (Object.keys(found).length > 0 || quantity === 'invalid') return;
+
+    setSaving(true);
+    try {
+      await foodService.createMovement(activeFood.id, {
+        kind: 'consumo',
+        quantityKg: quantity,
+        movementDate: consumoValues.movementDate,
+        feedingPointId: consumoValues.feedingPointId
+          ? Number(consumoValues.feedingPointId)
+          : null,
+        notes: consumoValues.notes.trim() ? consumoValues.notes.trim() : null,
+      });
+      finishMovement();
+    } catch (err) {
+      setActionError(
+        err instanceof HttpError ? err.message : 'Não foi possível registrar o consumo.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleEnd() {
+    if (!activeFood || saving) return;
+    setActionError(null);
+    setSaving(true);
+    try {
+      await foodService.createMovement(activeFood.id, {
+        kind: 'fim',
+        quantityKg: activeFood.balanceKg,
+        movementDate: todayIso(),
+      });
+      finishMovement();
+    } catch (err) {
+      setActionError(
+        err instanceof HttpError ? err.message : 'Não foi possível encerrar a ração.',
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHead
         title="Ração"
-        subtitle="Acompanhe o estoque e registre as compras de ração."
+        subtitle="Acompanhe o estoque, registre compras, consumo e encerramentos."
         actions={
           admin ? (
             <button type="button" onClick={openCreate} className={PRIMARY_BUTTON}>
@@ -182,7 +387,7 @@ export function FoodAdminPage() {
         }
       />
 
-      {(error || actionError) && !formOpen && (
+      {(error || actionError) && !formOpen && panel === null && (
         <Alert variant="danger">{actionError ?? error}</Alert>
       )}
 
@@ -246,6 +451,189 @@ export function FoodAdminPage() {
         </Panel>
       )}
 
+      {panel === 'consumo' && activeFood && (
+        <Panel>
+          <div className="mb-4 flex items-center gap-2 text-staff-ink">
+            <Utensils size={18} aria-hidden="true" />
+            <h2 className="text-lg font-semibold">Registrar consumo</h2>
+          </div>
+
+          <p className="text-sm text-staff-muted">
+            {activeFood.name} · saldo atual de {formatKg(activeFood.balanceKg)}
+          </p>
+
+          {actionError && <Alert variant="danger">{actionError}</Alert>}
+
+          <form onSubmit={handleConsumo} noValidate className="mt-4 space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <TextField
+                id="consumo-quantity"
+                label="Quantidade (kg)"
+                required
+                inputMode="numeric"
+                placeholder="5"
+                hint="Em quilogramas. Aceita vírgula."
+                value={consumoValues.quantity}
+                error={consumoErrors.quantity}
+                onChange={(value) => setConsumoField('quantity', value)}
+              />
+              <TextField
+                id="consumo-date"
+                label="Data"
+                type="date"
+                required
+                value={consumoValues.movementDate}
+                error={consumoErrors.movementDate}
+                onChange={(value) => setConsumoField('movementDate', value)}
+              />
+              <SelectField
+                id="consumo-point"
+                label="Ponto de alimentação"
+                optional
+                placeholder="Sem ponto vinculado"
+                value={consumoValues.feedingPointId}
+                options={pointOptions}
+                hint={pointsLoading ? 'Carregando pontos...' : undefined}
+                onChange={(value) => setConsumoField('feedingPointId', value)}
+              />
+              <div className="sm:col-span-2">
+                <TextField
+                  id="consumo-notes"
+                  label="Observação"
+                  optional
+                  multiline
+                  rows={3}
+                  value={consumoValues.notes}
+                  onChange={(value) => setConsumoField('notes', value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 border-t border-staff-line pt-4">
+              <button type="submit" className={PRIMARY_BUTTON} disabled={saving}>
+                {saving ? 'Salvando...' : 'Salvar consumo'}
+              </button>
+              <button
+                type="button"
+                onClick={closePanel}
+                className={SECONDARY_BUTTON}
+                disabled={saving}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </Panel>
+      )}
+
+      {panel === 'fim' && activeFood && (
+        <Panel>
+          <div className="mb-4 flex items-center gap-2 text-staff-ink">
+            <Package size={18} aria-hidden="true" />
+            <h2 className="text-lg font-semibold">Encerrar ração</h2>
+          </div>
+
+          <p className="text-sm text-staff-muted">
+            {activeFood.name} · saldo atual de {formatKg(activeFood.balanceKg)}
+          </p>
+
+          {actionError && <Alert variant="danger">{actionError}</Alert>}
+
+          <div className="mt-4 space-y-3 rounded-xl border border-staff-line bg-staff-bg p-4">
+            <p className="font-semibold text-staff-ink">
+              Encerrar a ração {activeFood.name}? Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => void handleEnd()}
+                disabled={saving}
+                className={PRIMARY_BUTTON}
+              >
+                {saving ? 'Encerrando...' : 'Confirmar encerramento'}
+              </button>
+              <button
+                type="button"
+                onClick={closePanel}
+                disabled={saving}
+                className={SECONDARY_BUTTON}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </Panel>
+      )}
+
+      {panel === 'historico' && activeFood && (
+        <Panel>
+          <div className="mb-4 flex items-center gap-2 text-staff-ink">
+            <History size={18} aria-hidden="true" />
+            <h2 className="text-lg font-semibold">Histórico de movimentações</h2>
+          </div>
+
+          <p className="text-sm text-staff-muted">Ração: {activeFood.name}</p>
+
+          {actionError && <Alert variant="danger">{actionError}</Alert>}
+          {historyError && <Alert variant="danger">{historyError}</Alert>}
+
+          <div className="mt-4">
+            {historyLoading ? (
+              <EmptyState>Carregando histórico...</EmptyState>
+            ) : movements.length === 0 ? (
+              <EmptyState>Nenhuma movimentação registrada para esta ração.</EmptyState>
+            ) : (
+              <Table
+                containerProps={{
+                  role: 'region',
+                  tabIndex: 0,
+                  'aria-label':
+                    'Histórico de movimentações — role horizontalmente para ver todas as colunas',
+                }}
+              >
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Ponto</TableHead>
+                    <TableHead>Autor</TableHead>
+                    <TableHead>Observação</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.map((movement) => (
+                    <TableRow key={movement.id}>
+                      <TableCell>
+                        <StatusBadge tone={MOVEMENT_KIND_TONE[movement.kind]}>
+                          {MOVEMENT_KIND_LABEL[movement.kind]}
+                        </StatusBadge>
+                      </TableCell>
+                      <TableCell>{formatKg(movement.quantityKg)}</TableCell>
+                      <TableCell>{formatDate(movement.movementDate)}</TableCell>
+                      <TableCell>
+                        {movement.feedingPointId
+                          ? (pointNameById.get(movement.feedingPointId) ??
+                            `Ponto #${movement.feedingPointId}`)
+                          : '—'}
+                      </TableCell>
+                      <TableCell>{movement.memberName}</TableCell>
+                      <TableCell>{movement.notes ?? '—'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <button type="button" onClick={closePanel} className={SECONDARY_BUTTON}>
+              Fechar
+            </button>
+          </div>
+        </Panel>
+      )}
+
       <Panel>
         {loading ? (
           <EmptyState>Carregando rações...</EmptyState>
@@ -276,6 +664,7 @@ export function FoodAdminPage() {
                 <TableHead>Saldo atual</TableHead>
                 <TableHead>Entrada</TableHead>
                 <TableHead>Situação</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -298,6 +687,36 @@ export function FoodAdminPage() {
                     <TableCell>{formatDate(food.entryDate)}</TableCell>
                     <TableCell>
                       <StatusBadge tone={info.tone}>{info.label}</StatusBadge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openHistory(food)}
+                          className={cn(SECONDARY_BUTTON, 'px-3')}
+                        >
+                          <History size={16} aria-hidden="true" />
+                          Histórico
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openConsumo(food)}
+                          className={cn(SECONDARY_BUTTON, 'px-3')}
+                        >
+                          <Utensils size={16} aria-hidden="true" />
+                          Registrar consumo
+                        </button>
+                        {food.balanceKg > 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => openEnd(food)}
+                            className={cn(SECONDARY_BUTTON, 'px-3')}
+                          >
+                            <Package size={16} aria-hidden="true" />
+                            Encerrar ração
+                          </button>
+                        ) : null}
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
