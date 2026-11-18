@@ -189,35 +189,51 @@ describe('AnimalsAdminPage', () => {
     renderPage(adminUser);
 
     await screen.findByText('Mel');
-    const button = screen.getAllByRole('button', { name: /Registrar morte/ })[0];
+    const button = screen.getAllByRole('button', { name: /Registrar óbito/ })[0];
     fireEvent.click(button);
 
     expect(confirmSpy).toHaveBeenCalledWith(
-      'Registrar o falecimento de Mel? Esta ação não pode ser desfeita.',
+      'Registrar o óbito de Mel? Esta ação não pode ser desfeita.',
     );
     await waitFor(() => {
       expect(animalService.markDeceased).not.toHaveBeenCalled();
     });
   });
 
-  it('registra a morte quando confirmado e refaz a busca via reload', async () => {
+  it('registra o óbito, tira o animal da lista de disponíveis e refaz a busca', async () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    vi.mocked(animalService.markDeceased).mockImplementation(async (id: number) => {
+      const found = fixtures.find((animal) => animal.id === id) ?? mel;
+      const updated: Animal = { ...found, isDeceased: true, status: 'indisponivel' };
+      vi.mocked(animalService.list).mockResolvedValue(
+        page(fixtures.map((animal) => (animal.id === id ? updated : animal))),
+      );
+      return updated;
+    });
     renderPage(adminUser);
 
     await screen.findByText('Mel');
-    expect(vi.mocked(animalService.list)).toHaveBeenCalledTimes(1);
+    fireEvent.change(screen.getByLabelText(/Status/i), { target: { value: 'disponivel' } });
+    expect(screen.getByText('Mel')).toBeInTheDocument();
+    expect(screen.queryByText('Thor')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByRole('button', { name: /Registrar morte/ })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar óbito' }));
 
+    expect(confirmSpy).toHaveBeenCalledWith(
+      'Registrar o óbito de Mel? Esta ação não pode ser desfeita.',
+    );
     await waitFor(() => {
       expect(animalService.markDeceased).toHaveBeenCalledWith(1);
     });
-    expect(confirmSpy).toHaveBeenCalledWith(
-      'Registrar o falecimento de Mel? Esta ação não pode ser desfeita.',
-    );
     await waitFor(() => {
       expect(vi.mocked(animalService.list)).toHaveBeenCalledTimes(2);
     });
+    await waitFor(() => {
+      expect(screen.queryByText('Mel')).not.toBeInTheDocument();
+    });
+    expect(
+      screen.getByText('Nenhum animal encontrado com esses filtros.'),
+    ).toBeInTheDocument();
   });
 
   it('exibe role="alert" com a mensagem quando a listagem falha', async () => {
@@ -241,13 +257,13 @@ describe('AnimalsAdminPage', () => {
     expect(editar).toHaveClass('text-staff-ink');
   });
 
-  it('para bolsista, oculta Novo animal e Editar mas mantém Registrar morte', async () => {
+  it('para bolsista, oculta Novo animal e Editar mas mantém Registrar óbito', async () => {
     renderPage(bolsistaUser);
 
     await screen.findByText('Mel');
     expect(screen.queryByRole('link', { name: /Novo animal/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /Registrar morte/ }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /Registrar óbito/ }).length).toBeGreaterThan(0);
   });
 
   it('usa a moldura nova sem classes legadas e com scroll acessível', async () => {
@@ -275,7 +291,7 @@ describe('AnimalsAdminPage', () => {
     expect(region).toHaveAttribute('tabindex', '0');
 
     // Botão de perigo novo
-    const danger = screen.getAllByRole('button', { name: /Registrar morte/ })[0];
+    const danger = screen.getAllByRole('button', { name: /Registrar óbito/ })[0];
     expect(danger).toHaveClass('text-staff-danger');
     expect(danger).toHaveClass('hover:bg-staff-danger/10');
     expect(danger).not.toHaveClass('btn--danger');
