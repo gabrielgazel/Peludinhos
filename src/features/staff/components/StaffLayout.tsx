@@ -88,7 +88,7 @@ export function StaffLayout() {
             <Link
               to="/"
               className={cn(
-                'inline-flex items-center gap-2.5 font-display text-xl font-bold text-staff-ink',
+                'inline-flex min-h-11 items-center gap-2.5 font-display text-xl font-bold text-staff-ink',
                 FOCUS_CLASSES,
               )}
             >
