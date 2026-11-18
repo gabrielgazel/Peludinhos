@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../features/auth/context/AuthContext';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage';
 import { AdoptionIntentPage } from '../features/adoption/pages/AdoptionIntentPage';
 import { AnimalDetailPage } from '../features/animals/pages/AnimalDetailPage';
 import { AnimalListPage } from '../features/animals/pages/AnimalListPage';
@@ -47,8 +49,12 @@ export function AppRouter() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
-          {/* Acesso da equipe */}
+          {/* Acesso da equipe e recuperação de senha: rotas públicas,
+              fora do ProtectedRoute (o link do e-mail precisa funcionar
+              mesmo sem sessão ativa). */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/recuperar-senha" element={<ForgotPasswordPage />} />
+          <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
 
           {/* Painel da equipe (membros do projeto) */}
           <Route element={<ProtectedRoute allowedRoles={MEMBER_ROLES} />}>

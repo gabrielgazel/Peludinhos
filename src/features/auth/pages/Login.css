@@ -147,6 +147,7 @@
 
 .login-button {
   width: 100%;
+  min-height: 44px;
   padding: 12px;
   font-family: var(--font-body);
   font-size: 15px;
@@ -201,5 +202,63 @@
   line-height: 1.6;
   text-align: center;
   color: var(--text-muted);
+}
+
+/* Recuperação e redefinição de senha reaproveitam o cartão do login. */
+.login-form__intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.login-form__hint {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.login-form__success {
+  margin: 0;
+  padding: var(--space-3);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+
+.login-form__link {
+  display: inline-flex;
+  align-self: center;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  /* Laranja sobre branco tem contraste baixo; o sublinhado mantém o
+     affordance de link com texto em cor escura legível. */
+  color: var(--color-dark);
+  text-decoration: underline;
+  border-radius: var(--radius-sm);
+}
+
+.login-form__link:hover {
+  color: var(--color-brown);
+}
+
+.login-form__link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.login-button--link {
+  display: block;
+  text-align: center;
+  text-decoration: none;
 }
 }
