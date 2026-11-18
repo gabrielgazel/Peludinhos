@@ -1,8 +1,10 @@
-import { useMemo, type ReactNode } from 'react';
-import { BarChart3, Package, PawPrint } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
+import { BarChart3, CalendarRange, Download, Package, PawPrint } from 'lucide-react';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { cn } from '../../../shared/lib/utils';
 import { formatDate, formatKg } from '../../../shared/utils/format';
+import { SelectField } from '../../../shared/components/SelectField';
+import { TextField } from '../../../shared/components/TextField';
 import { animalService } from '../../animals/services/animalService';
 import type { AnimalStatus } from '../../animals/types/animal.types';
 import {
@@ -10,6 +12,7 @@ import {
   type FeedingPointAnimal,
 } from '../services/feedingPointService';
 import { foodService, type Food } from '../services/foodService';
+import { csvFilename, downloadCsv, toCsvFile, type CsvField } from '../utils/csv';
 import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
@@ -25,14 +28,25 @@ const STATUS_ORDER: AnimalStatus[] = [
   'indisponivel',
 ];
 
-/**
- * Janela padrão do relatório de consumo: os últimos 6 meses (incluindo o
- * atual), contados a partir do primeiro dia do mês. A D4.2 troca isso pelo
- * filtro de período compartilhado no topo da página.
- */
-const PERIOD_MONTHS = 6;
+type PeriodPreset = '7' | '30' | '90' | 'custom';
+
+const PERIOD_PRESETS = [
+  { value: '7', label: 'Últimos 7 dias' },
+  { value: '30', label: 'Últimos 30 dias' },
+  { value: '90', label: 'Últimos 90 dias' },
+  { value: 'custom', label: 'Personalizado' },
+];
+
+const PRESET_DAYS: Record<Exclude<PeriodPreset, 'custom'>, number> = {
+  '7': 7,
+  '30': 30,
+  '90': 90,
+};
 
 const HIGH_LIMIT = 200;
+
+const EXPORT_BUTTON =
+  'inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
 
 function toIsoDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -40,9 +54,12 @@ function toIsoDate(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function defaultPeriod(now: Date = new Date()): { from: string; to: string } {
-  const from = new Date(now.getFullYear(), now.getMonth() - (PERIOD_MONTHS - 1), 1);
-  return { from: toIsoDate(from), to: toIsoDate(now) };
+/** Preset: de `hoje - (n - 1)` até hoje, intervalo fechado nos dois extremos. */
+function periodFor(preset: Exclude<PeriodPreset, 'custom'>): { from: string; to: string } {
+  const to = new Date();
+  const from = new Date(to);
+  from.setDate(to.getDate() - (PRESET_DAYS[preset] - 1));
+  return { from: toIsoDate(from), to: toIsoDate(to) };
 }
 
 /** Rótulo do mês (`AAAA-MM`) por extenso, ex.: "novembro de 2026". */
@@ -56,6 +73,21 @@ function monthLabel(month: string): string {
 
 function plural(count: number, singular: string, pluralForm: string): string {
   return `${count} ${count === 1 ? singular : pluralForm}`;
+}
+
+/** Número em pt-BR para o Excel entender `7,5` como decimal, não `7.5`. */
+function csvKg(value: number): string {
+  return value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+}
+
+/**
+ * Animais sem `createdAt` entram em qualquer período: não há como provar que
+ * são antigos, e excluí-los esconderia vínculos reais da demo.
+ */
+function createdWithin(createdAt: string | null | undefined, from: string, to: string): boolean {
+  if (!createdAt || !from || !to) return true;
+  const day = createdAt.slice(0, 10);
+  return day >= from && day <= to;
 }
 
 /** Lista nominal curta: até 3 nomes e, se houver mais, "+N". */
@@ -121,10 +153,19 @@ type ReportSectionProps = {
   subtitle: string;
   total?: string;
   totalLabel?: string;
+  exportButton?: ReactNode;
   children: ReactNode;
 };
 
-function ReportSection({ id, title, subtitle, total, totalLabel, children }: ReportSectionProps) {
+function ReportSection({
+  id,
+  title,
+  subtitle,
+  total,
+  totalLabel,
+  exportButton,
+  children,
+}: ReportSectionProps) {
   return (
     <Panel className="min-w-0">
       <section aria-labelledby={id} className="min-w-0">
@@ -135,16 +176,19 @@ function ReportSection({ id, title, subtitle, total, totalLabel, children }: Rep
             </h2>
             <p className="mt-1 text-sm text-staff-muted">{subtitle}</p>
           </div>
-          {total ? (
-            <p className="shrink-0 text-right">
-              <span className="block text-2xl font-bold text-staff-ink">{total}</span>
-              {totalLabel ? (
-                <span className="text-xs font-semibold tracking-[0.04em] text-staff-muted uppercase">
-                  {totalLabel}
-                </span>
-              ) : null}
-            </p>
-          ) : null}
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            {total ? (
+              <p className="text-right">
+                <span className="block text-2xl font-bold text-staff-ink">{total}</span>
+                {totalLabel ? (
+                  <span className="text-xs font-semibold tracking-[0.04em] text-staff-muted uppercase">
+                    {totalLabel}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            {exportButton}
+          </div>
         </div>
         {children}
       </section>
@@ -153,6 +197,28 @@ function ReportSection({ id, title, subtitle, total, totalLabel, children }: Rep
 }
 
 export function ReportsPage() {
+  const [preset, setPreset] = useState<PeriodPreset>('30');
+  const [customFrom, setCustomFrom] = useState('');
+  const [customTo, setCustomTo] = useState('');
+
+  const period = useMemo(() => {
+    if (preset === 'custom') return { from: customFrom, to: customTo };
+    return periodFor(preset);
+  }, [preset, customFrom, customTo]);
+
+  const rangeError: string | null =
+    period.from && period.to && period.from > period.to
+      ? 'A data inicial não pode ser posterior à data final.'
+      : null;
+
+  // Com intervalo inválido (ou personalizado ainda sem datas) não disparamos
+  // novas buscas: evita custo e mantém os painéis no último estado válido.
+  const activeFrom = rangeError ? '' : period.from;
+  const activeTo = rangeError ? '' : period.to;
+
+  const periodLabel =
+    activeFrom && activeTo ? `${formatDate(activeFrom)} a ${formatDate(activeTo)}` : null;
+
   const statusData = useAsyncData(() => animalService.list({ limit: HIGH_LIMIT }), []);
 
   const statusReport = useMemo(() => {
@@ -173,7 +239,18 @@ export function ReportsPage() {
         tone: ANIMAL_STATUS_TONE[status],
       };
     });
-    return { total, rows };
+    const csvRows: CsvField[][] = [
+      ['Status', 'Quantidade'],
+      ...STATUS_ORDER.map((status) => [ANIMAL_STATUS_LABEL[status], counts.get(status) ?? 0]),
+    ];
+    return { total, rows, csvRows };
+  }, [statusData.data]);
+
+  /** Data de criação por animal, usada para recortar o relatório de pontos. */
+  const createdAtById = useMemo(() => {
+    const map = new Map<number, string | null>();
+    for (const animal of statusData.data?.items ?? []) map.set(animal.id, animal.createdAt);
+    return map;
   }, [statusData.data]);
 
   const pointsData = useAsyncData(async () => {
@@ -188,35 +265,49 @@ export function ReportsPage() {
   }, []);
 
   const pointsReport = useMemo(() => {
-    const links = pointsData.data ?? [];
+    const links = (pointsData.data ?? []).map((link) => ({
+      point: link.point,
+      animals: link.animals.filter((animal) =>
+        createdWithin(createdAtById.get(animal.animalId), activeFrom, activeTo),
+      ),
+    }));
     const total = links.reduce((sum, link) => sum + link.animals.length, 0);
     const max = links.reduce((top, link) => Math.max(top, link.animals.length), 0);
-    const rows: ReportRow[] = [...links]
-      .sort(
-        (a, b) =>
-          b.animals.length - a.animals.length || a.point.name.localeCompare(b.point.name, 'pt-BR'),
-      )
-      .map(({ point, animals }) => ({
-        key: String(point.id),
-        label: point.name,
-        value: plural(animals.length, 'animal', 'animais'),
-        detail: animals.length > 0 ? shortNames(animals) : 'Nenhum animal vinculado.',
-        badge: point.isActive ? undefined : <StatusBadge tone="gray">Inativo</StatusBadge>,
-        ratio: max > 0 ? animals.length / max : 0,
-        tone: 'green' as BadgeTone,
-      }));
-    return { total, rows };
-  }, [pointsData.data]);
-
-  const period = useMemo(() => defaultPeriod(), []);
+    const sorted = [...links].sort(
+      (a, b) =>
+        b.animals.length - a.animals.length || a.point.name.localeCompare(b.point.name, 'pt-BR'),
+    );
+    const rows: ReportRow[] = sorted.map(({ point, animals }) => ({
+      key: String(point.id),
+      label: point.name,
+      value: plural(animals.length, 'animal', 'animais'),
+      detail:
+        animals.length > 0
+          ? shortNames(animals)
+          : 'Sem vínculos no período.',
+      badge: point.isActive ? undefined : <StatusBadge tone="gray">Inativo</StatusBadge>,
+      ratio: max > 0 ? animals.length / max : 0,
+      tone: 'green' as BadgeTone,
+    }));
+    const csvRows: CsvField[][] = [
+      ['Ponto', 'Animais vinculados', 'Animais'],
+      ...sorted.map(({ point, animals }) => [
+        point.name,
+        animals.length,
+        animals.map((animal) => animal.name).join(', '),
+      ]),
+    ];
+    return { total, rows, csvRows };
+  }, [pointsData.data, createdAtById, activeFrom, activeTo]);
 
   const consumptionData = useAsyncData(async () => {
+    if (!activeFrom || !activeTo) return { movements: [], foods: [] as Food[] };
     const [movementsPage, foodsPage] = await Promise.all([
-      foodService.listAllMovements({ ...period, limit: HIGH_LIMIT }),
+      foodService.listAllMovements({ from: activeFrom, to: activeTo, limit: HIGH_LIMIT }),
       foodService.list({ limit: HIGH_LIMIT }),
     ]);
     return { movements: movementsPage.items, foods: foodsPage.items };
-  }, [period.from, period.to]);
+  }, [activeFrom, activeTo]);
 
   const consumptionReport = useMemo(() => {
     const movements = consumptionData.data?.movements ?? [];
@@ -264,11 +355,25 @@ export function ReportsPage() {
       tone: 'green',
     }));
 
-    return { total, foodRows, monthRows };
+    const csvRows: CsvField[][] = [
+      ['Tipo', 'Item', 'Consumo (kg)'],
+      ...foodEntries.map((entry) => ['Ração', entry.label, csvKg(entry.kg)]),
+      ...monthEntries.map((entry) => ['Mês', monthLabel(entry.month), csvKg(entry.kg)]),
+      ['Total', '', csvKg(total)],
+    ];
+
+    return { total, foodRows, monthRows, csvRows };
   }, [consumptionData.data]);
 
-  const periodLabel = `${formatDate(period.from)} a ${formatDate(period.to)}`;
+  function exportCsv(slug: string, rows: CsvField[][]) {
+    downloadCsv(csvFilename(slug), toCsvFile(rows));
+  }
+
   const consumed = consumptionReport.total > 0;
+  const pointsSubtitle =
+    activeFrom && activeTo
+      ? `Animais criados entre ${formatDate(activeFrom)} e ${formatDate(activeTo)} vinculados a cada ponto de alimentação.`
+      : 'Selecione um período para ver os vínculos.';
 
   return (
     <div className="space-y-6">
@@ -277,13 +382,74 @@ export function ReportsPage() {
         subtitle="Indicadores calculados a partir das listas do painel, sem endpoint novo."
       />
 
+      <Panel className="min-w-0">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="w-full sm:w-56">
+            <SelectField
+              id="periodo"
+              label="Período"
+              value={preset}
+              onChange={(value) => setPreset(value as PeriodPreset)}
+              options={PERIOD_PRESETS}
+            />
+          </div>
+          {preset === 'custom' ? (
+            <>
+              <div className="w-full sm:w-44">
+                <TextField
+                  id="periodo-inicial"
+                  label="Data inicial"
+                  type="date"
+                  value={customFrom}
+                  onChange={setCustomFrom}
+                />
+              </div>
+              <div className="w-full sm:w-44">
+                <TextField
+                  id="periodo-final"
+                  label="Data final"
+                  type="date"
+                  value={customTo}
+                  onChange={setCustomTo}
+                />
+              </div>
+            </>
+          ) : null}
+          <p className="flex items-center gap-2 pb-2 text-sm text-staff-muted">
+            <CalendarRange size={16} aria-hidden="true" />
+            {rangeError ? 'Ajuste as datas para continuar.' : periodLabel ? `Intervalo: ${periodLabel}` : 'Intervalo não definido.'}
+          </p>
+        </div>
+        {rangeError ? (
+          <div className="mt-3">
+            <Alert variant="danger">{rangeError}</Alert>
+          </div>
+        ) : null}
+      </Panel>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <ReportSection
           id="relatorio-status"
           title="Animais por status"
           subtitle="Distribuição de todos os animais cadastrados."
-          total={statusData.loading || statusData.error ? undefined : plural(statusReport.total, 'animal', 'animais')}
+          total={
+            statusData.loading || statusData.error
+              ? undefined
+              : plural(statusReport.total, 'animal', 'animais')
+          }
           totalLabel="no total"
+          exportButton={
+            !statusData.loading && !statusData.error && statusReport.total > 0 ? (
+              <button
+                type="button"
+                className={EXPORT_BUTTON}
+                onClick={() => exportCsv('animais-por-status', statusReport.csvRows)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Exportar CSV
+              </button>
+            ) : undefined
+          }
         >
           {statusData.loading ? (
             <EmptyState>Carregando animais...</EmptyState>
@@ -301,9 +467,25 @@ export function ReportsPage() {
         <ReportSection
           id="relatorio-pontos"
           title="Animais por ponto"
-          subtitle="Quantos animais estão vinculados a cada ponto de alimentação."
-          total={pointsData.loading || pointsData.error ? undefined : plural(pointsReport.total, 'vínculo', 'vínculos')}
+          subtitle={pointsSubtitle}
+          total={
+            pointsData.loading || pointsData.error
+              ? undefined
+              : plural(pointsReport.total, 'vínculo', 'vínculos')
+          }
           totalLabel="no total"
+          exportButton={
+            !pointsData.loading && !pointsData.error && pointsReport.total > 0 ? (
+              <button
+                type="button"
+                className={EXPORT_BUTTON}
+                onClick={() => exportCsv('animais-por-ponto', pointsReport.csvRows)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Exportar CSV
+              </button>
+            ) : undefined
+          }
         >
           {pointsData.loading ? (
             <EmptyState>Carregando pontos...</EmptyState>
@@ -313,6 +495,8 @@ export function ReportsPage() {
             </div>
           ) : pointsReport.rows.length === 0 ? (
             <EmptyState>Nenhum ponto de alimentação cadastrado.</EmptyState>
+          ) : pointsReport.total === 0 ? (
+            <EmptyState>Nenhum animal vinculado no período.</EmptyState>
           ) : (
             <ReportRowList rows={pointsReport.rows} />
           )}
@@ -322,9 +506,25 @@ export function ReportsPage() {
           <ReportSection
             id="relatorio-consumo"
             title="Consumo de ração"
-            subtitle={`Soma das movimentações de consumo nos últimos ${PERIOD_MONTHS} meses (${periodLabel}).`}
+            subtitle={
+              periodLabel
+                ? `Soma das movimentações de consumo no período (${periodLabel}).`
+                : 'Soma das movimentações de consumo no período selecionado.'
+            }
             total={consumed ? formatKg(consumptionReport.total) : undefined}
             totalLabel="no período"
+            exportButton={
+              !consumptionData.loading && !consumptionData.error && consumed ? (
+                <button
+                  type="button"
+                  className={EXPORT_BUTTON}
+                  onClick={() => exportCsv('consumo-racao', consumptionReport.csvRows)}
+                >
+                  <Download size={16} aria-hidden="true" />
+                  Exportar CSV
+                </button>
+              ) : undefined
+            }
           >
             {consumptionData.loading ? (
               <EmptyState>Carregando movimentações...</EmptyState>
