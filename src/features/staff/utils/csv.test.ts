@@ -36,7 +36,10 @@ describe('csv', () => {
   });
 
   it('dispara o download com Blob UTF-8 e libera a URL depois', () => {
-    const createObjectURL = vi.fn((_blob: Blob) => 'blob:relatorio');
+    const createObjectURL = vi.fn((blob: Blob) => {
+      void blob; // inspecionado abaixo via mock.calls[0][0]
+      return 'blob:relatorio';
+    });
     const revokeObjectURL = vi.fn();
     vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
 

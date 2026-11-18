@@ -81,3 +81,17 @@
   - Termo demo: o link do animal (`a[Thor]`) no card da intenção mede **29×20px**, abaixo de 44px. Já presente antes de D4.5 e registrado naquela tarefa; não foi alterado para manter o escopo.
 - **Limitação honesta:** este modelo não aceita input de imagem; as capturas foram geradas, e a inspeção visual foi feita por auditoria DOM automatizada (geometria, contraste convertido para sRGB, foco, texto e requisições). As chamadas duplicadas em `loadCalls` dos scripts vêm do StrictMode do Vite em dev, não das telas.
 
+## D5.3 — Build de produção e lint
+- **Data:** 2026-11-18
+- **Comandos (saídas capturadas em `AppData/Local/Temp/opencode/d53-*`):**
+  - `node .\node_modules\vite\bin\vite.js build` → **exit 0**; `✓ 2024 modules transformed`; `dist/index.html 0,69 kB (gzip 0,43)`, `dist/assets/index-DXHhk2cy.css 60,72 kB (gzip 12,40)`, `dist/assets/index-DNN26oDI.js 489,38 kB (gzip 142,89)`; `✓ built in 1.49s`.
+  - `node .\node_modules\eslint\bin\eslint.js .` → **exit 0** (0 erros, 0 avisos). Antes das correções: **6 erros** (exit 1).
+  - `node .\node_modules\typescript\bin\tsc -b` → **exit 0** (sem erros).
+  - `node .\node_modules\vitest\vitest.mjs run` → **42 arquivos / 297 testes**, 0 falhas (69,60s), exit 0.
+- **Causa dos 6 erros de lint:** código escrito nesta semana (D1–D4) nunca tinha passado por `eslint .` — D0.1/D2.7/D3.7/D4.7 rodaram só Vitest e `tsc`. O config do ESLint e as versões das dependências não mudaram (`git log -- eslint.config.js package.json`). Dois padrões concretos:
+  1. **`react-hooks/set-state-in-effect` (5 erros):** `AnimalFormPage` (2), `FeedingPointsAdminPage` (1) e `ShiftPage` (1) duplicaram `loading`/`error` em `useState` e os resetavam com `setState` síncrono dentro de `useEffect`, causando renders em cascata. A causa raiz é estado derivado sendo materializado; o projeto já tem `useAsyncData`, que deriva `loading`/`error` de uma chave (`deps` + `nonce`) e faz o `setState` apenas no callback assíncrono. As três páginas passaram a usar esse hook; a seleção pré-vinda de `location.state` em `AnimalFormPage` virou inicializador de `useState` (o efeito agora só evita buscar vínculos quando essa seleção já existe), e o turno aberto/fechado local em `ShiftPage` virou um override chaveado por `currentRetry`, preservando o comportamento sem refetch extra.
+  2. **`react-refresh/only-export-components` (1 erro):** `formatDuration` era exportado de `ShiftPage.tsx`; foi extraído para `src/features/staff/utils/formatShift.ts` com teste próprio (`formatShift.test.ts`, TDD: RED por módulo ausente → GREEN).
+  - Ajuste colateral: `csv.test.ts` usava um parâmetro `_blob` nunca lido (erro `@typescript-eslint/no-unused-vars`); o parâmetro foi mantido para a inferência do mock e referenciado com `void blob`, já que o valor é inspecionado via `mock.calls[0][0]`.
+- **Nenhuma regra de lint foi desabilitada** e nenhum `eslint-disable` foi adicionado. Nenhuma frente de refatoração foi aberta: mudanças restritas a 4 páginas/testes + 2 arquivos novos de util, comportamento preservado pelos testes existentes (14 de `AnimalFormPage`, 9 de `ShiftPage`/`formatDuration` e os de `FeedingPointsAdminPage`).
+- **Aceite:** build concluído, lint sem erro, `tsc` limpo, suíte verde.
+
