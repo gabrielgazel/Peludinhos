@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AuthUser } from '../../auth/types/auth.types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
+import type { Shift } from '../services/shiftService';
 import { DashboardPage } from './DashboardPage';
 
 vi.mock('../../auth/hooks/useAuth', () => ({ useAuth: vi.fn() }));
@@ -31,6 +32,19 @@ type Summary = {
   animals: number;
   pendingIntents: number;
   members: number | null;
+  shift?: Shift | null;
+  shiftError?: string | null;
+};
+
+const turnoAberto: Shift = {
+  id: 12,
+  memberId: 42,
+  memberName: 'Maria Silva',
+  startedAt: '2026-11-17T08:15:00',
+  endedAt: null,
+  durationMinutes: 45,
+  feedingPoints: [],
+  notes: null,
 };
 
 function renderDashboard(options: {
@@ -131,6 +145,59 @@ describe('DashboardPage', () => {
 
     expect(screen.getByRole('link', { name: /Ver animais/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Avaliar intenções/ })).toBeInTheDocument();
+  });
+
+  it('exibe o turno aberto com a hora de início e o link Encerrar', () => {
+    renderDashboard({
+      user: bolsistaUser,
+      data: { animals: 12, pendingIntents: 3, members: null, shift: turnoAberto },
+    });
+
+    expect(screen.getByRole('heading', { name: 'Meu turno' })).toBeInTheDocument();
+    expect(screen.getByText(/Turno aberto desde/)).toBeInTheDocument();
+    expect(screen.getByText('08:15')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Encerrar' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/turnos',
+    );
+  });
+
+  it('sem turno aberto exibe o link Iniciar turno', () => {
+    renderDashboard({
+      user: bolsistaUser,
+      data: { animals: 12, pendingIntents: 3, members: null, shift: null },
+    });
+
+    expect(screen.getByText('Nenhum turno aberto.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Iniciar turno' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/turnos',
+    );
+    expect(screen.queryByRole('link', { name: 'Encerrar' })).not.toBeInTheDocument();
+  });
+
+  it('erro ao carregar o turno fica no card e não derruba o resumo', () => {
+    renderDashboard({
+      user: bolsistaUser,
+      data: {
+        animals: 12,
+        pendingIntents: 3,
+        members: null,
+        shift: null,
+        shiftError: 'falha no turno',
+      },
+    });
+
+    expect(screen.getByText('Animais cadastrados')).toBeInTheDocument();
+    expect(screen.getByText('12')).toBeInTheDocument();
+    expect(
+      screen.getByText('Não foi possível carregar seu turno: falha no turno'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ver turnos' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/turnos',
+    );
+    expect(screen.queryByText(/Não foi possível carregar o resumo/)).not.toBeInTheDocument();
   });
 
   it('exibe … nos valores enquanto carrega', () => {
