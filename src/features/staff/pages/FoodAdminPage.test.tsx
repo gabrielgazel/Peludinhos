@@ -269,6 +269,37 @@ describe('FoodAdminPage', () => {
     expect(vi.mocked(foodService.list)).toHaveBeenCalledTimes(1);
   });
 
+  it('exibe o saldo da compra recém-registrada após recarregar a lista', async () => {
+    renderPage(adminUser);
+    await screen.findByText('Ração premium');
+
+    const novaRacao = makeFood({
+      id: 5,
+      name: 'Ração de cães idosos',
+      weightKg: 20.5,
+      balanceKg: 20.5,
+      entryDate: '2026-11-17',
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Registrar compra' }));
+    fireEvent.change(screen.getByLabelText(/Nome/i), {
+      target: { value: 'Ração de cães idosos' },
+    });
+    fireEvent.change(screen.getByLabelText(/Peso/i), { target: { value: '20,5' } });
+    fireEvent.change(screen.getByLabelText(/Data/i), { target: { value: '2026-11-17' } });
+
+    vi.mocked(foodService.list).mockResolvedValue(foodsPage([...fixtures, novaRacao]));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar compra' }));
+
+    await waitFor(() => {
+      expect(vi.mocked(foodService.list)).toHaveBeenCalledTimes(2);
+    });
+    const row = rowFor('Ração de cães idosos');
+    // Peso inicial e saldo vêm do servidor: 20,5 kg nas duas colunas.
+    expect(within(row).getAllByText('20,5 kg')).toHaveLength(2);
+    expect(within(row).getByText('Suficiente')).toBeInTheDocument();
+  });
+
   it('registra consumo com ponto opcional, reduz o saldo na lista e recarrega o histórico', async () => {
     renderPage(adminUser);
     await screen.findByText('Ração premium');

@@ -91,6 +91,17 @@ const PRIMARY_BUTTON =
 const SECONDARY_BUTTON =
   'inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
 
+/**
+ * Abaixo de 768px a tabela vira uma pilha de cards: o cabeçalho some, cada
+ * linha vira um bloco e cada célula ganha o rótulo da coluna via
+ * `data-label` (pseudo-elemento), sem duplicar o conteúdo no DOM.
+ */
+const RESPONSIVE_ROW =
+  'max-md:mb-3 max-md:block max-md:rounded-xl max-md:border max-md:border-staff-line max-md:bg-staff-surface max-md:p-4';
+
+const RESPONSIVE_CELL =
+  'max-md:flex max-md:items-center max-md:justify-between max-md:gap-3 max-md:border-0 max-md:p-1 max-md:whitespace-normal max-md:before:block max-md:before:text-xs max-md:before:font-bold max-md:before:tracking-[0.04em] max-md:before:text-staff-muted max-md:before:uppercase max-md:before:content-[attr(data-label)]';
+
 function todayIso(): string {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -584,6 +595,7 @@ export function FoodAdminPage() {
               <EmptyState>Nenhuma movimentação registrada para esta ração.</EmptyState>
             ) : (
               <Table
+                className="max-md:block"
                 containerProps={{
                   role: 'region',
                   tabIndex: 0,
@@ -591,7 +603,7 @@ export function FoodAdminPage() {
                     'Histórico de movimentações — role horizontalmente para ver todas as colunas',
                 }}
               >
-                <TableHeader>
+                <TableHeader className="max-md:hidden">
                   <TableRow>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Quantidade</TableHead>
@@ -601,24 +613,32 @@ export function FoodAdminPage() {
                     <TableHead>Observação</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="max-md:block">
                   {movements.map((movement) => (
-                    <TableRow key={movement.id}>
-                      <TableCell>
+                    <TableRow key={movement.id} className={RESPONSIVE_ROW}>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Tipo">
                         <StatusBadge tone={MOVEMENT_KIND_TONE[movement.kind]}>
                           {MOVEMENT_KIND_LABEL[movement.kind]}
                         </StatusBadge>
                       </TableCell>
-                      <TableCell>{formatKg(movement.quantityKg)}</TableCell>
-                      <TableCell>{formatDate(movement.movementDate)}</TableCell>
-                      <TableCell>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Quantidade">
+                        {formatKg(movement.quantityKg)}
+                      </TableCell>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Data">
+                        {formatDate(movement.movementDate)}
+                      </TableCell>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Ponto">
                         {movement.feedingPointId
                           ? (pointNameById.get(movement.feedingPointId) ??
                             `Ponto #${movement.feedingPointId}`)
                           : '—'}
                       </TableCell>
-                      <TableCell>{movement.memberName}</TableCell>
-                      <TableCell>{movement.notes ?? '—'}</TableCell>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Autor">
+                        {movement.memberName}
+                      </TableCell>
+                      <TableCell className={RESPONSIVE_CELL} data-label="Observação">
+                        {movement.notes ?? '—'}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -651,13 +671,14 @@ export function FoodAdminPage() {
           </EmptyState>
         ) : (
           <Table
+            className="max-md:block"
             containerProps={{
               role: 'region',
               tabIndex: 0,
               'aria-label': 'Tabela de rações — role horizontalmente para ver todas as colunas',
             }}
           >
-            <TableHeader>
+            <TableHeader className="max-md:hidden">
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Peso inicial</TableHead>
@@ -667,14 +688,18 @@ export function FoodAdminPage() {
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
+            <TableBody className="max-md:block">
               {foods.map((food) => {
                 const info = balanceInfo(food);
                 return (
-                  <TableRow key={food.id}>
-                    <TableCell className="font-medium">{food.name}</TableCell>
-                    <TableCell>{formatKg(food.weightKg)}</TableCell>
-                    <TableCell>
+                  <TableRow key={food.id} className={RESPONSIVE_ROW}>
+                    <TableCell className={cn(RESPONSIVE_CELL, 'font-medium')} data-label="Nome">
+                      {food.name}
+                    </TableCell>
+                    <TableCell className={RESPONSIVE_CELL} data-label="Peso inicial">
+                      {formatKg(food.weightKg)}
+                    </TableCell>
+                    <TableCell className={RESPONSIVE_CELL} data-label="Saldo atual">
                       <span
                         className={cn(
                           'font-semibold',
@@ -684,11 +709,13 @@ export function FoodAdminPage() {
                         {formatKg(food.balanceKg)}
                       </span>
                     </TableCell>
-                    <TableCell>{formatDate(food.entryDate)}</TableCell>
-                    <TableCell>
+                    <TableCell className={RESPONSIVE_CELL} data-label="Entrada">
+                      {formatDate(food.entryDate)}
+                    </TableCell>
+                    <TableCell className={RESPONSIVE_CELL} data-label="Situação">
                       <StatusBadge tone={info.tone}>{info.label}</StatusBadge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className={RESPONSIVE_CELL} data-label="Ações">
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"

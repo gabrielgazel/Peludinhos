@@ -37,11 +37,18 @@
     background-color 0.15s ease;
 }
 
-.tf__input:hover:not(:focus):not(:disabled) {
+.tf__input:hover:not(:focus):not(:focus-within):not(:disabled) {
   border-color: rgba(107, 91, 82, 0.65);
 }
 
-.tf__input:focus {
+/*
+ * `:focus-within` cobre os sub-campos nativos de `input[type="date"]`
+ * (dia/mês/ano e o botão do calendário): o foco fica no shadow DOM e o
+ * host não casa `:focus`, mas continua casando `:focus-within`. Sem isso
+ * o anel de foco desaparece justamente ao navegar pelo campo por teclado.
+ */
+.tf__input:focus,
+.tf__input:focus-within {
   outline: none;
   border-color: var(--pub-accent, var(--accent));
   box-shadow: var(--focus-ring);
@@ -59,11 +66,12 @@
   background-color: var(--danger-bg);
 }
 
-.tf__input[aria-invalid='true']:hover:not(:focus) {
+.tf__input[aria-invalid='true']:hover:not(:focus):not(:focus-within) {
   border-color: var(--pub-danger, var(--danger));
 }
 
-.tf__input[aria-invalid='true']:focus {
+.tf__input[aria-invalid='true']:focus,
+.tf__input[aria-invalid='true']:focus-within {
   border-color: var(--pub-danger, var(--danger));
   box-shadow: 0 0 0 3px rgba(192, 80, 61, 0.25);
 }
