@@ -80,6 +80,7 @@ describe('StaffLayout', () => {
       '/painel/operacao/turnos',
     );
     expect(screen.getByRole('link', { name: 'Intenções' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Relatórios' })).toBeInTheDocument();
   });
 
   it('exibe o atalho de Ocorrências para membros', () => {

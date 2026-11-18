@@ -6,7 +6,7 @@ import { HttpError } from '../../../shared/api/httpsClient';
 import type { Page } from '../../../shared/api/types';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { cn } from '../../../shared/lib/utils';
-import { formatDate } from '../../../shared/utils/format';
+import { formatDate, formatKg } from '../../../shared/utils/format';
 import { TextField } from '../../../shared/components/TextField';
 import { SelectField } from '../../../shared/components/SelectField';
 import {
@@ -131,15 +131,11 @@ function parseWeight(value: string): number | 'invalid' {
  * tamanho de cada compra — uma ração de 10 kg alerta em 2 kg, uma de 40 kg
  * em 8 kg. O limite é estrito: exatamente 20% ainda conta como suficiente.
  */
-export function needsRestock(food: Food): boolean {
+function needsRestock(food: Food): boolean {
   return food.balanceKg < food.weightKg * 0.2;
 }
 
-/** Formata kg para exibição em pt-BR (até 2 casas, sem recalcular o valor). */
-export function formatKg(value: number): string {
-  return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg`;
-}
-
+/** Situação exibida para o saldo: sem estoque, reposição ou suficiente. */
 function balanceInfo(food: Food): { tone: BadgeTone; label: string } {
   if (food.balanceKg <= 0) return { tone: 'red', label: 'Sem estoque' };
   if (needsRestock(food)) return { tone: 'amber', label: 'Reposição' };

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import type { NavLinkProps } from 'react-router-dom';
 import {
+  BarChart3,
   CalendarDays,
   ClipboardList,
   Clock,
@@ -33,6 +34,7 @@ const GERAL_ITEMS: NavItem[] = [
   { to: '/painel/operacao/ocorrencias', label: 'Ocorrências', icon: CalendarDays, end: false },
   { to: '/painel/operacao/racao', label: 'Ração', icon: Package, end: false },
   { to: '/painel/intencoes', label: 'Intenções', icon: ClipboardList, end: false },
+  { to: '/painel/relatorios', label: 'Relatórios', icon: BarChart3, end: false },
 ];
 
 const MEMBROS_ITEM: NavItem = { to: '/painel/membros', label: 'Membros', icon: Users, end: false };
