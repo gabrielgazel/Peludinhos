@@ -70,11 +70,15 @@ describe('StaffLayout', () => {
     expect(screen.getByText('Administrador')).toBeInTheDocument();
   });
 
-  it('exibe a navegação com Visão geral, Animais e Intenções', () => {
+  it('exibe a navegação com Visão geral, Animais, Turnos e Intenções', () => {
     renderLayout(adminUser);
 
     expect(screen.getByRole('link', { name: 'Visão geral' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Animais' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Turnos' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/turnos',
+    );
     expect(screen.getByRole('link', { name: 'Intenções' })).toBeInTheDocument();
   });
 
