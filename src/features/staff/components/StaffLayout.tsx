@@ -3,6 +3,7 @@ import { NavLink, Outlet, Link } from 'react-router-dom';
 import type { NavLinkProps } from 'react-router-dom';
 import {
   ClipboardList,
+  Clock,
   LayoutDashboard,
   LogOut,
   MapPin,
@@ -26,6 +27,7 @@ const GERAL_ITEMS: NavItem[] = [
   { to: '/painel', label: 'Visão geral', icon: LayoutDashboard, end: true },
   { to: '/painel/animais', label: 'Animais', icon: PawPrint, end: false },
   { to: '/painel/operacao/pontos', label: 'Pontos', icon: MapPin, end: false },
+  { to: '/painel/operacao/turnos', label: 'Turnos', icon: Clock, end: false },
   { to: '/painel/intencoes', label: 'Intenções', icon: ClipboardList, end: false },
 ];
 
