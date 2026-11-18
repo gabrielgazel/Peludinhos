@@ -15,6 +15,7 @@ import { MemberDetailPage } from '../features/staff/pages/MemberDetailPage';
 import { MemberFormPage } from '../features/staff/pages/MemberFormPage';
 import { FeedingPointsAdminPage } from '../features/staff/pages/FeedingPointsAdminPage';
 import { EventsAdminPage } from '../features/staff/pages/EventsAdminPage';
+import { FoodAdminPage } from '../features/staff/pages/FoodAdminPage';
 import { ShiftPage } from '../features/staff/pages/ShiftPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
 import { ProtectedRoute } from '../shared/routes/ProtectedRoute';
@@ -56,6 +57,7 @@ export function AppRouter() {
               <Route path="operacao/pontos" element={<FeedingPointsAdminPage />} />
               <Route path="operacao/turnos" element={<ShiftPage />} />
               <Route path="operacao/ocorrencias" element={<EventsAdminPage />} />
+              <Route path="operacao/racao" element={<FoodAdminPage />} />
               <Route path="intencoes" element={<IntentsAdminPage />} />
 
               {/* Somente administração */}

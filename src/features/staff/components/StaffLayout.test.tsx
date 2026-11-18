@@ -91,6 +91,15 @@ describe('StaffLayout', () => {
     );
   });
 
+  it('exibe o atalho de Ração para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Ração' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/racao',
+    );
+  });
+
   it('agrupa a navegação em Geral e Equipe', () => {
     renderLayout(adminUser);
 
