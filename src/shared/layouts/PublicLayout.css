@@ -270,7 +270,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 40px;
+  /* Alvo de toque alinhado aos demais botões (D5.1). */
+  min-height: 44px;
   padding: 8px 14px;
   font-family: inherit;
   font-size: 14px;
@@ -348,7 +349,9 @@
 }
 
 .pub-btn--sm {
-  min-height: 40px;
+  /* Alvo de toque: o botão base já usa 44px; a variante pequena estava
+     em 40px e ficava abaixo do mínimo da varredura (D5.1). */
+  min-height: 44px;
   padding: 8px 14px;
   font-size: 16px;
 }
