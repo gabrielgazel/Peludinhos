@@ -86,7 +86,12 @@
 
     --accent: var(--color-orange);
     --accent-hover: #C97638;
-    --accent-contrast: #FFFFFF;
+    /* Texto sobre o laranja: branco dava 2,65:1 (abaixo de AA).
+       O marrom escuro da casa dá 5,46:1 sem mudar o fundo laranja. */
+    --accent-contrast: #2B2927;
+    /* Texto laranja sobre fundo claro (ex.: "Mostrar senha"): o --accent
+       puro dava 2,65:1; este tom escuro dá 5,05:1. */
+    --accent-text: #A85A26;
 
     --success: var(--color-green);
     --danger: #C0503D;

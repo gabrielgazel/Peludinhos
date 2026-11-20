@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '../features/auth/context/AuthContext';
 import { LoginPage } from '../features/auth/pages/LoginPage';
+import { ForgotPasswordPage } from '../features/auth/pages/ForgotPasswordPage';
+import { ResetPasswordPage } from '../features/auth/pages/ResetPasswordPage';
 import { AdoptionIntentPage } from '../features/adoption/pages/AdoptionIntentPage';
 import { AnimalDetailPage } from '../features/animals/pages/AnimalDetailPage';
 import { AnimalListPage } from '../features/animals/pages/AnimalListPage';
@@ -14,6 +16,10 @@ import { MembersAdminPage } from '../features/staff/pages/MembersAdminPage';
 import { MemberDetailPage } from '../features/staff/pages/MemberDetailPage';
 import { MemberFormPage } from '../features/staff/pages/MemberFormPage';
 import { FeedingPointsAdminPage } from '../features/staff/pages/FeedingPointsAdminPage';
+import { EventsAdminPage } from '../features/staff/pages/EventsAdminPage';
+import { FoodAdminPage } from '../features/staff/pages/FoodAdminPage';
+import { SuppliesDemoPage } from '../features/staff/pages/SuppliesDemoPage';
+import { ReportsPage } from '../features/staff/pages/ReportsPage';
 import { ShiftPage } from '../features/staff/pages/ShiftPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
 import { ProtectedRoute } from '../shared/routes/ProtectedRoute';
@@ -44,8 +50,12 @@ export function AppRouter() {
             <Route path="*" element={<NotFoundPage />} />
           </Route>
 
-          {/* Acesso da equipe */}
+          {/* Acesso da equipe e recuperação de senha: rotas públicas,
+              fora do ProtectedRoute (o link do e-mail precisa funcionar
+              mesmo sem sessão ativa). */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/recuperar-senha" element={<ForgotPasswordPage />} />
+          <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
 
           {/* Painel da equipe (membros do projeto) */}
           <Route element={<ProtectedRoute allowedRoles={MEMBER_ROLES} />}>
@@ -54,7 +64,12 @@ export function AppRouter() {
               <Route path="animais" element={<AnimalsAdminPage />} />
               <Route path="operacao/pontos" element={<FeedingPointsAdminPage />} />
               <Route path="operacao/turnos" element={<ShiftPage />} />
+              <Route path="operacao/ocorrencias" element={<EventsAdminPage />} />
+              <Route path="operacao/racao" element={<FoodAdminPage />} />
+              {/* Leitura em modo demonstração: sem service, sem requisição. */}
+              <Route path="insumos" element={<SuppliesDemoPage />} />
               <Route path="intencoes" element={<IntentsAdminPage />} />
+              <Route path="relatorios" element={<ReportsPage />} />
 
               {/* Somente administração */}
               <Route element={<ProtectedRoute allowedRoles={ADMIN_ROLES} />}>

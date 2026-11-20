@@ -80,6 +80,34 @@ describe('StaffLayout', () => {
       '/painel/operacao/turnos',
     );
     expect(screen.getByRole('link', { name: 'Intenções' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Relatórios' })).toBeInTheDocument();
+  });
+
+  it('exibe o atalho de Ocorrências para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Ocorrências' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/ocorrencias',
+    );
+  });
+
+  it('exibe o atalho de Ração para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Ração' })).toHaveAttribute(
+      'href',
+      '/painel/operacao/racao',
+    );
+  });
+
+  it('exibe o atalho de Insumos para membros', () => {
+    renderLayout(bolsistaUser);
+
+    expect(screen.getByRole('link', { name: 'Insumos' })).toHaveAttribute(
+      'href',
+      '/painel/insumos',
+    );
   });
 
   it('agrupa a navegação em Geral e Equipe', () => {

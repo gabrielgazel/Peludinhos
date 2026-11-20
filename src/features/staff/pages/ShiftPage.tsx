@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Clock, History, MapPin } from 'lucide-react';
 import { HttpError } from '../../../shared/api/httpsClient';
 import { CheckboxField } from '../../../shared/components/CheckboxField';
@@ -6,6 +6,7 @@ import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { formatDateTime } from '../../../shared/utils/format';
+import { formatDuration } from '../utils/formatShift';
 import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
@@ -22,16 +23,6 @@ const PERIOD_OPTIONS = [
   { value: '7', label: 'Últimos 7 dias' },
   { value: '30', label: 'Últimos 30 dias' },
 ];
-
-/** Duração legível em horas e minutos, a partir da duração calculada pela API. */
-export function formatDuration(minutes: number): string {
-  if (!Number.isFinite(minutes) || minutes < 0) return '—';
-  if (minutes < 1) return 'menos de 1 min';
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  if (hours === 0) return `${rest} min`;
-  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
-}
 
 function toIsoDate(date: Date): string {
   const year = date.getFullYear();
@@ -56,10 +47,19 @@ function pointsLabel(points: ShiftFeedingPoint[]): string {
 export function ShiftPage() {
   const [period, setPeriod] = useState('7');
 
-  const [current, setCurrent] = useState<Shift | null>(null);
-  const [currentLoading, setCurrentLoading] = useState(true);
-  const [currentError, setCurrentError] = useState<string | null>(null);
   const [currentRetry, setCurrentRetry] = useState(0);
+  // Resultado local de abrir/encerrar: evita outra ida à API e é descartado
+  // assim que uma nova busca começa (currentRetry muda).
+  const [localCurrent, setLocalCurrent] = useState<{
+    retry: number;
+    value: Shift | null;
+  } | null>(null);
+  const {
+    data: fetchedCurrent,
+    loading: currentLoading,
+    error: currentError,
+  } = useAsyncData(() => shiftService.current(), [currentRetry]);
+  const current = localCurrent?.retry === currentRetry ? localCurrent.value : fetchedCurrent;
 
   const [selectedPointIds, setSelectedPointIds] = useState<number[]>([]);
   const [notes, setNotes] = useState('');
@@ -88,32 +88,6 @@ export function ShiftPage() {
   } = useAsyncData(() => feedingPointService.list({ limit: 200 }), []);
   const points = pointsData?.items ?? [];
 
-  useEffect(() => {
-    let cancelled = false;
-    setCurrentLoading(true);
-    setCurrentError(null);
-
-    shiftService
-      .current()
-      .then((shift) => {
-        if (!cancelled) setCurrent(shift);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setCurrentError(
-            err instanceof Error ? err.message : 'Não foi possível carregar o turno atual.',
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setCurrentLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [currentRetry]);
-
   function togglePoint(pointId: number, checked: boolean) {
     setSelectedPointIds((currentIds) => {
       if (checked) {
@@ -134,7 +108,7 @@ export function ShiftPage() {
         feedingPointIds: selectedPointIds,
         notes: notes.trim() ? notes.trim() : undefined,
       });
-      setCurrent(opened);
+      setLocalCurrent({ retry: currentRetry, value: opened });
       setSelectedPointIds([]);
       setNotes('');
       reloadHistory();
@@ -169,7 +143,7 @@ export function ShiftPage() {
     setClosing(true);
     try {
       await shiftService.close(current.id);
-      setCurrent(null);
+      setLocalCurrent({ retry: currentRetry, value: null });
       setConfirmingClose(false);
       reloadHistory();
     } catch (err) {

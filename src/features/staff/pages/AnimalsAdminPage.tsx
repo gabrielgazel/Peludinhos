@@ -62,7 +62,7 @@ export function AnimalsAdminPage() {
 
   async function handleMarkDeceased(animal: Animal) {
     const confirmed = window.confirm(
-      `Registrar o falecimento de ${animal.name}? Esta ação não pode ser desfeita.`,
+      `Registrar o óbito de ${animal.name}? Esta ação não pode ser desfeita.`,
     );
     if (!confirmed) return;
 
@@ -73,7 +73,7 @@ export function AnimalsAdminPage() {
       reload();
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : 'Não foi possível registrar o falecimento.',
+        err instanceof Error ? err.message : 'Não foi possível registrar o óbito.',
       );
     } finally {
       setBusyId(null);
@@ -187,7 +187,7 @@ export function AnimalsAdminPage() {
                           disabled={busyId === animal.id}
                           onClick={() => void handleMarkDeceased(animal)}
                         >
-                          {busyId === animal.id ? 'Registrando...' : 'Registrar morte'}
+                          {busyId === animal.id ? 'Registrando...' : 'Registrar óbito'}
                         </button>
                       )}
                     </div>

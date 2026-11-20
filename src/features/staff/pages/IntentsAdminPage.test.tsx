@@ -176,6 +176,7 @@ describe('IntentsAdminPage', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('busca com status pendente e limit 200 no início', async () => {
@@ -287,6 +288,55 @@ describe('IntentsAdminPage', () => {
       expect(within(article).queryByRole('button', { name: 'Aprovar' })).not.toBeInTheDocument();
       expect(within(article).queryByRole('button', { name: 'Rejeitar' })).not.toBeInTheDocument();
     }
+  });
+
+  it('oferece Ver termo de adoção (demo) só para intenções aprovadas', async () => {
+    renderPage();
+
+    const aprovadaArticle = await articleByMotivation(aprovada.motivation);
+    const button = within(aprovadaArticle).getByRole('button', {
+      name: 'Ver termo de adoção (demo)',
+    });
+    expect(button).toHaveAttribute('aria-expanded', 'false');
+    expect(button).toHaveAttribute('aria-controls', `termo-demo-${aprovada.id}`);
+
+    for (const other of [pendenteCompleta, rejeitada, cancelada]) {
+      const article = await articleByMotivation(other.motivation);
+      expect(
+        within(article).queryByRole('button', { name: /termo de adoção/i }),
+      ).not.toBeInTheDocument();
+    }
+  });
+
+  it('abre o termo com os dados da intenção aprovada sem escrever nem recarregar', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    renderPage();
+
+    const aprovadaArticle = await articleByMotivation(aprovada.motivation);
+    await waitFor(() => {
+      expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(
+      within(aprovadaArticle).getByRole('button', { name: 'Ver termo de adoção (demo)' }),
+    );
+
+    const panel = await screen.findByRole('region', { name: /Termo de adoção/i });
+    expect(within(panel).getByText('Bruno Visitante')).toBeInTheDocument();
+    expect(within(panel).getByText('Thor')).toBeInTheDocument();
+    expect(within(panel).getByText('DEMONSTRAÇÃO')).toBeInTheDocument();
+    expect(
+      within(panel).getByText('Dados de demonstração - esta área ainda não persiste no banco'),
+    ).toBeInTheDocument();
+    expect(within(panel).getByText(/backlog \(B3\)/i)).toBeInTheDocument();
+
+    expect(within(aprovadaArticle).getByRole('button', {
+      name: 'Ver termo de adoção (demo)',
+    })).toHaveAttribute('aria-expanded', 'true');
+    expect(vi.mocked(adoptionService.review)).not.toHaveBeenCalled();
+    expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('clicar Aprovar chama review com aprovada e refaz a busca via reload', async () => {

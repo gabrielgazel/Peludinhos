@@ -12,10 +12,7 @@ import type {
   AnimalSex,
   AnimalStatus,
 } from '../../animals/types/animal.types';
-import {
-  feedingPointService,
-  type FeedingPoint,
-} from '../services/feedingPointService';
+import { feedingPointService } from '../services/feedingPointService';
 import {
   AnimalPhotoInput,
   type PhotoChange,
@@ -24,6 +21,7 @@ import { CheckboxField } from '../../../shared/components/CheckboxField';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { HttpError } from '../../../shared/api/httpsClient';
+import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
@@ -77,11 +75,19 @@ export function AnimalFormPage() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const [feedingPoints, setFeedingPoints] = useState<FeedingPoint[]>([]);
-  const [pointsLoading, setPointsLoading] = useState(true);
-  const [pointsError, setPointsError] = useState<string | null>(null);
-  const [pointsRetry, setPointsRetry] = useState(0);
-  const [selectedPointIds, setSelectedPointIds] = useState<number[]>([]);
+  const {
+    data: pointsData,
+    loading: pointsLoading,
+    error: pointsError,
+    reload: reloadPoints,
+  } = useAsyncData(() => feedingPointService.list({ limit: 200 }), []);
+  const feedingPoints = pointsData?.items ?? [];
+  // Veio da navegação após falha no vínculo: pré-seleciona sem efeito (o
+  // componente é remontado ao trocar /novo → /:id/editar).
+  const [selectedPointIds, setSelectedPointIds] = useState<number[]>(() => {
+    const ids = (location.state as { feedingPointIds?: number[] } | null)?.feedingPointIds;
+    return ids ?? [];
+  });
 
   const loading = isEdit && loadedId !== animalId;
 
@@ -119,42 +125,14 @@ export function AnimalFormPage() {
   }, [isEdit, animalId]);
 
   useEffect(() => {
-    let cancelled = false;
-    setPointsLoading(true);
-    setPointsError(null);
-
-    feedingPointService
-      .list({ limit: 200 })
-      .then((page) => {
-        if (!cancelled) setFeedingPoints(page.items);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setPointsError(
-            err instanceof Error
-              ? err.message
-              : 'Não foi possível carregar os pontos de alimentação.',
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setPointsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [pointsRetry]);
-
-  useEffect(() => {
     if (!isEdit) return;
 
-    const statePointIds = (location.state as { feedingPointIds?: number[] } | null)
-      ?.feedingPointIds;
-    if (statePointIds) {
-      setSelectedPointIds(statePointIds);
-      return;
-    }
+    // A seleção já veio pronta do location.state; não busque os vínculos para
+    // não sobrescrever a tentativa que o usuário está refazendo.
+    const hasStatePointIds = Boolean(
+      (location.state as { feedingPointIds?: number[] } | null)?.feedingPointIds,
+    );
+    if (hasStatePointIds) return;
 
     let cancelled = false;
     feedingPointService
@@ -425,7 +403,7 @@ export function AnimalFormPage() {
                   <Alert variant="danger">{pointsError}</Alert>
                   <button
                     type="button"
-                    onClick={() => setPointsRetry((current) => current + 1)}
+                    onClick={reloadPoints}
                     className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
                   >
                     Tentar novamente

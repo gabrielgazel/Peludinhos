@@ -25,3 +25,14 @@ export function formatDateTime(value: string | null | undefined): string {
 export function firstName(name: string): string {
   return name.trim().split(/\s+/)[0] ?? name;
 }
+
+/**
+ * Formata quilogramas para exibição em pt-BR (até 2 casas).
+ *
+ * Não recalcula nem arredonda saldos vindos da API: apenas formata o número
+ * recebido. Totais calculados na tela (relatórios) também se beneficiam da
+ * mesma regra de exibição.
+ */
+export function formatKg(value: number): string {
+  return `${value.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} kg`;
+}

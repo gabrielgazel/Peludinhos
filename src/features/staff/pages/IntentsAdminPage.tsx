@@ -16,6 +16,7 @@ import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
 import { EmptyState } from '../components/EmptyState';
 import { StatusBadge } from '../components/StatusBadge';
+import { AdoptionTermDemoPanel } from '../components/AdoptionTermDemoPanel';
 
 type StatusFilter = 'todas' | IntentStatus;
 
@@ -28,6 +29,8 @@ export function IntentsAdminPage() {
   const [status, setStatus] = useState<StatusFilter>('pendente');
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
+  /** ID da intenção cuja prévia do termo está aberta (somente leitura). */
+  const [openTermId, setOpenTermId] = useState<number | null>(null);
 
   const { data, loading, error, reload } = useAsyncData(
     () =>
@@ -137,6 +140,25 @@ export function IntentsAdminPage() {
                       Rejeitar
                     </button>
                   </div>
+                )}
+
+                {intent.status === 'aprovada' && (
+                  <>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                        aria-expanded={openTermId === intent.id}
+                        aria-controls={`termo-demo-${intent.id}`}
+                        onClick={() =>
+                          setOpenTermId((current) => (current === intent.id ? null : intent.id))
+                        }
+                      >
+                        Ver termo de adoção (demo)
+                      </button>
+                    </div>
+                    {openTermId === intent.id && <AdoptionTermDemoPanel intent={intent} />}
+                  </>
                 )}
               </article>
             ))}

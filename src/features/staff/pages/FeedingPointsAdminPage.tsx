@@ -71,8 +71,6 @@ export function FeedingPointsAdminPage() {
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [animalCounts, setAnimalCounts] = useState<Record<number, number>>({});
-  const [countsLoading, setCountsLoading] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<FeedingPoint | null>(null);
@@ -92,37 +90,29 @@ export function FeedingPointsAdminPage() {
   );
   const points = useMemo(() => data?.items ?? [], [data]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (points.length === 0) {
-      setAnimalCounts({});
-      return;
-    }
-    setCountsLoading(true);
-    Promise.allSettled(
-      points.map((point) =>
-        feedingPointService
-          .listAnimals(point.id)
-          .then((animals) => ({ id: point.id, count: animals.length })),
-      ),
-    )
-      .then((results) => {
-        if (cancelled) return;
+  // Contagens derivadas da lista de pontos: trocando os ids, uma nova busca
+  // é disparada; loading/erro vêm do hook, sem setState síncrono em efeito.
+  const pointIdsKey = points.map((point) => point.id).join(',');
+  const { data: countsData, loading: countsLoading } = useAsyncData(
+    () =>
+      Promise.allSettled(
+        points.map((point) =>
+          feedingPointService
+            .listAnimals(point.id)
+            .then((animals) => ({ id: point.id, count: animals.length })),
+        ),
+      ).then((results) => {
         const next: Record<number, number> = {};
         for (const result of results) {
           if (result.status === 'fulfilled') {
             next[result.value.id] = result.value.count;
           }
         }
-        setAnimalCounts(next);
-      })
-      .finally(() => {
-        if (!cancelled) setCountsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [points]);
+        return next;
+      }),
+    [pointIdsKey],
+  );
+  const animalCounts = countsData ?? {};
 
   const filtered = useMemo(() => {
     const q = debouncedSearch.toLowerCase();

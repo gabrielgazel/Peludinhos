@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useLocation, useNavigate, type Location } from 'react-router-dom'
+import { Link, useLocation, useNavigate, type Location } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { HttpError } from '../../../shared/api/httpsClient'
 import { PawIcon } from '../../../shared/components/PawIcon'
@@ -7,6 +7,8 @@ import './Login.css'
 
 interface LocationState {
   from?: Location
+  /** Marca o retorno do fluxo de redefinição de senha. */
+  passwordReset?: boolean
 }
 
 export function LoginPage() {
@@ -63,6 +65,12 @@ export function LoginPage() {
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>
+          {(location.state as LocationState | null)?.passwordReset && (
+            <p className="login-form__success" role="status">
+              Senha redefinida com sucesso. Faça login com a nova senha.
+            </p>
+          )}
+
           <div className="field">
             <label className="field__label" htmlFor="email">
               E-mail ou usuário
@@ -103,6 +111,10 @@ export function LoginPage() {
               </button>
             </div>
           </div>
+
+          <Link className="login-form__link" to="/recuperar-senha">
+            Esqueci minha senha
+          </Link>
 
           {error && (
             <p className="login-form__error" role="alert">

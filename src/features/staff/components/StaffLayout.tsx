@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
 import type { NavLinkProps } from 'react-router-dom';
 import {
+  BarChart3,
+  CalendarDays,
   ClipboardList,
   Clock,
   LayoutDashboard,
   LogOut,
   MapPin,
   Menu,
+  Package,
   PawPrint,
+  Pill,
   Users,
   X,
 } from 'lucide-react';
@@ -28,7 +32,11 @@ const GERAL_ITEMS: NavItem[] = [
   { to: '/painel/animais', label: 'Animais', icon: PawPrint, end: false },
   { to: '/painel/operacao/pontos', label: 'Pontos', icon: MapPin, end: false },
   { to: '/painel/operacao/turnos', label: 'Turnos', icon: Clock, end: false },
+  { to: '/painel/operacao/ocorrencias', label: 'Ocorrências', icon: CalendarDays, end: false },
+  { to: '/painel/operacao/racao', label: 'Ração', icon: Package, end: false },
+  { to: '/painel/insumos', label: 'Insumos', icon: Pill, end: false },
   { to: '/painel/intencoes', label: 'Intenções', icon: ClipboardList, end: false },
+  { to: '/painel/relatorios', label: 'Relatórios', icon: BarChart3, end: false },
 ];
 
 const MEMBROS_ITEM: NavItem = { to: '/painel/membros', label: 'Membros', icon: Users, end: false };
