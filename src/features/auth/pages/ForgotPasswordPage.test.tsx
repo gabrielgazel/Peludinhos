@@ -93,4 +93,33 @@ describe('ForgotPasswordPage', () => {
       await screen.findByText(/Se o e-mail existir, enviaremos as instruções/i),
     ).toBeInTheDocument();
   });
+
+  it('usa o design system no cartão, campo e botões', () => {
+    renderPage();
+
+    const heading = screen.getByRole('heading', { name: /recuperar senha/i });
+    expect(heading.closest('[data-slot="card"]')).toBeInTheDocument();
+    expect(heading.closest('[data-slot="card-header"]')).toHaveClass('bg-marker');
+    expect(screen.getByLabelText('E-mail')).toHaveClass('tf__input');
+    expect(screen.getByRole('button', { name: /Enviar instruções/i })).toHaveAttribute(
+      'data-slot',
+      'button',
+    );
+    expect(screen.getByRole('link', { name: /Voltar para o login/i })).toHaveAttribute(
+      'data-slot',
+      'button',
+    );
+  });
+
+  it('mantém o retorno ao login como botão após o envio', async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'ana@peludinhos.org' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Enviar instruções/i }));
+
+    const link = await screen.findByRole('link', { name: /Voltar para o login/i });
+    expect(link).toHaveAttribute('data-slot', 'button');
+    expect(link).toHaveAttribute('href', '/login');
+  });
 });
