@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate, type Location } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { HttpError } from '../../../shared/api/httpsClient'
 import { PawIcon } from '../../../shared/components/PawIcon'
-import './Login.css'
+import { Button } from '../../../shared/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card'
 
 interface LocationState {
   from?: Location
@@ -50,113 +51,111 @@ export function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-card__header">
-          <div className="login-card__brand">
+    <main className="flex min-h-svh items-center justify-center bg-paper px-6 py-10">
+      <Card className="w-full max-w-md gap-0 overflow-hidden py-0">
+        <CardHeader className="flex flex-col items-center gap-4 bg-marker px-6 py-8 text-center text-ink">
+          <div className="flex items-center gap-2">
             <PawIcon size={28} />
-            <span className="login-card__brand-name">Peludinhos</span>
+            <span className="font-display text-sm font-bold uppercase tracking-[0.08em]">
+              Peludinhos
+            </span>
           </div>
-          <h1 className="login-card__title">
-            Acesso
+          <CardTitle className="text-3xl leading-tight font-normal text-ink">
+            Acesso{' '}
             <br />
             da equipe
-          </h1>
-        </div>
+          </CardTitle>
+        </CardHeader>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          {(location.state as LocationState | null)?.passwordReset && (
-            <p className="login-form__success" role="status">
-              Senha redefinida com sucesso. Faça login com a nova senha.
-            </p>
-          )}
-
-          <div className="field">
-            <label className="field__label" htmlFor="email">
-              E-mail ou usuário
-            </label>
-            <input
-              className="field__input"
-              id="email"
-              type="text"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="equipe@peludinhos.org"
-            />
-          </div>
-
-          <div className="field">
-            <label className="field__label" htmlFor="password">
-              Senha
-            </label>
-            <div className="field__wrapper">
-              <input
-                className="field__input field__input--password"
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="••••••••••"
-              />
-              <button
-                className="field__toggle"
-                type="button"
-                onClick={() => setShowPassword((visible) => !visible)}
+        <CardContent className="flex flex-col gap-5 px-6 py-8">
+          <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+            {(location.state as LocationState | null)?.passwordReset && (
+              <p
+                role="status"
+                className="rounded-xl border border-line bg-paper px-4 py-3 text-sm leading-relaxed text-ink"
               >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
-              </button>
-            </div>
-          </div>
-
-          <Link className="login-form__link" to="/recuperar-senha">
-            Esqueci minha senha
-          </Link>
-
-          {error && (
-            <p className="login-form__error" role="alert">
-              {error}
-            </p>
-          )}
-
-          <button className="login-button" type="submit" disabled={loading}>
-            {loading ? (
-              <span className="login-button__content">
-                <svg
-                  className="login-button__spinner"
-                  width="18"
-                  height="18"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <circle
-                    cx="9"
-                    cy="9"
-                    r="7"
-                    stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeDasharray="35 10"
-                  />
-                </svg>
-                Entrando...
-              </span>
-            ) : (
-              'Entrar'
+                Senha redefinida com sucesso. Faça login com a nova senha.
+              </p>
             )}
-          </button>
 
-          <p className="login-form__note">
-            Acesso restrito à equipe do abrigo.
-            <br />
-            Fale com o administrador se precisar de uma conta.
-          </p>
-        </form>
-      </div>
-    </div>
+            <div className="tf">
+              <label className="tf__label" htmlFor="email">
+                E-mail ou usuário
+              </label>
+              <input
+                className="tf__input"
+                id="email"
+                type="text"
+                autoComplete="username"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="equipe@peludinhos.org"
+              />
+            </div>
+
+            <div className="tf">
+              <label className="tf__label" htmlFor="password">
+                Senha
+              </label>
+              <div className="relative">
+                <input
+                  className="tf__input pr-24"
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••••"
+                />
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xs text-ink hover:text-ink"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                >
+                  {showPassword ? 'Ocultar' : 'Mostrar'}
+                </Button>
+              </div>
+            </div>
+
+            <Button asChild variant="link" className="self-center text-ink">
+              <Link to="/recuperar-senha">Esqueci minha senha</Link>
+            </Button>
+
+            {error && (
+              <p
+                role="alert"
+                className="rounded-xl bg-[#F6E1DA] px-4 py-3 text-sm font-bold text-[#7A2E20]"
+              >
+                {error}
+              </p>
+            )}
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden="true"
+                    className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                  />
+                  Entrando...
+                </span>
+              ) : (
+                'Entrar'
+              )}
+            </Button>
+
+            <p className="text-center text-xs leading-relaxed text-muted">
+              Acesso restrito à equipe do abrigo.
+              <br />
+              Fale com o administrador se precisar de uma conta.
+            </p>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
   )
 }

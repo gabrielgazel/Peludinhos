@@ -75,6 +75,10 @@ describe('ResetPasswordPage', () => {
       'href',
       '/recuperar-senha',
     );
+    expect(screen.getByRole('link', { name: /Solicitar novo link/i })).toHaveAttribute(
+      'data-slot',
+      'button',
+    );
   });
 
   it('rejeita senhas que não coincidem sem chamar a API', () => {
@@ -124,5 +128,45 @@ describe('ResetPasswordPage', () => {
 
     finish({ message: 'ok' });
     expect(await screen.findByText('Login de destino')).toBeInTheDocument();
+  });
+
+  it('alterna a visibilidade das duas senhas', () => {
+    renderAt(`/redefinir-senha#access_token=${TOKEN}`);
+    const password = screen.getByLabelText('Nova senha');
+    const confirmation = screen.getByLabelText('Confirmar nova senha');
+
+    expect(password).toHaveAttribute('type', 'password');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar senha' }));
+    expect(password).toHaveAttribute('type', 'text');
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar senha' }));
+    expect(password).toHaveAttribute('type', 'password');
+
+    expect(confirmation).toHaveAttribute('type', 'password');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar confirmação' }));
+    expect(confirmation).toHaveAttribute('type', 'text');
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar confirmação' }));
+    expect(confirmation).toHaveAttribute('type', 'password');
+  });
+
+  it('usa o design system no cartão, campos e botões', () => {
+    renderAt(`/redefinir-senha#access_token=${TOKEN}`);
+
+    const heading = screen.getByRole('heading', { name: 'Nova senha' });
+    expect(heading.closest('[data-slot="card"]')).toBeInTheDocument();
+    expect(heading.closest('[data-slot="card-header"]')).toHaveClass('bg-marker');
+    expect(screen.getByLabelText('Nova senha')).toHaveClass('tf__input');
+    expect(screen.getByLabelText('Confirmar nova senha')).toHaveClass('tf__input');
+    expect(screen.getByRole('button', { name: 'Mostrar senha' })).toHaveAttribute(
+      'data-variant',
+      'link',
+    );
+    expect(screen.getByRole('button', { name: /Redefinir senha/i })).toHaveAttribute(
+      'data-slot',
+      'button',
+    );
+    expect(screen.getByRole('link', { name: /Voltar para o login/i })).toHaveAttribute(
+      'data-slot',
+      'button',
+    );
   });
 });
