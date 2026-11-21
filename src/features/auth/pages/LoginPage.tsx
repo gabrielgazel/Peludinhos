@@ -113,7 +113,7 @@ export function LoginPage() {
                   type="button"
                   variant="link"
                   size="sm"
-                  className="absolute right-2 top-1/2 min-h-9 -translate-y-1/2 px-2 text-xs text-ink hover:text-ink"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xs text-ink hover:text-ink"
                   onClick={() => setShowPassword((visible) => !visible)}
                 >
                   {showPassword ? 'Ocultar' : 'Mostrar'}
