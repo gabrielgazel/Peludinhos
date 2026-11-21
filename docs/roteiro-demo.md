@@ -97,7 +97,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 
 ### 8. Relatórios 1–3, membros, recuperação, manual e backlog
 
-- Clique: menu **Relatórios** → conferir **Animais por status**, **Animais por ponto** e **Consumo de ração**, com **Exportar CSV**; se sobrar tempo: menu **Membros**, `/recuperar-senha` (somente o formulário), o PDF do manual e a seção “Próximos relatórios”.
+- Clique: menu **Relatórios** → conferir **Animais por status**, **Animais por ponto** e **Consumo de ração**, com **Exportar CSV**; se sobrar tempo: menu **Membros**, `/recuperar-senha` (somente o formulário), o PDF único de entrega (`docs/pacote-entrega.pdf`) e a seção “Próximos relatórios”.
 - Aparece: três cartões com números reais da API; seção “Próximos relatórios” com selo **Planejado**; rodapé “Os números são recalculados a cada visita; nenhuma informação é gravada.”
 - Tempo alvo: 2:00
 - Frase de demo: “Três relatórios são reais; o restante é plano do backlog, e o PDF é um artefato de entrega — não uma tela do sistema.”
@@ -118,7 +118,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 
 ## Fora do build de produção
 
-- **`docs/manual-do-usuario.pdf`** — artefato de entrega, não rota da aplicação. Mostrar como PDF separado, nunca como tela.
+- **`docs/pacote-entrega.pdf`** — artefato único de entrega (manual + roteiro), não rota da aplicação. Mostrar como PDF, nunca como tela.
 - **Backlog priorizado** — artefato da D5.6, ainda não existe no build.
 - **Relatórios 4–6** — apenas “Próximos relatórios” com selo **Planejado**.
 - **Insumos e prévia do termo** — telas de demonstração sinalizadas na própria interface pela faixa “Dados de demonstração - esta área ainda não persiste no banco”.
