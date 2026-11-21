@@ -2,9 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HttpError } from '../../../shared/api/httpsClient';
 import { PawIcon } from '../../../shared/components/PawIcon';
+import { Button } from '../../../shared/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../../../shared/ui/card';
 import { authService } from '../services/authService';
 import { extractRecoveryToken } from '../utils/recoveryToken';
-import './Login.css';
 
 /** Mesma regra do cadastro de visitante e do formulário de membro. */
 const MIN_PASSWORD_LENGTH = 8;
@@ -64,125 +65,129 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="login-page">
-      <div className="login-card">
-        <div className="login-card__header">
-          <div className="login-card__brand">
+    <main className="flex min-h-svh items-center justify-center bg-paper px-6 py-10">
+      <Card className="w-full max-w-md gap-0 overflow-hidden py-0">
+        <CardHeader className="flex flex-col items-center gap-4 bg-marker px-6 py-8 text-center text-ink">
+          <div className="flex items-center gap-2">
             <PawIcon size={28} />
-            <span className="login-card__brand-name">Peludinhos</span>
+            <span className="font-display text-sm font-bold uppercase tracking-[0.08em]">
+              Peludinhos
+            </span>
           </div>
-          <h1 className="login-card__title">Nova senha</h1>
-        </div>
+          <CardTitle className="text-3xl leading-tight font-normal text-ink">
+            Nova senha
+          </CardTitle>
+        </CardHeader>
 
-        {!token ? (
-          <div className="login-form">
-            <p className="login-form__error" role="alert">
-              Link de recuperação inválido ou expirado. Solicite um novo e-mail.
-            </p>
-            <Link className="login-button login-button--link" to="/recuperar-senha">
-              Solicitar novo link
-            </Link>
-          </div>
-        ) : (
-          <form className="login-form" onSubmit={handleSubmit} noValidate>
-            <p className="login-form__intro">Escolha uma nova senha para acessar o painel.</p>
-
-            <div className="field">
-              <label className="field__label" htmlFor="new-password">
-                Nova senha
-              </label>
-              <div className="field__wrapper">
-                <input
-                  className="field__input field__input--password"
-                  id="new-password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  minLength={MIN_PASSWORD_LENGTH}
-                  maxLength={MAX_PASSWORD_LENGTH}
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                />
-                <button
-                  className="field__toggle"
-                  type="button"
-                  onClick={() => setShowPassword((visible) => !visible)}
-                >
-                  {showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                </button>
-              </div>
-            </div>
-
-            <div className="field">
-              <label className="field__label" htmlFor="confirm-password">
-                Confirmar nova senha
-              </label>
-              <div className="field__wrapper">
-                <input
-                  className="field__input field__input--password"
-                  id="confirm-password"
-                  type={showConfirmation ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  minLength={MIN_PASSWORD_LENGTH}
-                  maxLength={MAX_PASSWORD_LENGTH}
-                  required
-                  placeholder="••••••••"
-                  value={confirmation}
-                  onChange={(event) => setConfirmation(event.target.value)}
-                />
-                <button
-                  className="field__toggle"
-                  type="button"
-                  onClick={() => setShowConfirmation((visible) => !visible)}
-                >
-                  {showConfirmation ? 'Ocultar confirmação' : 'Mostrar confirmação'}
-                </button>
-              </div>
-            </div>
-
-            <p className="login-form__hint">Mínimo de {MIN_PASSWORD_LENGTH} caracteres.</p>
-
-            {error ? (
-              <p className="login-form__error" role="alert">
-                {error}
+        <CardContent className="flex flex-col gap-5 px-6 py-8">
+          {!token ? (
+            <div className="flex flex-col gap-5">
+              <p
+                role="alert"
+                className="rounded-xl bg-[#F6E1DA] px-4 py-3 text-sm font-bold text-[#7A2E20]"
+              >
+                Link de recuperação inválido ou expirado. Solicite um novo e-mail.
               </p>
-            ) : null}
+              <Button asChild className="w-full">
+                <Link to="/recuperar-senha">Solicitar novo link</Link>
+              </Button>
+            </div>
+          ) : (
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit} noValidate>
+              <p className="text-sm leading-relaxed text-muted">
+                Escolha uma nova senha para acessar o painel.
+              </p>
 
-            <button className="login-button" type="submit" disabled={loading}>
-              {loading ? (
-                <span className="login-button__content">
-                  <svg
-                    className="login-button__spinner"
-                    width="18"
-                    height="18"
-                    viewBox="0 0 18 18"
-                    fill="none"
-                    aria-hidden="true"
+              <div className="tf">
+                <label className="tf__label" htmlFor="new-password">
+                  Nova senha
+                </label>
+                <div className="relative">
+                  <input
+                    className="tf__input pr-28"
+                    id="new-password"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    minLength={MIN_PASSWORD_LENGTH}
+                    maxLength={MAX_PASSWORD_LENGTH}
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xs text-ink hover:text-ink"
+                    onClick={() => setShowPassword((visible) => !visible)}
                   >
-                    <circle
-                      cx="9"
-                      cy="9"
-                      r="7"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeDasharray="35 10"
-                    />
-                  </svg>
-                  Salvando...
-                </span>
-              ) : (
-                'Redefinir senha'
-              )}
-            </button>
+                    {showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                  </Button>
+                </div>
+              </div>
 
-            <Link className="login-form__link" to="/login">
-              Voltar para o login
-            </Link>
-          </form>
-        )}
-      </div>
-    </div>
+              <div className="tf">
+                <label className="tf__label" htmlFor="confirm-password">
+                  Confirmar nova senha
+                </label>
+                <div className="relative">
+                  <input
+                    className="tf__input pr-32"
+                    id="confirm-password"
+                    type={showConfirmation ? 'text' : 'password'}
+                    autoComplete="new-password"
+                    minLength={MIN_PASSWORD_LENGTH}
+                    maxLength={MAX_PASSWORD_LENGTH}
+                    required
+                    placeholder="••••••••"
+                    value={confirmation}
+                    onChange={(event) => setConfirmation(event.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 text-xs text-ink hover:text-ink"
+                    onClick={() => setShowConfirmation((visible) => !visible)}
+                  >
+                    {showConfirmation ? 'Ocultar confirmação' : 'Mostrar confirmação'}
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-sm text-muted">Mínimo de {MIN_PASSWORD_LENGTH} caracteres.</p>
+
+              {error ? (
+                <p
+                  role="alert"
+                  className="rounded-xl bg-[#F6E1DA] px-4 py-3 text-sm font-bold text-[#7A2E20]"
+                >
+                  {error}
+                </p>
+              ) : null}
+
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                    />
+                    Salvando...
+                  </span>
+                ) : (
+                  'Redefinir senha'
+                )}
+              </Button>
+
+              <Button asChild variant="link" className="self-center text-ink">
+                <Link to="/login">Voltar para o login</Link>
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
+    </main>
   );
 }
