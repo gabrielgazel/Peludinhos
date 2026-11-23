@@ -364,12 +364,14 @@ aparecer, peça acesso ao administrador.
 
 ---
 
-## 6. O que é demonstração (termo de adoção e relatórios planejados) e por quê
+## 6. Demonstração e pendências de API
 
-Nesta seção estão os itens que continuam como demonstração: a prévia do
-termo de adoção e os relatórios planejados. Eles mostram como será o fluxo
-previsto, mas não substituem um registro definitivo — o termo definitivo está
-no backlog B3 e os relatórios 4–6 ainda não estão prontos.
+Nesta seção estão os itens que continuam como demonstração — a prévia do termo
+de adoção e os relatórios planejados — e a pendência da API de insumos. A prévia
+e os relatórios mostram como será o fluxo previsto, mas não substituem um
+registro definitivo: o termo definitivo está no backlog B3 e os relatórios 4–6
+ainda não estão prontos. A tela de insumos já usa cadastro com API, mas a
+persistência efetiva depende da API de insumos (§6.1), ainda pendente.
 
 ### 6.1 Insumos (medicamentos e produtos)
 
@@ -382,7 +384,6 @@ no backlog B3 e os relatórios 4–6 ainda não estão prontos.
    **Ponto** (obrigatórios); **Validade** e **Observação** são opcionais.
    Conclua com **Salvar medicamento** ou **Salvar produto**, ou desista com
    **Cancelar**.
-4. Se a listagem falhar, clique em **Tentar novamente**.
 
 > **Resultado esperado:** as duas listas aparecem e, para a administração, a
 > tela oferece criação e edição. Membros da equipe podem consultar; criar e

@@ -169,9 +169,37 @@ class MedicationOut(BaseModel):
     updated_at: datetime | None = None
 
 
-# Espelhar exatamente para products, trocando Medication por Product
-# e medication_id por product_id:
-# ProductCreate / ProductUpdate / ProductOut
+class ProductCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    type: str = Field(min_length=1, max_length=60)
+    quantity: float = Field(ge=0)
+    unit: str = Field(min_length=1, max_length=20)
+    validity: date | None = None
+    point: str = Field(min_length=1, max_length=120)
+    notes: str | None = None
+
+
+class ProductUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    type: str | None = Field(default=None, min_length=1, max_length=60)
+    quantity: float | None = Field(default=None, ge=0)
+    unit: str | None = Field(default=None, min_length=1, max_length=20)
+    validity: date | None = None
+    point: str | None = Field(default=None, min_length=1, max_length=120)
+    notes: str | None = None
+
+
+class ProductOut(BaseModel):
+    product_id: int
+    name: str
+    type: str
+    quantity: float
+    unit: str
+    validity: date | None = None
+    point: str
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 ```
 
 As listagens devem responder `Page[MedicationOut]` e `Page[ProductOut]` (`items`, `total`, `limit`, `offset`). No front, `map*` converte `snake_case` → `camelCase`: `medication_id`/`product_id` → `id`, `created_at` → `createdAt`, `updated_at` → `updatedAt`.

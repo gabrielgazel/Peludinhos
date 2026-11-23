@@ -21,7 +21,7 @@ exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
 `docs/roteiro-demo.md`; o passo a passo para quem usa o sistema está em
 `docs/manual-do-usuario.md`.
 
-## O que é simulado
+## O que é demonstração ou está pendente
 
 | Item | Como apresentar |
 | --- | --- |
@@ -31,7 +31,8 @@ exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
 | Recuperação de senha | A tela é real, mas o envio de e-mail depende de servidor de e-mail e **não é simulado**. O teste com e-mail real (D4.3) segue pendente. |
 | Contas de demonstração | `*.demo@peludinhos.example`, senha pública `Demo@12345`, válidas somente neste ambiente. |
 
-Nada marcado como demo deve ser usado como registro definitivo.
+Nada marcado como demonstração (termo e relatórios 4–6) deve ser usado como
+registro definitivo.
 
 ## Como rodar
 
