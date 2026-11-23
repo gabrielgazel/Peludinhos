@@ -172,6 +172,12 @@ export function AnimalsAdminPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        to={`/painel/animais/${animal.id}`}
+                        className="inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                      >
+                        Ver ficha
+                      </Link>
                       {admin && (
                         <Link
                           to={`/painel/animais/${animal.id}/editar`}

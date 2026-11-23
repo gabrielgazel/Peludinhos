@@ -304,4 +304,12 @@ describe('AnimalsAdminPage', () => {
       within(screen.getByRole('table')).getByText('Falecido'),
     ).toHaveClass('text-staff-muted');
   });
+
+  it('oferece link para a ficha de saúde do animal', async () => {
+    renderPage(bolsistaUser);
+    expect(await screen.findByText('Mel')).toBeInTheDocument();
+    const links = screen.getAllByRole('link', { name: 'Ver ficha' });
+    expect(links).toHaveLength(3);
+    expect(links[0]).toHaveAttribute('href', '/painel/animais/1');
+  });
 });

@@ -10,6 +10,7 @@ import { PublicHomePage } from '../features/public/pages/PublicHomePage';
 import { StaffLayout } from '../features/staff/components/StaffLayout';
 import { DashboardPage } from '../features/staff/pages/DashboardPage';
 import { AnimalsAdminPage } from '../features/staff/pages/AnimalsAdminPage';
+import { AnimalHealthPage } from '../features/staff/pages/AnimalHealthPage';
 import { AnimalFormPage } from '../features/staff/pages/AnimalFormPage';
 import { IntentsAdminPage } from '../features/staff/pages/IntentsAdminPage';
 import { MembersAdminPage } from '../features/staff/pages/MembersAdminPage';
@@ -62,6 +63,7 @@ export function AppRouter() {
             <Route path="/painel" element={<StaffLayout />}>
               <Route index element={<DashboardPage />} />
               <Route path="animais" element={<AnimalsAdminPage />} />
+              <Route path="animais/:id" element={<AnimalHealthPage />} />
               <Route path="operacao/pontos" element={<FeedingPointsAdminPage />} />
               <Route path="operacao/turnos" element={<ShiftPage />} />
               <Route path="operacao/ocorrencias" element={<EventsAdminPage />} />
