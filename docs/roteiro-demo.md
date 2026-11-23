@@ -69,6 +69,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 - Aparece: animal na listagem; ficha com o campo **Foto do animal** e a dica “JPG, PNG, WEBP ou GIF, até 5 MB”; confirmação “Registrar o óbito de Demo Ensaio 1? Esta ação não pode ser desfeita.”
 - Tempo alvo: 1:00
 - Frase de demo: “O óbito é aplicado só ao animal criado para o ensaio — nenhum animal do catálogo é alterado.”
+- Frase de demo: “A ficha interna reúne histórico, vacinas e receitas; a gravação depende da API do `TempDB`, ainda pendente (ver `docs/backlog/tarefas-api-tempdb.md`).” Abra com **Ver ficha**; na aba **Saúde**, mostre histórico, vacinas e receitas.
 - Plano B: se o upload falhar, pular a foto e mostrar o campo **Foto do animal** na ficha; se o óbito falhar duas vezes, sai do roteiro e vira apenas a frase.
 
 ### 5. Pontos: criar e vincular animais

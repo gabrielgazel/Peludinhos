@@ -203,12 +203,15 @@ equipe. No menu lateral, o grupo **Geral** reúne as opções abaixo.
 1. Clique em **Animais** no menu.
 2. Use **Buscar por nome** e o filtro **Status** para localizar o animal.
 3. Para registrar um falecimento, clique em **Registrar óbito** e confirme.
+4. Clique em **Ver ficha** para abrir a ficha interna do animal e, na aba **Saúde**, consultar histórico, vacinas e receitas.
 
 > **Resultado esperado:** a lista mostra os animais cadastrados, incluindo os
 > que já encontraram um lar. A confirmação diz “Registrar o óbito de {nome}?
 > Esta ação não pode ser desfeita.” — depois de confirmar, o animal deixa de
 > aparecer como disponível no catálogo. O botão **Editar** aparece apenas para
-> a administração.
+> a administração. Na aba **Saúde**, **Editar** aparece só para o autor do
+> registro ou a administração; não há exclusão e a persistência depende da API
+> pendente (`docs/backlog/tarefas-api-tempdb.md`).
 
 ### 4.3 Consultar e manter pontos de alimentação
 
@@ -427,6 +430,18 @@ persistência efetiva depende da API de insumos (§6.1), ainda pendente.
 > prévia, que o registro definitivo da adoção está no backlog e que os três
 > relatórios reais são animais por status, animais por ponto e consumo de
 > ração.
+
+### 6.5 Saúde do animal (histórico, vacinas e receitas)
+
+1. Em **Animais**, clique em **Ver ficha** e abra a aba **Saúde**.
+
+> **Resultado esperado:** o caminho é **Animais → Ver ficha → Saúde**. A leitura
+> é permitida a qualquer membro; para criar é preciso ter vínculo com membro,
+> e **Editar** aparece só para o autor do registro ou a administração. O autor
+> aparece como `Membro #id` ou `—` quando não há vínculo. Não há botão de
+> exclusão. Criar ou editar e recarregar a página só persiste depois que a API
+> do `TempDB` for executada (ver `docs/backlog/tarefas-api-tempdb.md`); até lá,
+> não apresente os dados como registro definitivo.
 
 ---
 

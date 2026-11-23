@@ -134,6 +134,10 @@ Autenticação:
 - `/painel` — painel geral e cartão “Meu turno”
 - `/painel/animais` — gestão de animais
 - `/painel/animais/novo`, `/painel/animais/:id/editar` — cadastro/edição (admin)
+- `/painel/animais/:id` — ficha interna do animal com abas **Dados** e **Saúde**
+  (histórico, vacinação e receitas); persistência dependente da API pendente
+  (`docs/backlog/tarefas-api-tempdb.md`); abra pelo botão **Ver ficha** na
+  listagem
 - `/painel/operacao/pontos` — pontos de alimentação e vínculo com animais
 - `/painel/operacao/turnos` — turnos
 - `/painel/operacao/ocorrencias` — ocorrências
