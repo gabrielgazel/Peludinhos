@@ -18,7 +18,7 @@ import { MemberFormPage } from '../features/staff/pages/MemberFormPage';
 import { FeedingPointsAdminPage } from '../features/staff/pages/FeedingPointsAdminPage';
 import { EventsAdminPage } from '../features/staff/pages/EventsAdminPage';
 import { FoodAdminPage } from '../features/staff/pages/FoodAdminPage';
-import { SuppliesDemoPage } from '../features/staff/pages/SuppliesDemoPage';
+import { SuppliesPage } from '../features/staff/pages/SuppliesPage';
 import { ReportsPage } from '../features/staff/pages/ReportsPage';
 import { ShiftPage } from '../features/staff/pages/ShiftPage';
 import { PublicLayout } from '../shared/layouts/PublicLayout';
@@ -66,8 +66,8 @@ export function AppRouter() {
               <Route path="operacao/turnos" element={<ShiftPage />} />
               <Route path="operacao/ocorrencias" element={<EventsAdminPage />} />
               <Route path="operacao/racao" element={<FoodAdminPage />} />
-              {/* Leitura em modo demonstração: sem service, sem requisição. */}
-              <Route path="insumos" element={<SuppliesDemoPage />} />
+              {/* Leitura e cadastro de insumos via API (medicamentos e produtos). */}
+              <Route path="insumos" element={<SuppliesPage />} />
               <Route path="intencoes" element={<IntentsAdminPage />} />
               <Route path="relatorios" element={<ReportsPage />} />
 
