@@ -54,9 +54,15 @@ describe('AdoptionTermPanel', () => {
     const panel = screen.getByRole('region', { name: /Termo de adoção/i });
     expect(panel).toBeInTheDocument();
     expect(screen.getByText('Bruno Visitante')).toBeInTheDocument();
+    expect(screen.getByText('—')).toBeInTheDocument(); // CPF sem cadastro
     expect(screen.getByText('bruno@example.com')).toBeInTheDocument();
     expect(screen.getByText('Thor')).toBeInTheDocument();
+    expect(screen.getByText('3 anos')).toBeInTheDocument(); // Idade
+    expect(screen.getByText('Caramelo')).toBeInTheDocument(); // Pelagem
     expect(screen.getByText('Macho')).toBeInTheDocument();
+    expect(screen.getByText('Não')).toBeInTheDocument(); // Castrado
+    expect(screen.getByText('Dócil')).toBeInTheDocument(); // Temperamento
+    expect(screen.getByText('#3')).toBeInTheDocument(); // Pedido
     expect(screen.getByText('23/11/2026')).toBeInTheDocument();
     expect(screen.getByText('Membro #7')).toBeInTheDocument();
     expect(screen.getByText(intent.motivation)).toBeInTheDocument();
@@ -100,8 +106,9 @@ describe('AdoptionTermPanel', () => {
       />,
     );
 
+    expect(screen.getByText('CPF')).toBeInTheDocument();
     expect(screen.getByText('Data da adoção')).toBeInTheDocument();
     expect(screen.getByText('Data do pedido')).toBeInTheDocument();
-    expect(screen.getAllByText('—')).toHaveLength(2);
+    expect(screen.getAllByText('—')).toHaveLength(3);
   });
 });

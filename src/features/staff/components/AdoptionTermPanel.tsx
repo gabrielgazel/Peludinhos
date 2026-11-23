@@ -49,10 +49,15 @@ export function AdoptionTermPanel({
 
         <dl className="rounded-lg border border-staff-line bg-staff-surface px-4 py-2">
           <Field label="Adotante" value={visitor?.name ?? `Visitante #${intent.visitorId}`} />
+          <Field label="CPF" value={visitor?.cpf ?? '—'} />
           <Field label="E-mail" value={visitor?.email ?? '—'} />
           <Field label="Animal" value={animal?.name ?? `Animal #${intent.animalId}`} />
+          <Field label="Idade" value={animal?.age ?? '—'} />
+          <Field label="Pelagem" value={animal?.colorDescription ?? '—'} />
           <Field label="Sexo" value={animal ? SEX_LABEL[animal.sex] : '—'} />
+          <Field label="Castrado" value={animal ? (animal.isNeutered ? 'Sim' : 'Não') : '—'} />
           <Field label="Temperamento" value={animal?.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'} />
+          <Field label="Pedido" value={`#${intent.id}`} />
           <Field label="Data da adoção" value={formatDate(adoptionDate)} />
           <Field label="Data do pedido" value={formatDateTime(intent.createdAt)} />
           <Field
