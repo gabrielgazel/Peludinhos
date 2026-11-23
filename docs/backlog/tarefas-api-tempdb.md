@@ -212,7 +212,7 @@ Inserir um bloco `[11] Insumos (B1)` antes do bloco atual `[11] Sessão` (renume
 5. `GET /api/medications` e `GET /api/products` com `bol_headers` → `200` e `Page` com `items` (leitura de membro);
 6. `PATCH /api/medications/{id}` e `PATCH /api/products/{id}` com `admin_headers` → `200`;
 7. nova listagem após o `PATCH` → o nome criado e o campo editado aparecem refletidos (persistência da criação + edição);
-8. `PATCH /api/medications/999999` e `PATCH /api/products/999999` com `admin_headers` → `404`, com `detail` "Medicamento não encontrado" / "Produto não encontrado" (cai em `_find_medication` / `_find_product`). O contrato define apenas `GET ""`, `POST ""` e `PATCH "/{id}"`.
+8. `PATCH /api/medications/999999` e `PATCH /api/products/999999`, ambos com `admin_headers` e `json={}` → `404`, com `detail` "Medicamento não encontrado" / "Produto não encontrado" (cai em `_find_medication` / `_find_product`). O corpo vazio é necessário: os PATCH exigem um payload `Update`, e sem `json={}` o FastAPI responderia `422` na validação antes de chegar ao `_find_*`. O contrato define apenas `GET ""`, `POST ""` e `PATCH "/{id}"`.
 
 Esqueleto ilustrativo (o mesmo padrão se repete para `products`):
 
