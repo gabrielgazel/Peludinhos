@@ -141,8 +141,15 @@ describe('veterinaryHistoryService', () => {
       updatedAt: null,
     };
     expect(mapVeterinaryHistory(row)).toEqual(mapped);
-    const { created_at: _c, updated_at: _u, ...semOpcionais } = row;
-    expect(mapVeterinaryHistory(semOpcionais)).toEqual(mapped);
+    const semOpcionais: Omit<ApiVeterinaryHistory, 'created_at' | 'updated_at'> = {
+      history_id: 3,
+      animal_id: 5,
+      record_date: '2026-10-02',
+      title: 'Consulta de rotina',
+      description: 'Animal saudável.',
+      created_by_member_id: 7,
+    };
+    expect(mapVeterinaryHistory(semOpcionais)).toEqual({ ...mapped, createdAt: null });
   });
 
   it('list usa a rota aninhada e envia filtros em snake_case', async () => {
