@@ -197,6 +197,28 @@ describe('SuppliesPage', () => {
     expect(screen.queryByRole('button', { name: 'Salvar medicamento' })).not.toBeInTheDocument();
   });
 
+  it('mostra erro do cadastro e mantém o formulário aberto quando a criação falha', async () => {
+    vi.mocked(medicationService.create).mockRejectedValueOnce(
+      new Error('Não foi possível salvar o medicamento.'),
+    );
+    renderPage();
+    await screen.findByText(remedio.name);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Novo medicamento' }));
+    fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Dipirona' } });
+    fireEvent.change(screen.getByLabelText('Tipo'), { target: { value: 'Analgésico' } });
+    fireEvent.change(screen.getByLabelText('Quantidade'), { target: { value: '12' } });
+    fireEvent.change(screen.getByLabelText('Unidade'), { target: { value: 'comprimido' } });
+    fireEvent.change(screen.getByLabelText('Ponto'), { target: { value: 'Enfermaria' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar medicamento' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Não foi possível salvar o medicamento.',
+    );
+    expect(screen.getByRole('heading', { name: 'Novo medicamento' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Salvar medicamento' })).toBeInTheDocument();
+  });
+
   it('edita produto existente com os dados preenchidos', async () => {
     renderPage();
     await screen.findByText(insumo.name);
