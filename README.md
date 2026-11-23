@@ -25,7 +25,7 @@ exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
 
 | Item | Como apresentar |
 | --- | --- |
-| Insumos (medicamentos e produtos) | Tela de demonstração: não persiste no banco. |
+| Insumos (medicamentos e produtos) | Cadastro de medicamentos e produtos; persistência dependente da API (ver `docs/backlog/tarefas-api-tempdb.md`). |
 | Termo de adoção | Prévia com marca d’água; o registro definitivo está no backlog B3. |
 | Relatórios 4–6 | Marcados como **Planejado**; são o backlog B4, não relatório pronto. |
 | Recuperação de senha | A tela é real, mas o envio de e-mail depende de servidor de e-mail e **não é simulado**. O teste com e-mail real (D4.3) segue pendente. |
@@ -137,7 +137,9 @@ Autenticação:
 - `/painel/operacao/turnos` — turnos
 - `/painel/operacao/ocorrencias` — ocorrências
 - `/painel/operacao/racao` — compra, consumo e saldo de ração
-- `/painel/insumos` — medicamentos e produtos em modo demonstração
+- `/painel/insumos` — medicamentos e produtos: listar, criar e editar (criar e
+  editar só para administração); persistência dependente da API pendente
+  (`docs/backlog/tarefas-api-tempdb.md`)
 - `/painel/intencoes` — avaliação das intenções de adoção
 - `/painel/relatorios` — relatórios 1–3 reais; 4–6 como **Planejado**
 - `/painel/membros`, `/painel/membros/:id` — gestão de membros (admin)

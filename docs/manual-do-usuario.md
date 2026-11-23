@@ -364,21 +364,32 @@ aparecer, peça acesso ao administrador.
 
 ---
 
-## 6. O que é demonstração (insumos e termo de adoção) e por quê
+## 6. O que é demonstração (termo de adoção e relatórios planejados) e por quê
 
-Algumas telas foram criadas apenas para mostrar ao público como será o fluxo
-completo. Elas estão identificadas na própria interface pela faixa
-**“Dados de demonstração - esta área ainda não persiste no banco”**.
+Nesta seção estão os itens que continuam como demonstração: a prévia do
+termo de adoção e os relatórios planejados. Eles mostram como será o fluxo
+previsto, mas não substituem um registro definitivo — o termo definitivo está
+no backlog B3 e os relatórios 4–6 ainda não estão prontos.
 
 ### 6.1 Insumos (medicamentos e produtos)
 
 1. No painel, clique em **Insumos**.
-2. Leia o subtítulo “Medicamentos e produtos da operação em modo
-   demonstração.” e as tabelas **Medicamentos** e **Produtos**.
+2. Confira as tabelas **Medicamentos** e **Produtos**, com **Nome**, **Tipo**,
+   **Quantidade**, **Unidade**, **Validade**, **Ponto/uso** e **Ações**.
+3. Se você tiver perfil de administrador, clique em **Novo medicamento** ou
+   **Novo produto** para criar um registro, e em **Editar** na linha de um item
+   para alterá-lo. Preencha **Nome**, **Tipo**, **Quantidade**, **Unidade** e
+   **Ponto** (obrigatórios); **Validade** e **Observação** são opcionais.
+   Conclua com **Salvar medicamento** ou **Salvar produto**, ou desista com
+   **Cancelar**.
+4. Se a listagem falhar, clique em **Tentar novamente**.
 
-> **Resultado esperado:** você vê uma tela somente de leitura, com dados
-> fictícios. Não há **service**, carregamento de API nem botões de criar ou
-> editar: nada do que aparece ali é salvo.
+> **Resultado esperado:** as duas listas aparecem e, para a administração, a
+> tela oferece criação e edição. Membros da equipe podem consultar; criar e
+> editar é restrito à administração. A persistência efetiva do que for
+> cadastrado depende da execução da API de insumos, ainda pendente (ver
+> `docs/backlog/tarefas-api-tempdb.md`): não apresente os dados como registro
+> definitivo antes disso.
 
 ### 6.2 Termo de adoção (prévia)
 
@@ -406,15 +417,15 @@ completo. Elas estão identificadas na própria interface pela faixa
 
 ### 6.4 Por que existem telas demo
 
-1. Ao abrir **Insumos** ou a prévia do termo, procure a faixa amarela com o
-   aviso de demonstração e leia os avisos no rodapé.
+1. Ao abrir a prévia do termo, procure a faixa amarela com o aviso de
+   demonstração e leia os avisos no rodapé.
 2. Compare com os cartões de **Relatórios** — os três primeiros têm números
    reais; os itens de “Próximos relatórios” não.
 
-> **Resultado esperado:** você consegue explicar à banca que insumos e termo
-> são prévias (não persistem), que o registro definitivo da adoção está no
-> backlog e que os três relatórios reais são animais por status, animais por
-> ponto e consumo de ração.
+> **Resultado esperado:** você consegue explicar à banca que o termo é uma
+> prévia, que o registro definitivo da adoção está no backlog e que os três
+> relatórios reais são animais por status, animais por ponto e consumo de
+> ração.
 
 ---
 
