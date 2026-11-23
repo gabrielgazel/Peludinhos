@@ -32,6 +32,26 @@ export interface IntentAnimal {
   isNeutered: boolean;
 }
 
+export interface Adoption {
+  id: number;
+  adoptionIntentId: number;
+  animalId: number;
+  visitorId: number;
+  responsibleMemberId: number;
+  adoptionDate: string;
+  termText: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+}
+
+/** Corpo de registro de adoção: intenção aprovada + termo gerado no front. */
+export interface AdoptionRecordPayload {
+  adoptionIntentId: number;
+  responsibleMemberId: number;
+  adoptionDate: string;
+  termText: string;
+}
+
 export interface AdoptionIntent {
   id: number;
   motivation: string;
@@ -42,6 +62,7 @@ export interface AdoptionIntent {
   updatedAt: string | null;
   visitor: IntentVisitor | null;
   animal: IntentAnimal | null;
+  adoption: Adoption | null;
 }
 
 /** ---- Formatos vindos da API (snake_case) ---- */
@@ -76,4 +97,18 @@ export interface ApiAdoptionIntent {
   updated_at: string | null;
   visitor: ApiIntentVisitor | null;
   animal: ApiIntentAnimal | null;
+  adoption?: ApiAdoption | null;
+}
+
+/** Registro definitivo da adoção (termo gerado no front e gravado na API). */
+export interface ApiAdoption {
+  adoption_id: number;
+  fk_adoption_intent_id: number;
+  fk_animal_id: number;
+  fk_visitor_id: number;
+  fk_responsible_member_id: number;
+  adoption_date: string;
+  term_text: string;
+  created_at?: string | null;
+  updated_at?: string | null;
 }

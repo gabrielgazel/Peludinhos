@@ -43,6 +43,7 @@ function makeIntent(partial: Partial<AdoptionIntent> & { id: number }): Adoption
     updatedAt: null,
     visitor: null,
     animal: null,
+    adoption: null,
     ...partial,
   };
 }

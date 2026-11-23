@@ -1,4 +1,5 @@
 import { httpClient } from '../../../shared/api/httpsClient';
+import { mapAdoption } from './adoptionRecordService';
 import type { Page } from '../../../shared/api/types';
 import type {
   AdoptionIntent,
@@ -38,6 +39,7 @@ export function mapIntent(row: ApiAdoptionIntent): AdoptionIntent {
           isNeutered: row.animal.is_neutered,
         }
       : null,
+    adoption: row.adoption ? mapAdoption(row.adoption) : null,
   };
 }
 

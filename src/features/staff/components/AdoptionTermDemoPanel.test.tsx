@@ -38,6 +38,7 @@ const intent: AdoptionIntent = {
   updatedAt: null,
   visitor,
   animal,
+  adoption: null,
 };
 
 describe('AdoptionTermDemoPanel', () => {
