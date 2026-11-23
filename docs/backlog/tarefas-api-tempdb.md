@@ -758,8 +758,7 @@ do $$ begin
         using (private.is_project_admin()) with check (private.is_project_admin());
 exception when duplicate_object then null; end $$;
 
-grant select on public.adoption to authenticated;
-grant insert on public.adoption to authenticated;
+grant select, insert, update on public.adoption to authenticated;
 grant select, insert, update, delete on public.adoption to service_role;
 grant usage, select on all sequences in schema public to authenticated, service_role;
 
