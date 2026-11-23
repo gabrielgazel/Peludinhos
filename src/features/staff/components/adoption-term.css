@@ -1,0 +1,21 @@
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .adoption-term-print,
+  .adoption-term-print * {
+    visibility: visible;
+  }
+
+  .adoption-term-print {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  [data-no-print] {
+    display: none;
+  }
+}
