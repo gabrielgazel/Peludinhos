@@ -221,6 +221,13 @@ export function ReportsPage() {
     );
   }, [activeFrom, activeTo]);
 
+  // Os novos painéis mostram o período da última busca válida, mesmo quando o
+  // filtro está invertido; o filtro e os relatórios 1-3 continuam usando periodLabel.
+  const reportPeriodLabel =
+    reportPeriod.from && reportPeriod.to
+      ? `${formatDate(reportPeriod.from)} a ${formatDate(reportPeriod.to)}`
+      : null;
+
   const statusData = useAsyncData(() => animalService.list({ limit: HIGH_LIMIT }), []);
 
   const statusReport = useMemo(() => {
@@ -410,14 +417,14 @@ export function ReportsPage() {
     };
   }, [productData.data]);
 
-  const occurrenceSubtitle = periodLabel
-    ? `Ocorrências agrupadas por mês (${periodLabel}).`
+  const occurrenceSubtitle = reportPeriodLabel
+    ? `Ocorrências agrupadas por mês (${reportPeriodLabel}).`
     : 'Ocorrências agrupadas por mês no período selecionado.';
-  const medicationSubtitle = periodLabel
-    ? `Consumo de medicamentos no período (${periodLabel}).`
+  const medicationSubtitle = reportPeriodLabel
+    ? `Consumo de medicamentos no período (${reportPeriodLabel}).`
     : 'Consumo de medicamentos no período selecionado.';
-  const productSubtitle = periodLabel
-    ? `Consumo de produtos no período (${periodLabel}).`
+  const productSubtitle = reportPeriodLabel
+    ? `Consumo de produtos no período (${reportPeriodLabel}).`
     : 'Consumo de produtos no período selecionado.';
 
   function exportCsv(slug: string, rows: CsvField[][]) {

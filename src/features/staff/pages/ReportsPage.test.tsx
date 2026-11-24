@@ -5,7 +5,7 @@ import type { AuthUser } from '../../auth/types/auth.types';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { animalService } from '../../animals/services/animalService';
 import type { Animal, AnimalStatus } from '../../animals/types/animal.types';
-import { formatKg } from '../../../shared/utils/format';
+import { formatDate, formatKg } from '../../../shared/utils/format';
 import {
   feedingPointService,
   type FeedingPoint,
@@ -601,6 +601,8 @@ describe('ReportsPage', () => {
     await waitFor(() => {
       expect(within(occurrences).queryByText(monthLabelOf(isoDaysAgo(35)))).not.toBeInTheDocument();
     });
+    // Total e linha do único mês do período passam a 2 ocorrências.
+    expect(await within(occurrences).findAllByText('2 ocorrências')).toHaveLength(2);
     expect(lastOccurrenceParams()).toEqual({ from: isoDaysAgo(6), to: isoDaysAgo(0) });
     expect(lastSupplyParams('medication')).toEqual({
       kind: 'medication',
@@ -631,11 +633,13 @@ describe('ReportsPage', () => {
 
     await waitFor(() => {
       expect(lastOccurrenceParams()).toEqual({ from: isoDaysAgo(6), to: isoDaysAgo(0) });
-      expect(lastSupplyParams('medication')).toMatchObject({
+      expect(lastSupplyParams('medication')).toEqual({
+        kind: 'medication',
         from: isoDaysAgo(6),
         to: isoDaysAgo(0),
       });
-      expect(lastSupplyParams('product')).toMatchObject({
+      expect(lastSupplyParams('product')).toEqual({
+        kind: 'product',
         from: isoDaysAgo(6),
         to: isoDaysAgo(0),
       });
@@ -671,6 +675,12 @@ describe('ReportsPage', () => {
 
     expect(
       await screen.findByText('A data inicial não pode ser posterior à data final.'),
+    ).toBeInTheDocument();
+    const occurrences = screen.getByRole('region', { name: /Ocorrências mensais/i });
+    expect(
+      within(occurrences).getByText(
+        `Ocorrências agrupadas por mês (${formatDate(isoDaysAgo(29))} a ${formatDate(isoDaysAgo(0))}).`,
+      ),
     ).toBeInTheDocument();
     expect(vi.mocked(reportService.getOccurrencesByMonth).mock.calls).toHaveLength(
       callsBefore.occurrences,
