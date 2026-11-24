@@ -16,8 +16,9 @@ A apresentação de 10 minutos percorre oito blocos: home pública; catálogo,
 detalhe e intenção de adoção com autocadastro; login da equipe e painel;
 animais (busca, ficha, foto e óbito); pontos de alimentação e vínculo com
 animais; turno (iniciar, encerrar, histórico); ocorrência e ração (20 kg
-comprados, 5 kg consumidos, saldo de 15 kg); e os três relatórios reais com
-exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
+comprados, 5 kg consumidos, saldo de 15 kg); e os seis painéis de relatórios com
+exportação CSV (os três novos dependem da API B4 documentada no backlog). O
+roteiro completo, com plano B e tempos medidos, está em
 `docs/roteiro-demo.md`; o passo a passo para quem usa o sistema está em
 `docs/manual-do-usuario.md`.
 
@@ -27,13 +28,16 @@ exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
 | --- | --- |
 | Insumos (medicamentos e produtos) | Cadastro de medicamentos e produtos; persistência dependente da API (ver `docs/backlog/tarefas-api-tempdb.md`). |
 | Termo de adoção | Em uma intenção aprovada, **Registrar adoção** registra a adoção, **Ver termo** reabre o termo da adoção registrada e **Imprimir termo** abre a impressão; a persistência depende da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`). |
-| Relatórios 4–6 | Marcados como **Planejado**; são o backlog B4, não relatório pronto. |
+| Relatórios 4–6 | Painéis prontos no front — **Ocorrências mensais**, **Medicamentos** e **Produtos**; os números dependem da API documentada no backlog B4 (`docs/backlog/tarefas-api-tempdb.md`). |
 | Recuperação de senha | A tela é real, mas o envio de e-mail depende de servidor de e-mail e **não é simulado**. O teste com e-mail real (D4.3) segue pendente. |
 | Contas de demonstração | `*.demo@peludinhos.example`, senha pública `Demo@12345`, válidas somente neste ambiente. |
 
-Os relatórios 4–6 seguem marcados como **Planejado** e não devem ser usados como
-resultado. O registro da adoção só passa a ser definitivo depois da execução e do
-aceite da API pendente; até lá, `B3` continua desmarcado no roadmap.
+Os painéis de relatórios 4–6 já estão no front, mas os números só aparecem com a
+API B4 documentada no backlog: não há fallback nem dado estimado. Sem a API, os
+painéis mostram erro em `Alert` ou estado vazio. O registro da adoção só passa a
+ser definitivo depois da execução e do aceite da API pendente; até lá, `B3`
+continua desmarcado no roadmap, assim como `B4` até o aceite da persistência
+real.
 
 ## Como rodar
 
@@ -149,7 +153,9 @@ Autenticação:
 - `/painel/intencoes` — avaliação das intenções de adoção; intenções aprovadas
   permitem registrar a adoção e imprimir o termo (persistência dependente da API
   pendente em `docs/backlog/tarefas-api-tempdb.md`)
-- `/painel/relatorios` — relatórios 1–3 reais; 4–6 como **Planejado**
+- `/painel/relatorios` — seis painéis no front; os três novos (**Ocorrências
+  mensais**, **Medicamentos**, **Produtos**) dependem da API B4 documentada em
+  `docs/backlog/tarefas-api-tempdb.md`
 - `/painel/membros`, `/painel/membros/:id` — gestão de membros (admin)
 
 ## Integração com a API

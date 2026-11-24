@@ -17,7 +17,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 | 5 | 5:00–6:00 | 1:00 | Pontos: criar e vincular animais |
 | 6 | 6:00–7:00 | 1:00 | Turno: iniciar, encerrar, histórico |
 | 7 | 7:00–8:00 | 1:00 | Ocorrência e ração: 20 kg › 5 kg › saldo |
-| 8 | 8:00–10:00 | 2:00 | Relatórios 1–3, membros, recuperação, manual e backlog |
+| 8 | 8:00–10:00 | 2:00 | Relatórios 1–6, membros, recuperação, manual e backlog |
 | | | **10:00** | |
 
 ## Pré-ensaio (fora dos 10 minutos)
@@ -96,13 +96,13 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 - Frase de demo: “Compra de 20 kg, consumo de 5 kg, saldo de 15 kg — cada movimentação fica no histórico.”
 - Plano B: se a compra falhar, usar a ração de seed *Demo Ração Premium* e mostrar o consumo; se falhar duas vezes, sai do roteiro e vira o print descrito do saldo 15 kg do ensaio anterior.
 
-### 8. Relatórios 1–3, membros, recuperação, manual e backlog
+### 8. Relatórios 1–6, membros, recuperação, manual e backlog
 
-- Clique: menu **Relatórios** → conferir **Animais por status**, **Animais por ponto** e **Consumo de ração**, com **Exportar CSV**; se sobrar tempo: menu **Membros**, `/recuperar-senha` (somente o formulário), o PDF único de entrega (`docs/pacote-entrega.pdf`) e a seção “Próximos relatórios”.
-- Aparece: três cartões com números reais da API; seção “Próximos relatórios” com selo **Planejado**; rodapé “Os números são recalculados a cada visita; nenhuma informação é gravada.”
+- Clique: menu **Relatórios** → conferir os seis painéis **Animais por status**, **Animais por ponto**, **Consumo de ração**, **Ocorrências mensais**, **Medicamentos** e **Produtos**, com **Exportar CSV** em cada um quando houver dados; se sobrar tempo: menu **Membros**, `/recuperar-senha` (somente o formulário), o PDF único de entrega (`docs/pacote-entrega.pdf`) e o backlog `docs/backlog/tarefas-api-tempdb.md`.
+- Aparece: seis painéis; os três primeiros trazem números reais da API; os três novos dependem do contrato documentado no backlog B4 (`docs/backlog/tarefas-api-tempdb.md`), ainda pendente, e podem mostrar um `Alert` de erro ou estado vazio; rodapé “Os números são recalculados a cada visita; nenhuma informação é gravada.”
 - Tempo alvo: 2:00
-- Frase de demo: “Três relatórios são reais; o restante é plano do backlog, e o PDF é um artefato de entrega — não uma tela do sistema.”
-- Plano B: se **Animais por ponto** mostrar “Failed to fetch”, recarregar a página até três vezes — a API remota é intermitente e os outros dois cartões costumam carregar; se persistir, mostrar o print descrito dos três cartões do ensaio anterior. Nunca apresentar “Próximos relatórios” como pronto.
+- Frase de demo: “Os seis painéis leem a API; os três novos dependem do contrato documentado no backlog, então não mostram número inventado.”
+- Plano B: se um painel novo falhar, mostrar o `Alert` e explicar a pendência da API B4 documentada em `docs/backlog/tarefas-api-tempdb.md` — nunca apresentar estimativa como dado. Se **Animais por ponto** mostrar “Failed to fetch”, recarregar a página até três vezes — a API remota é intermitente e os outros cartões costumam carregar; se persistir, mostrar o print descrito dos painéis do ensaio anterior.
 
 ---
 
@@ -114,14 +114,14 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 | Intenção de adoção | “É uma manifestação de interesse; a equipe avalia e entra em contato por e-mail.” |
 | Insumos | “Medicamentos e produtos são listados e cadastrados na tela, com criação e edição restritas à administração; a persistência depende da execução da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`).” |
 | Termo de adoção | “Em uma intenção aprovada, registre a adoção, abra **Ver termo** e demonstre a impressão — lembrando que a persistência depende da API documentada em `docs/backlog/tarefas-api-tempdb.md`.” |
-| Relatórios 4–6 | “Estão marcados como Planejado: são plano do backlog, não relatório pronto.” |
+| Relatórios 4–6 | “Os seis painéis leem a API; os três novos dependem do contrato documentado no backlog, então não mostram número inventado.” |
 | Recuperação de senha | “A tela existe; o e-mail real de recuperação depende do servidor de e-mail e não é simulado aqui.” |
 
 ## Fora do build de produção
 
 - **`docs/pacote-entrega.pdf`** — artefato único de entrega (manual + roteiro), não rota da aplicação. Mostrar como PDF, nunca como tela.
 - **Backlog priorizado** — artefato da D5.6, ainda não existe no build.
-- **Relatórios 4–6** — apenas “Próximos relatórios” com selo **Planejado**.
+- **Contrato da API dos relatórios 4–6** — pendente no `TempDB`; os três painéis novos dependem do contrato documentado em `docs/backlog/tarefas-api-tempdb.md`, então não mostram número inventado.
 - **Recuperação com e-mail real (D4.3)** — segue pendente de aceite; não fingir recebimento.
 
 ## Regra “falhou duas vezes sai”

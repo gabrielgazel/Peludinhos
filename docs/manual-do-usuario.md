@@ -281,16 +281,19 @@ equipe. No menu lateral, o grupo **Geral** reúne as opções abaixo.
 1. Clique em **Relatórios** no menu.
 2. Escolha o **Período**: “Últimos 7 dias”, “Últimos 30 dias”, “Últimos 90
    dias” ou “Personalizado”.
-3. Leia os cartões **Animais por status**, **Animais por ponto** e **Consumo
-   de ração**.
+3. Leia os seis cartões: **Animais por status**, **Animais por ponto**,
+   **Consumo de ração**, **Ocorrências mensais**, **Medicamentos** e
+   **Produtos**.
 4. Se precisar levar os números para uma planilha, clique em **Exportar CSV**
    no cartão desejado.
 
-> **Resultado esperado:** os três relatórios acima são reais e trazem dados da
-> API; o filtro de período altera “Animais por ponto” e “Consumo de ração”, mas
-> não “Animais por status”. O rodapé lembra: “Os números são recalculados a
-> cada visita; nenhuma informação é gravada.”. A seção “Próximos relatórios”
-> está marcada como **Planejado** — não a use como dado.
+> **Resultado esperado:** os seis painéis do front leem a API; o filtro de
+> período altera **Animais por ponto**, **Consumo de ração**, **Ocorrências
+> mensais**, **Medicamentos** e **Produtos**, mas não **Animais por status**.
+> Os três novos dependem do contrato B4 documentado em
+> `docs/backlog/tarefas-api-tempdb.md`: sem a API, mostram erro em `Alert` ou
+> estado vazio, sem fallback nem número inventado. O rodapé lembra: “Os números
+> são recalculados a cada visita; nenhuma informação é gravada.”.
 
 ### 4.8 Avaliar intenções de adoção
 
@@ -372,15 +375,17 @@ aparecer, peça acesso ao administrador.
 
 ## 6. Demonstração e pendências de API
 
-Nesta seção estão os itens que continuam como demonstração — os relatórios
-planejados — e as pendências de API. O termo de adoção já é o registro real do
-fluxo: a adoção é registrada em **Intenções** e o termo salvo pode ser reaberto
-e impresso. Ainda assim, a persistência depende da API pendente em
-`docs/backlog/tarefas-api-tempdb.md`; até a execução e o aceite, `B3` continua
-desmarcado no roadmap e o termo não deve ser apresentado como registro
-definitivo. Os relatórios 4–6 também não estão prontos. A tela de insumos já usa
-cadastro com API, mas a persistência efetiva depende da API de insumos (§6.1),
-ainda pendente.
+Nesta seção estão os itens que continuam como demonstração e as pendências de
+API. O termo de adoção já é o registro real do fluxo: a adoção é registrada em
+**Intenções** e o termo salvo pode ser reaberto e impresso. Ainda assim, a
+persistência depende da API pendente em `docs/backlog/tarefas-api-tempdb.md`;
+até a execução e o aceite, `B3` continua desmarcado no roadmap e o termo não
+deve ser apresentado como registro definitivo. Os painéis de relatórios 4–6
+(**Ocorrências mensais**, **Medicamentos** e **Produtos**) já estão na tela,
+mas seus números dependem da API B4 documentada no mesmo backlog; `B4` permanece
+desmarcado no roadmap até o aceite da persistência real. A tela de insumos já
+usa cadastro com API, mas a persistência efetiva depende da API de insumos
+(§6.1), ainda pendente.
 
 ### 6.1 Insumos (medicamentos e produtos)
 
@@ -419,15 +424,18 @@ ainda pendente.
 > desmarcado no roadmap e o termo não deve ser apresentado como registro
 > definitivo.
 
-### 6.3 Relatórios planejados
+### 6.3 Relatórios 4–6
 
-1. Em **Relatórios**, role até **Próximos relatórios**.
-2. Leia os itens marcados como **Planejado**, com os campos **Falta:** e
-   **Estimativa:**.
+1. Em **Relatórios**, confira, ao lado dos três primeiros, os painéis
+   **Ocorrências mensais**, **Medicamentos** e **Produtos**.
+2. Troque o **Período** e veja os três novos painéis recalcularem os números
+   vindos da API; use **Exportar CSV** em cada um quando houver dados.
 
-> **Resultado esperado:** o rodapé da seção esclarece: “O que está aqui é o
-> plano do backlog, não um relatório pronto.” Eles não têm números e não
-> devem ser apresentados como resultado.
+> **Resultado esperado:** os seis painéis aparecem na tela e todos leem a API.
+> Os três novos dependem do contrato B4 documentado em
+> `docs/backlog/tarefas-api-tempdb.md`, ainda pendente: sem a API, mostram um
+> `Alert` de erro ou estado vazio, sem fallback nem número inventado. `B4`
+> continua desmarcado no roadmap até o aceite da persistência real.
 
 ### 6.4 O que mudou no termo de adoção
 
@@ -440,8 +448,11 @@ roadmap.
 
 > **Resultado esperado:** você consegue explicar à banca que o termo é o
 > registro real do fluxo, que a persistência depende da API pendente e que os
-> três relatórios reais são animais por status, animais por ponto e consumo de
-> ração. Os relatórios 4–6 continuam como **Planejado**.
+> seis painéis de front são animais por status, animais por ponto, consumo de
+> ração, **Ocorrências mensais**, **Medicamentos** e **Produtos**. Os três
+> novos dependem da API B4 documentada em `docs/backlog/tarefas-api-tempdb.md`,
+> ainda pendente; `B4` permanece desmarcado no roadmap até o aceite da
+> persistência real.
 
 ### 6.5 Saúde do animal (histórico, vacinas e receitas)
 
