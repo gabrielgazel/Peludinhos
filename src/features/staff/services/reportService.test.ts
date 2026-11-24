@@ -1,0 +1,157 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { httpClient } from '../../../shared/api/httpsClient';
+import {
+  mapOccurrences,
+  mapSupplyConsumption,
+  reportService,
+  type ApiOccurrencesResponse,
+  type ApiSupplyConsumptionResponse,
+} from './reportService';
+
+vi.mock('../../../shared/api/httpsClient', () => ({
+  httpClient: { get: vi.fn() },
+}));
+
+const occurrencesRow: ApiOccurrencesResponse = {
+  total: 2,
+  months: [
+    {
+      month: '2026-11',
+      total: 2,
+      items: [
+        {
+          event_id: 11,
+          animal_id: 1,
+          animal_name: 'Mel',
+          description: 'Vacina aplicada',
+          event_date: '2026-11-05',
+          member_name: 'Maria Silva',
+        },
+        {
+          event_id: 12,
+          animal_id: null,
+          animal_name: null,
+          description: 'Visita',
+          event_date: '2026-11-06',
+        },
+      ],
+    },
+  ],
+};
+
+const supplyRow: ApiSupplyConsumptionResponse = {
+  kind: 'medication',
+  from: '2026-11-01',
+  to: '2026-11-30',
+  total_quantity: 8,
+  items: [
+    {
+      supply_id: 1,
+      name: 'Dipirona',
+      type: 'analgésico',
+      quantity: 8,
+      unit: 'comprimidos',
+      point: 'Canil',
+      stock_quantity: 24,
+    },
+  ],
+};
+
+describe('reportService', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('mapeia ocorrências para camelCase', () => {
+    expect(mapOccurrences(occurrencesRow)).toEqual({
+      total: 2,
+      months: [
+        {
+          month: '2026-11',
+          total: 2,
+          items: [
+            {
+              id: 11,
+              animalId: 1,
+              animalName: 'Mel',
+              description: 'Vacina aplicada',
+              eventDate: '2026-11-05',
+              memberName: 'Maria Silva',
+            },
+            {
+              id: 12,
+              animalId: null,
+              animalName: null,
+              description: 'Visita',
+              eventDate: '2026-11-06',
+              memberName: null,
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('busca ocorrências com from e to', async () => {
+    vi.mocked(httpClient.get).mockResolvedValue(occurrencesRow);
+
+    const result = await reportService.getOccurrencesByMonth({
+      from: '2026-11-01',
+      to: '2026-11-30',
+    });
+
+    expect(httpClient.get).toHaveBeenCalledWith(
+      '/reports/occurrences-by-month?from=2026-11-01&to=2026-11-30',
+    );
+    expect(result).toEqual(mapOccurrences(occurrencesRow));
+  });
+
+  it('mapeia consumo de insumos', () => {
+    expect(mapSupplyConsumption(supplyRow)).toEqual({
+      kind: 'medication',
+      from: '2026-11-01',
+      to: '2026-11-30',
+      totalQuantity: 8,
+      items: [
+        {
+          supplyId: 1,
+          name: 'Dipirona',
+          type: 'analgésico',
+          quantity: 8,
+          unit: 'comprimidos',
+          point: 'Canil',
+          stockQuantity: 24,
+        },
+      ],
+    });
+  });
+
+  it('busca consumo por tipo com query ordenada', async () => {
+    vi.mocked(httpClient.get).mockResolvedValue({ ...supplyRow, kind: 'product' });
+
+    const result = await reportService.getSupplyConsumption({
+      kind: 'product',
+      from: '2026-11-01',
+      to: '2026-11-30',
+    });
+
+    expect(httpClient.get).toHaveBeenCalledWith(
+      '/reports/supply-consumption?kind=product&from=2026-11-01&to=2026-11-30',
+    );
+    expect(result).toEqual({
+      kind: 'product',
+      from: '2026-11-01',
+      to: '2026-11-30',
+      totalQuantity: 8,
+      items: [
+        {
+          supplyId: 1,
+          name: 'Dipirona',
+          type: 'analgésico',
+          quantity: 8,
+          unit: 'comprimidos',
+          point: 'Canil',
+          stockQuantity: 24,
+        },
+      ],
+    });
+  });
+});
