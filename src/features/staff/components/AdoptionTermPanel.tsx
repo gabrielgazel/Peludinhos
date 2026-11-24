@@ -39,6 +39,7 @@ export function AdoptionTermPanel({
 
   return (
     <section
+      id={`termo-${intent.id}`}
       aria-labelledby={titleId}
       className="relative mt-4 overflow-hidden rounded-xl border border-staff-line bg-staff-bg p-5"
     >

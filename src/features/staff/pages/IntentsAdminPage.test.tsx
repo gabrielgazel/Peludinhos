@@ -383,6 +383,19 @@ describe('IntentsAdminPage', () => {
     expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
   });
 
+  it('liga o aria-controls do botao Ver termo ao id do painel do termo', async () => {
+    mockMember(7);
+    renderPage();
+
+    const registeredArticle = await articleByMotivation(registered.motivation);
+    const termButton = within(registeredArticle).getByRole('button', { name: 'Ver termo' });
+    fireEvent.click(termButton);
+
+    const panel = await screen.findByRole('region', { name: /Termo de adoção/i });
+    expect(panel).toBeInTheDocument();
+    expect(panel.id).toBe(termButton.getAttribute('aria-controls'));
+  });
+
   it('pede confirmação e registra com payload camelCase', async () => {
     mockMember(7);
     renderPage();
