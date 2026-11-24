@@ -20,10 +20,7 @@ Restrições válidas para todas as tarefas registradas aqui:
 - [ ] **B1 — Medicamentos e produtos com API real** — itens abertos: B1 e B2; detalhes na seção `B1` abaixo.
 - [ ] **B2 — Receitas, histórico e vacinação** — detalhes na seção B2 abaixo.
 - [ ] **B3 — Registro de adoção com termo** — detalhes na seção B3 abaixo.
-
-### Tarefas futuras (B4 em diante)
-
-_(sem conteúdo ainda — espaço reservado para as próximas pendências de API.)_
+- [ ] **B4 — Relatórios 4–6** — detalhes na seção B4 abaixo.
 
 ## B1 — Medicamentos e produtos com API real
 
@@ -902,3 +899,239 @@ Espelhando o checklist do B1/B2, com os comandos já prontos para o projeto `Tem
 ### Aceite suspenso
 
 Registrar a adoção, recarregar a lista e ver o animal como **Adotado** com o termo reabrível e imprimível **só pode ser verificado depois que a API do B3 for executada** no `TempDB` (ver checklist "Antes de executar (B3)"). A fatia atual de front **não marca `B3` como concluído no roadmap**: o item permanece `- [ ]` até a execução e a verificação da persistência real.
+
+## B4 — Relatórios 4–6
+
+### Contexto
+
+Data: 2026-11-24 · Origem: desenho da fatia de frente do B4 em `docs/superpowers/specs/2026-11-24-b4-relatorios-4-6-front-design.md`.
+
+A página de relatórios passou a exibir três painéis novos — ocorrências mensais, consumo de medicamentos e consumo de produtos — alimentados por contratos de relatório dedicados. O B1 expõe apenas o **estoque atual** de medicamentos e produtos: não há histórico de consumo por período. Deduzir consumo da diferença de estoque produziria número falso sempre que houvesse reposição; por isso o front **não** tem fallback para fixture nem para valores estimados e consome `GET /api/reports/...` diretamente.
+
+Como no B1/B2/B3, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação. Os três relatórios antigos (status, pontos e consumo de ração), seus rótulos, CSV e testes permanecem intactos.
+
+Valem as mesmas restrições, com o recorte desta fatia:
+
+- nenhuma migration `0001`–`0007` é alterada — toda mudança de banco é aditiva e idempotente, concentrada na `0008`;
+- nenhuma alteração em seed, backend, rotas, tags ou páginas existentes fora do escopo descrito; a extensão do seed descrita abaixo é aplicada apenas quando a API for executada no `TempDB`;
+- leitura para membros, sem escrita a partir da tela e sem rota DELETE;
+- documentação, mensagens de erro e CSV em português, sem mojibake.
+
+### Colunas
+
+Tabela `public.supply_movement` — histórico de movimentação de insumos; cada linha é uma entrada (`entrada`) ou um consumo (`consumo`) em uma data.
+
+| Coluna | Tipo / regra | Observação |
+|---|---|---|
+| `movement_id` | inteiro, chave primária | `bigserial primary key`; vira `id` apenas se o domínio do front precisar — o relatório usa `supply_id` |
+| `supply_type` | texto, `medication` ou `product` | `text not null check (supply_type in ('medication', 'product'))` |
+| `supply_id` | inteiro | `bigint not null`; aponta para `medications.medication_id` ou `products.product_id` conforme `supply_type`; **sem FK**, porque uma mesma coluna não pode referenciar as duas tabelas |
+| `movement_kind` | texto, `consumo` ou `entrada` | `text not null check (movement_kind in ('consumo', 'entrada'))`; só `consumo` entra no relatório |
+| `quantity` | número > 0 | `numeric(10,2) not null check (quantity > 0)` |
+| `movement_date` | data | obrigatório (`date`); alvo dos filtros `from`/`to` |
+| `point` | texto, 1–120 | obrigatório; ponto onde a movimentação ocorreu (`texto livre`, não FK) |
+| `created_by_member_id` | inteiro, FK | referência a `public.members (member_id)`; autor do lançamento |
+| `created_at` / `updated_at` | data/hora | opcionais na resposta; `updated_at` mantido por trigger |
+
+### Passo 1 — Migration `0008` (criar `migrations/0008_supply_movement.sql`)
+
+Seguir o padrão da `0005`/`0006`/`0007`: tabela com `if not exists`, `public.touch_updated_at()` (já existente na `0001`), índices com `if not exists`, `enable row level security`, policy `select` com `private.is_project_member()` para `authenticated`, **nada para `anon`**, `service_role` com CRUD e `notify pgrst, 'reload schema';` no fim. Não criar policy nem grant de `insert`/`update`/`delete` para `authenticated`: o router usa `get_service_client()` e a escrita não é exposta pela tela. Esqueleto a adaptar:
+
+```sql
+-- 0008 — Histórico de movimentação de insumos (relatórios 4–6)
+-- Aditiva e idempotente; reaproveita public.touch_updated_at() e
+-- private.is_project_member(). Nada para anon.
+
+create table if not exists public.supply_movement (
+    movement_id           bigserial primary key,
+    supply_type           text not null check (supply_type in ('medication', 'product')),
+    supply_id             bigint not null,
+    movement_kind         text not null check (movement_kind in ('consumo', 'entrada')),
+    quantity              numeric(10,2) not null check (quantity > 0),
+    movement_date         date not null,
+    point                 text not null check (char_length(point) between 1 and 120),
+    created_by_member_id  bigint not null references public.members (member_id),
+    created_at            timestamptz not null default now(),
+    updated_at            timestamptz not null default now()
+);
+
+create index if not exists idx_supply_movement_supply
+    on public.supply_movement (supply_type, supply_id);
+create index if not exists idx_supply_movement_kind_date
+    on public.supply_movement (movement_kind, movement_date desc, movement_id desc);
+create index if not exists idx_supply_movement_date
+    on public.supply_movement (movement_date desc, movement_id desc);
+
+do $$ begin
+    create trigger supply_movement_touch_updated_at
+        before update on public.supply_movement
+        for each row execute function public.touch_updated_at();
+exception when duplicate_object then null; end $$;
+
+alter table public.supply_movement enable row level security;
+
+do $$ begin
+    create policy supply_movement_select_member on public.supply_movement
+        for select to authenticated using (private.is_project_member());
+exception when duplicate_object then null; end $$;
+
+grant select on public.supply_movement to authenticated;
+grant select, insert, update, delete on public.supply_movement to service_role;
+grant usage, select on all sequences in schema public to authenticated, service_role;
+
+notify pgrst, 'reload schema';
+```
+
+### Passo 2 — Schemas Pydantic em `app/schemas.py`
+
+Acrescentar os modelos de resposta abaixo, seguindo o estilo dos schemas existentes. Reutilizar `BaseModel`, `Field` e `date` já importados; acrescentar `Literal` quando necessário. O campo `from` é palavra reservada em Python: usar `from_: date = Field(alias="from")` e configurar o modelo para aceitar ambos os nomes; no JSON da resposta o campo continua `from`.
+
+```python
+class OccurrenceItemOut(BaseModel):
+    event_id: int
+    animal_id: int | None = None
+    animal_name: str | None = None
+    description: str
+    event_date: date
+    member_name: str | None = None
+
+
+class OccurrenceMonthOut(BaseModel):
+    month: str
+    total: int
+    items: list[OccurrenceItemOut]
+
+
+class OccurrencesByMonthOut(BaseModel):
+    total: int
+    months: list[OccurrenceMonthOut]
+
+
+class SupplyConsumptionItemOut(BaseModel):
+    supply_id: int
+    name: str
+    type: str
+    quantity: float
+    unit: str
+    point: str
+    stock_quantity: float
+
+
+class SupplyConsumptionOut(BaseModel):
+    kind: Literal["medication", "product"]
+    from_: date = Field(alias="from")
+    to: date
+    total_quantity: float
+    items: list[SupplyConsumptionItemOut]
+```
+
+`animal_name` e `member_name` podem ser `null` quando o evento não tiver animal ou quando o membro não for encontrado. Não criar `Page[T]`: os dois relatórios respondem objetos próprios, com `total` e listas, não paginação. No front, os services novos convertem `snake_case` → `camelCase` apenas em `src/features/staff/services/reportService.ts`: `event_id` → `id`, `supply_id` → `supplyId`, `stock_quantity` → `stockQuantity`, `total_quantity` → `totalQuantity`.
+
+### Passo 3 — Router `app/routers/reports.py`
+
+Criar `router = APIRouter(prefix="/api/reports", tags=["reports"])` com duas rotas de leitura.
+
+**`GET /occurrences-by-month?from=&to=`**
+
+- `response_model=OccurrencesByMonthOut`, `_member: CurrentUser = Depends(require_member)`.
+- Query params: `from_: date = Query(alias="from")` e `to: date`. Se `from_ > to`, `422` com `detail="Intervalo inválido: data inicial não pode ser posterior à data final."`
+- Buscar em `public.events` com `get_service_client()`, filtrando `.gte("event_date", from_.isoformat())` e `.lte("event_date", to.isoformat())`. Reaproveitar a resolução de `animal_name`/`member_name` já usada em `GET /api/events` (quando os nomes não vierem na linha, buscar `animals`/`members` em lote), sem N+1.
+- Agrupar por `YYYY-MM` em `month`, ordenar meses do mais recente para o mais antigo e, dentro de cada mês, ordenar por `event_date` e `event_id` decrescentes. `total` de cada mês é a quantidade de itens; `total` da resposta é a soma dos meses. O front não reordena.
+
+**`GET /supply-consumption?kind=medication|product&from=&to=`**
+
+- `response_model=SupplyConsumptionOut`, `_member: CurrentUser = Depends(require_member)`.
+- Query params: `kind: Literal["medication", "product"]`, `from_: date = Query(alias="from")` e `to: date`. `kind` fora de `medication|product` → `422` pela validação do FastAPI; `from_ > to` → `422` com a mesma mensagem da rota de ocorrências.
+- Buscar em `public.supply_movement` com `.eq("supply_type", kind)`, `.eq("movement_kind", "consumo")`, `.gte("movement_date", from_.isoformat())` e `.lte("movement_date", to.isoformat())`: movimentos `entrada` **nunca** entram na soma.
+- Agrupar por `supply_id`, somar `quantity` em `total_quantity` por item e em `total_quantity` da resposta. Para cada item, ler `name`, `type`, `quantity` (como `stock_quantity`), `unit` e `point` da tabela atual (`medications` quando `kind=medication`; `products` quando `kind=product`), usando `medication_id`/`product_id` conforme o caso. `point` na resposta é o da tabela atual; o `point` do movimento fica como auditoria na `0008`.
+- Ordenar itens por `quantity` decrescente, com desempate por `supply_id` crescente. Ecoar `kind`, `from` e `to` na resposta.
+- Todas as mensagens de erro em português. **Não registrar rota DELETE nem rota de escrita** neste router.
+
+### Passo 4 — Registro do router e documentação
+
+Ampliar a importação existente em `app/main.py` e incluir o router junto dos demais:
+
+```python
+from app.routers import (
+    adoption_intents, adoptions, animals, auth, events, feeding_points, foods,
+    members, medications, products, reports, shifts,
+    prescriptions, vaccinations, veterinary_history,
+)
+...
+app.include_router(reports.router)
+```
+
+Atualizar `TempDB/DOCUMENTACAO.md` (no projeto `TempDB`, quando a API for executada):
+
+- árvore de `app/routers/` com `reports.py` e `migrations/` com `0008_supply_movement.sql`;
+- item de migrations: aplicar em ordem `0001` → `0002` → `0003` → `0004` → `0005` → `0006` → `0007` → `0008`; atualizar "Estado do modelo" de 18 para 19 tabelas;
+- nova seção de endpoints (§4.3) com `GET /api/reports/occurrences-by-month` e `GET /api/reports/supply-consumption` — leitura de membro, filtros `from`/`to` e `kind`, sem DELETE;
+- matriz RBAC (§5): linha para "Ler relatórios" ✅ membro;
+- modelos de dados (§6): incluir `supply_movement` com as colunas da tabela acima;
+- registrar a migration `0008` como aplicada e o `notify pgrst, 'reload schema';` no fim dela.
+
+### Passo 5 — Extensão determinística do seed
+
+Acrescentar a `scripts/seed_demo.py` do `TempDB` linhas de `public.supply_movement` com datas e valores fixos, sem apagar registros e mantendo a segunda execução idempotente (verificar a existência pelo par natural `supply_type`/`supply_id`/`movement_kind`/`quantity`/`movement_date`/`point` antes de inserir). Usar apenas `supply_id` de medicamentos/produtos já presentes no seed e um `created_by_member_id` fixo do seed.
+
+Conjunto mínimo para o smoke test (intervalo fixo `2026-11-01` a `2026-11-30`):
+
+| `supply_type` | `supply_id` | `movement_kind` | `quantity` | `movement_date` | Resultado esperado |
+|---|---|---|---|---|---|
+| `medication` | 1 | `consumo` | 2,00 | 2026-11-02 | soma do medicamento 1 |
+| `medication` | 1 | `entrada` | 10,00 | 2026-11-03 | **não** entra no relatório |
+| `medication` | 1 | `consumo` | 1,50 | 2026-11-10 | soma do medicamento 1 |
+| `medication` | 2 | `consumo` | 4,00 | 2026-11-18 | soma do medicamento 2 |
+| `product` | 1 | `consumo` | 3,00 | 2026-11-12 | soma do produto 1 |
+
+Assim, no intervalo fixo, o relatório de medicamentos tem **2 itens** e `total_quantity` **7,50**, e o de produtos tem **1 item** e `total_quantity` **3,00**. Para ocorrências, usar os eventos já existentes no seed e comparar a resposta com a contagem direta de `events` no mesmo intervalo, agrupada por `YYYY-MM`; nenhum evento é inventado pelo teste. `scripts/test_seed_demo.py` continua sem banco e precisa permanecer verde.
+
+### Passo 6 — Smoke test em `scripts/smoke_test.py`
+
+Inserir um bloco `[15] Relatórios (B4)` antes do bloco atual `[14] Sessão` (renumerar este para `[16]`), reaproveitando `check(name, condição, detail)`, `admin_headers`, `bol_headers` e a variável `tag` quando útil. Cobertura mínima:
+
+1. `GET /api/reports/occurrences-by-month` e `GET /api/reports/supply-consumption` sem token → `401` (anon);
+2. os mesmos dois `GET` com `bol_headers` → `200` e corpo com `total` e listas `months`/`items`;
+3. `kind=invalid` com membro → `422`;
+4. `from=2026-11-30&to=2026-11-01` nas duas rotas → `422` com a mensagem em português;
+5. ocorrências: `total` e `months[].total` no intervalo fixo iguais à contagem direta dos eventos do seed no mesmo intervalo;
+6. medicamentos/produtos: itens e `total_quantity` iguais aos valores fixos do seed da tabela acima, provando que movimentos `entrada` foram ignorados;
+7. `stock_quantity` de cada item igual ao `quantity` atual da linha correspondente em `medications`/`products`;
+8. nenhuma rota DELETE exposta em `/api/reports`, `/api/reports/occurrences-by-month` ou `/api/reports/supply-consumption`.
+
+Esqueleto ilustrativo:
+
+```python
+r = client.get("/api/reports/supply-consumption", headers=bol_headers,
+               params={"kind": "medication", "from": "2026-11-01", "to": "2026-11-30"})
+check("membro lê consumo de medicamentos -> 200", r.status_code == 200, f"{r.status_code} {r.text}")
+body = r.json()
+check("consumo bate com o seed (entrada ignorada)",
+      body.get("total_quantity") == 7.5 and len(body.get("items", [])) == 2,
+      f"{r.status_code} {r.text[:200]}")
+
+r = client.get("/api/reports/supply-consumption", headers=bol_headers,
+               params={"kind": "invalido", "from": "2026-11-01", "to": "2026-11-30"})
+check("kind inválido -> 422", r.status_code == 422, f"{r.status_code} {r.text}")
+```
+
+### Desvios registrados
+
+- **`supply_id` sem FK:** a coluna aponta para `medications` ou `products` conforme `supply_type`; uma FK única não cobriria as duas tabelas. O seed e o router garantem que o id existe na tabela correspondente.
+- **`entrada` existe mas não é consumo:** a migration registra reposição para preservar o histórico; o relatório soma somente `consumo`. Nunca inferir consumo da diferença entre estoques do B1.
+- **`total_quantity` no contrato:** é devolvido para conferência com o seed; o painel de medicamentos/produtos mostra a quantidade por item e o total em número de itens, não uma soma isolada de unidades diferentes.
+- **`stock_quantity` da tabela atual:** estoque atual é informação distinta do consumo do período; os dois números são exibidos juntos, sem conversão de unidade.
+- **Sem DELETE e sem escrita:** os relatórios são somente leitura; não há botão de excluir nem endpoint de criação/edição nesta fatia.
+
+### Antes de executar (B4)
+
+- [ ] Confirmar a branch do `TempDB` em que a API será implementada (trabalhar no projeto `TempDB`, não neste repo de front).
+- [ ] Aplicar `migrations/0008_supply_movement.sql` via Supabase MCP (`apply_migration`) ou, com `DATABASE_URL` válido no `.env`, via `.venv\Scripts\python.exe scripts\apply_migration.py 0008_supply_movement.sql` (executa em uma transação).
+- [ ] Confirmar que a migration termina com `notify pgrst, 'reload schema';` e que o schema cache recarregou (novos endpoints aparecem em `http://127.0.0.1:8000/docs`).
+- [ ] Subir a API (`.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000`) e rodar `.venv\Scripts\python.exe scripts\smoke_test.py` — incluído o bloco `[15] Relatórios (B4)` com anon 401, membro 200, `kind` inválido 422, intervalo invertido 422, contagens iguais ao seed estendido e nenhuma rota DELETE exposta.
+- [ ] Rodar `.venv\Scripts\python.exe scripts\test_seed_demo.py` e `scripts\seed_demo.py` (idempotente) após a extensão determinística do seed.
+- [ ] **Números conferidos com o seed estendido: verificação final, pendente.** Só pode ser confirmada depois que o usuário executar os passos acima; até lá o aceite fica suspenso e `B4` não deve ser marcado como concluído.
+
+### Aceite suspenso
+
+Exibir ocorrências mensais e consumo de medicamentos/produtos com números que batem com o seed estendido, recarregar e continuar vendo os mesmos valores **só pode ser verificado depois que a API do B4 for executada** no `TempDB` (ver checklist "Antes de executar (B4)"). A fatia atual de front **não marca `B4` como concluído no roadmap**: o item permanece `- [ ]` até a execução e a conferência dos números com o seed estendido.
