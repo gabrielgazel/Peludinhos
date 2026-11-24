@@ -113,7 +113,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 | Contas `*.demo@peludinhos.example` | “São contas de ensaio com senha pública, válidas só neste ambiente.” |
 | Intenção de adoção | “É uma manifestação de interesse; a equipe avalia e entra em contato por e-mail.” |
 | Insumos | “Medicamentos e produtos são listados e cadastrados na tela, com criação e edição restritas à administração; a persistência depende da execução da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`).” |
-| Termo de adoção | “É uma prévia com marca d’água; o registro definitivo está no backlog B3.” |
+| Termo de adoção | “Em uma intenção aprovada, registre a adoção, abra **Ver termo** e demonstre a impressão — lembrando que a persistência depende da API documentada em `docs/backlog/tarefas-api-tempdb.md`.” |
 | Relatórios 4–6 | “Estão marcados como Planejado: são plano do backlog, não relatório pronto.” |
 | Recuperação de senha | “A tela existe; o e-mail real de recuperação depende do servidor de e-mail e não é simulado aqui.” |
 
@@ -122,7 +122,6 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 - **`docs/pacote-entrega.pdf`** — artefato único de entrega (manual + roteiro), não rota da aplicação. Mostrar como PDF, nunca como tela.
 - **Backlog priorizado** — artefato da D5.6, ainda não existe no build.
 - **Relatórios 4–6** — apenas “Próximos relatórios” com selo **Planejado**.
-- **Prévia do termo** — tela de demonstração sinalizada na própria interface pela marca d’água **DEMONSTRAÇÃO** e pelos avisos no rodapé.
 - **Recuperação com e-mail real (D4.3)** — segue pendente de aceite; não fingir recebimento.
 
 ## Regra “falhou duas vezes sai”

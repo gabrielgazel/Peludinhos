@@ -26,13 +26,14 @@ exportação CSV. O roteiro completo, com plano B e tempos medidos, está em
 | Item | Como apresentar |
 | --- | --- |
 | Insumos (medicamentos e produtos) | Cadastro de medicamentos e produtos; persistência dependente da API (ver `docs/backlog/tarefas-api-tempdb.md`). |
-| Termo de adoção | Prévia com marca d’água; o registro definitivo está no backlog B3. |
+| Termo de adoção | Em uma intenção aprovada, **Registrar adoção** registra a adoção, **Ver termo** reabre o termo da adoção registrada e **Imprimir termo** abre a impressão; a persistência depende da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`). |
 | Relatórios 4–6 | Marcados como **Planejado**; são o backlog B4, não relatório pronto. |
 | Recuperação de senha | A tela é real, mas o envio de e-mail depende de servidor de e-mail e **não é simulado**. O teste com e-mail real (D4.3) segue pendente. |
 | Contas de demonstração | `*.demo@peludinhos.example`, senha pública `Demo@12345`, válidas somente neste ambiente. |
 
-Nada marcado como demonstração (termo e relatórios 4–6) deve ser usado como
-registro definitivo.
+Os relatórios 4–6 seguem marcados como **Planejado** e não devem ser usados como
+resultado. O registro da adoção só passa a ser definitivo depois da execução e do
+aceite da API pendente; até lá, `B3` continua desmarcado no roadmap.
 
 ## Como rodar
 
@@ -145,7 +146,9 @@ Autenticação:
 - `/painel/insumos` — medicamentos e produtos: listar, criar e editar (criar e
   editar só para administração); persistência dependente da API pendente
   (`docs/backlog/tarefas-api-tempdb.md`)
-- `/painel/intencoes` — avaliação das intenções de adoção
+- `/painel/intencoes` — avaliação das intenções de adoção; intenções aprovadas
+  permitem registrar a adoção e imprimir o termo (persistência dependente da API
+  pendente em `docs/backlog/tarefas-api-tempdb.md`)
 - `/painel/relatorios` — relatórios 1–3 reais; 4–6 como **Planejado**
 - `/painel/membros`, `/painel/membros/:id` — gestão de membros (admin)
 

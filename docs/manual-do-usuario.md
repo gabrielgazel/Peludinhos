@@ -298,10 +298,13 @@ equipe. No menu lateral, o grupo **Geral** reúne as opções abaixo.
 2. Leia o cartão do pedido: visitante, e-mail, marcas “comunidade Ufopa” e
    “já tem animal” quando aplicável, animal, data e motivação.
 3. Para decidir, clique em **Aprovar** ou **Rejeitar**.
+4. Filtre as aprovadas, clique em **Registrar adoção**, confirme e use
+   **Imprimir termo**.
 
 > **Resultado esperado:** o pedido sai da lista de pendentes após a decisão.
-> Em pedidos já aprovados, aparece **Ver termo de adoção (demo)** — veja a
-> seção 6 antes de usar esse botão.
+> Em pedidos já aprovados, aparece **Registrar adoção**; depois de registrada a
+> adoção, o mesmo cartão passa a oferecer **Ver termo**, que reabre o termo da
+> adoção registrada para conferência e impressão.
 
 ---
 
@@ -369,12 +372,15 @@ aparecer, peça acesso ao administrador.
 
 ## 6. Demonstração e pendências de API
 
-Nesta seção estão os itens que continuam como demonstração — a prévia do termo
-de adoção e os relatórios planejados — e a pendência da API de insumos. A prévia
-e os relatórios mostram como será o fluxo previsto, mas não substituem um
-registro definitivo: o termo definitivo está no backlog B3 e os relatórios 4–6
-ainda não estão prontos. A tela de insumos já usa cadastro com API, mas a
-persistência efetiva depende da API de insumos (§6.1), ainda pendente.
+Nesta seção estão os itens que continuam como demonstração — os relatórios
+planejados — e as pendências de API. O termo de adoção já é o registro real do
+fluxo: a adoção é registrada em **Intenções** e o termo salvo pode ser reaberto
+e impresso. Ainda assim, a persistência depende da API pendente em
+`docs/backlog/tarefas-api-tempdb.md`; até a execução e o aceite, `B3` continua
+desmarcado no roadmap e o termo não deve ser apresentado como registro
+definitivo. Os relatórios 4–6 também não estão prontos. A tela de insumos já usa
+cadastro com API, mas a persistência efetiva depende da API de insumos (§6.1),
+ainda pendente.
 
 ### 6.1 Insumos (medicamentos e produtos)
 
@@ -395,19 +401,23 @@ persistência efetiva depende da API de insumos (§6.1), ainda pendente.
 > `docs/backlog/tarefas-api-tempdb.md`): não apresente os dados como registro
 > definitivo antes disso.
 
-### 6.2 Termo de adoção (prévia)
+### 6.2 Termo de adoção
 
-1. Em **Intenções**, filtre as aprovadas e clique em **Ver termo de adoção
-   (demo)**.
-2. Confira os campos preenchidos: **Adotante**, **E-mail**, **Animal**,
-   **Sexo**, **Idade**, **Pelagem**, **Temperamento**, **Castrado**, **Pedido**,
-   **Data do pedido** e **Motivação**.
-3. Observe a marca d’água **DEMONSTRAÇÃO** e os avisos no rodapé.
+1. Em **Intenções**, filtre as aprovadas e, se a adoção ainda não foi
+   registrada, clique em **Registrar adoção** e confirme em **Confirmar
+   adoção**.
+2. Clique em **Ver termo** para reabrir o termo da adoção registrada e confira
+   os campos:
+   **Adotante**, **CPF**, **E-mail**, **Animal**, **Idade**, **Pelagem**,
+   **Sexo**, **Castrado**, **Temperamento**, **Pedido**, **Data da adoção**,
+   **Data do pedido**, **Responsável** e **Motivação**.
+3. Clique em **Imprimir termo** para abrir a impressão do navegador.
 
-> **Resultado esperado:** a tela mostra “Termo de adoção (prévia)” e avisa: “O
-> registro definitivo da adoção entra no backlog (B3).” e “Esta prévia não
-> altera o status da intenção e não registra a adoção.” Clicar nos botões não
-> conclui a adoção.
+> **Resultado esperado:** o termo mostra os dados reais da intenção aprovada,
+> sem marca d’água. A persistência do registro depende da API pendente em
+> `docs/backlog/tarefas-api-tempdb.md`: até a execução e o aceite, `B3` continua
+> desmarcado no roadmap e o termo não deve ser apresentado como registro
+> definitivo.
 
 ### 6.3 Relatórios planejados
 
@@ -419,17 +429,19 @@ persistência efetiva depende da API de insumos (§6.1), ainda pendente.
 > plano do backlog, não um relatório pronto.” Eles não têm números e não
 > devem ser apresentados como resultado.
 
-### 6.4 Por que existem telas demo
+### 6.4 O que mudou no termo de adoção
 
-1. Ao abrir a prévia do termo, procure a faixa amarela com o aviso de
-   demonstração e leia os avisos no rodapé.
-2. Compare com os cartões de **Relatórios** — os três primeiros têm números
-   reais; os itens de “Próximos relatórios” não.
+A antiga prévia do termo foi substituída pelo registro real da adoção: em
+**Intenções**, **Registrar adoção** registra a adoção e **Ver termo** reabre o
+termo registrado para impressão. A faixa amarela do termo deixou de existir. A
+pendência que resta é a execução da API documentada em
+`docs/backlog/tarefas-api-tempdb.md`; até o aceite, `B3` continua desmarcado no
+roadmap.
 
-> **Resultado esperado:** você consegue explicar à banca que o termo é uma
-> prévia, que o registro definitivo da adoção está no backlog e que os três
-> relatórios reais são animais por status, animais por ponto e consumo de
-> ração.
+> **Resultado esperado:** você consegue explicar à banca que o termo é o
+> registro real do fluxo, que a persistência depende da API pendente e que os
+> três relatórios reais são animais por status, animais por ponto e consumo de
+> ração. Os relatórios 4–6 continuam como **Planejado**.
 
 ### 6.5 Saúde do animal (histórico, vacinas e receitas)
 
@@ -494,9 +506,8 @@ definido em `VITE_API_URL`). Se ela não responder:
 > (como “Failed to fetch”) pode aparecer dentro da mensagem — isso significa
 > que a requisição não chegou à API.
 
-> **Atenção:** não existe um aviso global de “API fora do ar”. A única faixa
-> amarela da interface é a de **demonstração**, descrita na seção 6. Um erro de
-> carregamento não é a faixa demo.
+> **Atenção:** não existe um aviso global de “API fora do ar”. Os erros
+> aparecem dentro da própria tela, com **Tentar novamente** quando disponível.
 
 ### 7.3 Roteiro rápido de verificação
 
