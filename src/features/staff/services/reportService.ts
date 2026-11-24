@@ -116,14 +116,77 @@ export function mapSupplyConsumption(row: ApiSupplyConsumptionResponse): SupplyC
   };
 }
 
+/** Mensagens genéricas que não devem aparecer nos Alerts em português. */
+const GENERIC_ERROR_MESSAGES = new Set([
+  'bad request',
+  'error',
+  'failed to fetch',
+  'fetch failed',
+  'forbidden',
+  'internal server error',
+  'load failed',
+  'network error',
+  'networkerror',
+  'network request failed',
+  'not found',
+  'request failed',
+  'service unavailable',
+  'timeout',
+  'unauthorized',
+]);
+
+function isGenericMessage(message: string): boolean {
+  const normalized = message.trim().toLowerCase();
+  return GENERIC_ERROR_MESSAGES.has(normalized) || /^erro \d{3}$/.test(normalized);
+}
+
+/** Lê `detail` de forma defensiva, sem depender da classe HttpError. */
+function extractDetail(error: Error): string | null {
+  if (!('body' in error)) return null;
+  const body = (error as { body?: unknown }).body;
+  if (!body || typeof body !== 'object') return null;
+  const detail = (body as { detail?: unknown }).detail;
+  if (typeof detail === 'string') return detail.trim() || null;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) =>
+        item && typeof item === 'object' && 'msg' in item
+          ? String((item as { msg?: unknown }).msg ?? '')
+          : '',
+      )
+      .filter(Boolean);
+    return messages.join(' ') || null;
+  }
+  return null;
+}
+
+/** Converte falhas de rede/HTTP em mensagem pt-BR, preservando `detail` da API. */
+export function reportErrorMessage(error: unknown, fallback: string): string {
+  if (!(error instanceof Error)) return fallback;
+  const message = error.message.trim();
+  if (message && !isGenericMessage(message)) return message;
+  const detail = extractDetail(error);
+  if (detail && !isGenericMessage(detail)) return detail;
+  return fallback;
+}
+
+function withPortugueseError<T>(request: Promise<T>, fallback: string): Promise<T> {
+  return request.catch((error: unknown) => {
+    throw new Error(reportErrorMessage(error, fallback));
+  });
+}
+
 export const reportService = {
   getOccurrencesByMonth: (period: ReportPeriod) => {
     const query = new URLSearchParams();
     query.set('from', period.from);
     query.set('to', period.to);
-    return httpClient
-      .get<ApiOccurrencesResponse>(withQuery('/reports/occurrences-by-month', query))
-      .then(mapOccurrences);
+    return withPortugueseError(
+      httpClient
+        .get<ApiOccurrencesResponse>(withQuery('/reports/occurrences-by-month', query))
+        .then(mapOccurrences),
+      'Não foi possível carregar as ocorrências.',
+    );
   },
 
   getSupplyConsumption: (period: ReportPeriod & { kind: SupplyKind }) => {
@@ -131,8 +194,13 @@ export const reportService = {
     query.set('kind', period.kind);
     query.set('from', period.from);
     query.set('to', period.to);
-    return httpClient
-      .get<ApiSupplyConsumptionResponse>(withQuery('/reports/supply-consumption', query))
-      .then(mapSupplyConsumption);
+    return withPortugueseError(
+      httpClient
+        .get<ApiSupplyConsumptionResponse>(withQuery('/reports/supply-consumption', query))
+        .then(mapSupplyConsumption),
+      period.kind === 'medication'
+        ? 'Não foi possível carregar os medicamentos.'
+        : 'Não foi possível carregar os produtos.',
+    );
   },
 };

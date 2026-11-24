@@ -154,4 +154,57 @@ describe('reportService', () => {
       ],
     });
   });
+
+  it('traduz erro 404 da API para o fallback das ocorrências', async () => {
+    vi.mocked(httpClient.get).mockRejectedValue(
+      Object.assign(new Error('Not Found'), {
+        status: 404,
+        body: { detail: 'Not Found' },
+      }),
+    );
+
+    await expect(
+      reportService.getOccurrencesByMonth({ from: '2026-11-01', to: '2026-11-30' }),
+    ).rejects.toThrow('Não foi possível carregar as ocorrências.');
+  });
+
+  it('traduz falha de rede para o fallback dos medicamentos', async () => {
+    vi.mocked(httpClient.get).mockRejectedValue(new Error('Failed to fetch'));
+
+    await expect(
+      reportService.getSupplyConsumption({
+        kind: 'medication',
+        from: '2026-11-01',
+        to: '2026-11-30',
+      }),
+    ).rejects.toThrow('Não foi possível carregar os medicamentos.');
+  });
+
+  it('traduz erro 404 da API para o fallback dos produtos', async () => {
+    vi.mocked(httpClient.get).mockRejectedValue(
+      Object.assign(new Error('Not Found'), {
+        status: 404,
+        body: { detail: 'Not Found' },
+      }),
+    );
+
+    await expect(
+      reportService.getSupplyConsumption({
+        kind: 'product',
+        from: '2026-11-01',
+        to: '2026-11-30',
+      }),
+    ).rejects.toThrow('Não foi possível carregar os produtos.');
+  });
+
+  it('preserva detail em português devolvido pela API', async () => {
+    const detail = 'Intervalo inválido: data inicial não pode ser posterior à data final.';
+    vi.mocked(httpClient.get).mockRejectedValue(
+      Object.assign(new Error(detail), { status: 422, body: { detail } }),
+    );
+
+    await expect(
+      reportService.getOccurrencesByMonth({ from: '2026-11-30', to: '2026-11-01' }),
+    ).rejects.toThrow(detail);
+  });
 });

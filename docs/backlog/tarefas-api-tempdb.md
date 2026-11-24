@@ -1011,10 +1011,10 @@ class SupplyConsumptionItemOut(BaseModel):
     supply_id: int
     name: str
     type: str
-    quantity: float
+    quantity: float  # soma de quantity dos movimentos 'consumo' no período (exibido como "Consumo")
     unit: str
     point: str
-    stock_quantity: float
+    stock_quantity: float  # quantity atual da linha em medications/products; nunca o consumo
 
 
 class SupplyConsumptionOut(BaseModel):
@@ -1043,7 +1043,8 @@ Criar `router = APIRouter(prefix="/api/reports", tags=["reports"])` com duas rot
 - `response_model=SupplyConsumptionOut`, `_member: CurrentUser = Depends(require_member)`.
 - Query params: `kind: Literal["medication", "product"]`, `from_: date = Query(alias="from")` e `to: date`. `kind` fora de `medication|product` → `422` pela validação do FastAPI; `from_ > to` → `422` com a mesma mensagem da rota de ocorrências.
 - Buscar em `public.supply_movement` com `.eq("supply_type", kind)`, `.eq("movement_kind", "consumo")`, `.gte("movement_date", from_.isoformat())` e `.lte("movement_date", to.isoformat())`: movimentos `entrada` **nunca** entram na soma.
-- Agrupar por `supply_id`, somar `quantity` em `total_quantity` por item e em `total_quantity` da resposta. Para cada item, ler `name`, `type`, `quantity` (como `stock_quantity`), `unit` e `point` da tabela atual (`medications` quando `kind=medication`; `products` quando `kind=product`), usando `medication_id`/`product_id` conforme o caso. `point` na resposta é o da tabela atual; o `point` do movimento fica como auditoria na `0008`.
+- Agrupar os movimentos `consumo` por `supply_id` e preencher `items[].quantity` com a soma de `quantity` desses movimentos no período: é esse valor que o front exibe como "Consumo". `total_quantity` da resposta é a soma dos `items[].quantity` (consumos), nunca de estoques. Movimentos `entrada` continuam fora do relatório.
+- Para cada `supply_id`, `items[].stock_quantity` é o `quantity` da linha atual de `medications` (quando `kind=medication`) ou `products` (quando `kind=product`), localizada por `medication_id`/`product_id` conforme o caso. `name`, `type`, `unit` e `point` também vêm dessa linha atual; o `point` do movimento fica apenas como auditoria na `0008`. Nunca usar o estoque atual em `items[].quantity` nem o consumo em `items[].stock_quantity`.
 - Ordenar itens por `quantity` decrescente, com desempate por `supply_id` crescente. Ecoar `kind`, `from` e `to` na resposta.
 - Todas as mensagens de erro em português. **Não registrar rota DELETE nem rota de escrita** neste router.
 
@@ -1095,7 +1096,7 @@ Inserir um bloco `[15] Relatórios (B4)` antes do bloco atual `[14] Sessão` (re
 3. `kind=invalid` com membro → `422`;
 4. `from=2026-11-30&to=2026-11-01` nas duas rotas → `422` com a mensagem em português;
 5. ocorrências: `total` e `months[].total` no intervalo fixo iguais à contagem direta dos eventos do seed no mesmo intervalo;
-6. medicamentos/produtos: itens e `total_quantity` iguais aos valores fixos do seed da tabela acima, provando que movimentos `entrada` foram ignorados;
+6. medicamentos/produtos: `total_quantity` **7,50** em medicamentos e **3,00** em produtos. Verificar também o consumo por item, na ordem esperada: medicamento `supply_id=2` com `quantity` **4,00**, medicamento `supply_id=1` com `quantity` **3,5** (2,00 + 1,50) e produto `supply_id=1` com `quantity` **3,00**. Esses valores são consumos, não `stock_quantity`; o movimento `entrada` de 10,00 foi ignorado;
 7. `stock_quantity` de cada item igual ao `quantity` atual da linha correspondente em `medications`/`products`;
 8. nenhuma rota DELETE exposta em `/api/reports`, `/api/reports/occurrences-by-month` ou `/api/reports/supply-consumption`.
 
@@ -1108,6 +1109,20 @@ check("membro lê consumo de medicamentos -> 200", r.status_code == 200, f"{r.st
 body = r.json()
 check("consumo bate com o seed (entrada ignorada)",
       body.get("total_quantity") == 7.5 and len(body.get("items", [])) == 2,
+      f"{r.status_code} {r.text[:200]}")
+check("quantidade por item é consumo, não estoque",
+      [(item["supply_id"], item["quantity"]) for item in body.get("items", [])]
+      == [(2, 4.0), (1, 3.5)],
+      f"{r.status_code} {r.text[:200]}")
+
+r = client.get("/api/reports/supply-consumption", headers=bol_headers,
+               params={"kind": "product", "from": "2026-11-01", "to": "2026-11-30"})
+check("membro lê consumo de produtos -> 200", r.status_code == 200, f"{r.status_code} {r.text}")
+body = r.json()
+check("total e quantidade por item batem com o seed",
+      body.get("total_quantity") == 3.0
+      and [(item["supply_id"], item["quantity"]) for item in body.get("items", [])]
+      == [(1, 3.0)],
       f"{r.status_code} {r.text[:200]}")
 
 r = client.get("/api/reports/supply-consumption", headers=bol_headers,
