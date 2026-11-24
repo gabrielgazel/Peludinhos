@@ -5,10 +5,21 @@ import { HttpError } from '../../../shared/api/httpsClient';
 import { formatDateTime } from '../../../shared/utils/format';
 import type { AdoptionIntent, IntentAnimal, IntentVisitor } from '../../adoption/types/adoption.types';
 import { adoptionService } from '../../adoption/services/adoptionService';
+import { adoptionRecordService } from '../../adoption/services/adoptionRecordService';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { buildAdoptionTerm } from '../utils/adoptionTerm';
 import { IntentsAdminPage } from './IntentsAdminPage';
 
 vi.mock('../../adoption/services/adoptionService', () => ({
   adoptionService: { list: vi.fn(), review: vi.fn() },
+}));
+
+vi.mock('../../adoption/services/adoptionRecordService', () => ({
+  adoptionRecordService: { create: vi.fn() },
+}));
+
+vi.mock('../../auth/hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({ user: null })),
 }));
 
 function makeVisitor(partial: Partial<IntentVisitor> & { id: number; name: string }): IntentVisitor {
@@ -140,7 +151,26 @@ const cancelada = makeIntent({
   animal: pipoca,
 });
 
-const fixtures = [pendenteCompleta, pendenteFallback, aprovada, rejeitada, cancelada];
+const registered = makeIntent({
+  id: 6,
+  motivation: 'Motivação registrada.',
+  status: 'aprovada',
+  animalId: 6,
+  visitorId: 11,
+  adoption: {
+    id: 21,
+    adoptionIntentId: 6,
+    animalId: 6,
+    visitorId: 11,
+    responsibleMemberId: 7,
+    adoptionDate: '2026-11-20',
+    termText: 'Termo registrado.',
+    createdAt: null,
+    updatedAt: null,
+  },
+});
+
+const fixtures = [pendenteCompleta, pendenteFallback, aprovada, rejeitada, cancelada, registered];
 
 function page(items: AdoptionIntent[]) {
   return { items, total: items.length, limit: 200, offset: 0 };
@@ -162,6 +192,12 @@ function setupList(items: AdoptionIntent[] = fixtures) {
   });
 }
 
+function mockMember(memberId: number | null) {
+  vi.mocked(useAuth).mockReturnValue({
+    user: { memberId },
+  } as unknown as ReturnType<typeof useAuth>);
+}
+
 async function articleByMotivation(motivation: string) {
   await screen.findByText(motivation);
   const article = screen.getByText(motivation).closest('article');
@@ -173,11 +209,13 @@ describe('IntentsAdminPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupList();
+    vi.setSystemTime(new Date('2026-11-23T12:00:00Z'));
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    vi.useRealTimers();
   });
 
   it('busca com status pendente e limit 200 no início', async () => {
@@ -291,53 +329,142 @@ describe('IntentsAdminPage', () => {
     }
   });
 
-  it('oferece Ver termo de adoção (demo) só para intenções aprovadas', async () => {
+  it('oferece Registrar adoção só para aprovadas sem adoção e Ver termo para registradas', async () => {
+    mockMember(7);
     renderPage();
 
     const aprovadaArticle = await articleByMotivation(aprovada.motivation);
-    const button = within(aprovadaArticle).getByRole('button', {
-      name: 'Ver termo de adoção (demo)',
+    const registrarButton = within(aprovadaArticle).getByRole('button', {
+      name: 'Registrar adoção',
     });
-    expect(button).toHaveAttribute('aria-expanded', 'false');
-    expect(button).toHaveAttribute('aria-controls', `termo-demo-${aprovada.id}`);
+    expect(registrarButton).toBeInTheDocument();
+    expect(registrarButton).toBeEnabled();
+    expect(
+      within(aprovadaArticle).queryByRole('button', { name: 'Ver termo' }),
+    ).not.toBeInTheDocument();
+
+    const registeredArticle = await articleByMotivation(registered.motivation);
+    expect(
+      within(registeredArticle).getByRole('button', { name: 'Ver termo' }),
+    ).toBeInTheDocument();
+    expect(
+      within(registeredArticle).queryByRole('button', { name: 'Registrar adoção' }),
+    ).not.toBeInTheDocument();
 
     for (const other of [pendenteCompleta, rejeitada, cancelada]) {
       const article = await articleByMotivation(other.motivation);
       expect(
-        within(article).queryByRole('button', { name: /termo de adoção/i }),
+        within(article).queryByRole('button', { name: 'Registrar adoção' }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(article).queryByRole('button', { name: 'Ver termo' }),
       ).not.toBeInTheDocument();
     }
+
+    expect(screen.queryByText(/DEMONSTRAÇÃO/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Dados de demonstração/i)).not.toBeInTheDocument();
   });
 
-  it('abre o termo com os dados da intenção aprovada sem escrever nem recarregar', async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
+  it('reabre o termo gravado sem registrar de novo', async () => {
+    mockMember(null);
     renderPage();
 
-    const aprovadaArticle = await articleByMotivation(aprovada.motivation);
+    const registeredArticle = await articleByMotivation(registered.motivation);
+    fireEvent.click(
+      within(registeredArticle).getByRole('button', { name: 'Ver termo' }),
+    );
+
+    const panel = await screen.findByRole('region', { name: /Termo de adoção/i });
+    expect(within(panel).getByText('Termo registrado.')).toBeInTheDocument();
+    expect(within(panel).getByText('20/11/2026')).toBeInTheDocument();
+    expect(within(panel).getByText('Membro #7')).toBeInTheDocument();
+
+    expect(vi.mocked(adoptionRecordService.create)).not.toHaveBeenCalled();
+    expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
+  });
+
+  it('pede confirmação e registra com payload camelCase', async () => {
+    mockMember(7);
+    renderPage();
+
+    const article = await articleByMotivation(aprovada.motivation);
     await waitFor(() => {
       expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
     });
 
-    fireEvent.click(
-      within(aprovadaArticle).getByRole('button', { name: 'Ver termo de adoção (demo)' }),
+    fireEvent.click(within(article).getByRole('button', { name: 'Registrar adoção' }));
+
+    const confirmButton = await screen.findByRole('button', { name: 'Confirmar adoção' });
+    expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument();
+    expect(vi.mocked(adoptionRecordService.create)).not.toHaveBeenCalled();
+
+    fireEvent.click(confirmButton);
+
+    const hoje = '2026-11-23';
+    await waitFor(() => {
+      expect(vi.mocked(adoptionRecordService.create)).toHaveBeenCalledWith({
+        adoptionIntentId: 3,
+        responsibleMemberId: 7,
+        adoptionDate: hoje,
+        termText: buildAdoptionTerm(aprovada, 7, hoje),
+      });
+    });
+    await waitFor(() => {
+      expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('não registra sem membro vinculado', async () => {
+    mockMember(null);
+    renderPage();
+
+    const aprovadaArticle = await articleByMotivation(aprovada.motivation);
+    const registrarButton = within(aprovadaArticle).getByRole('button', {
+      name: 'Registrar adoção',
+    });
+    expect(registrarButton).toBeDisabled();
+    expect(
+      within(aprovadaArticle).getByText(
+        'É necessário vínculo com membro para registrar a adoção.',
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(registrarButton);
+    expect(vi.mocked(adoptionRecordService.create)).not.toHaveBeenCalled();
+  });
+
+  it('mostra erro do service sem registrar', async () => {
+    mockMember(7);
+    vi.mocked(adoptionRecordService.create).mockRejectedValueOnce(
+      new HttpError(409, 'Animal já adotado.', null),
     );
 
-    const panel = await screen.findByRole('region', { name: /Termo de adoção/i });
-    expect(within(panel).getByText('Bruno Visitante')).toBeInTheDocument();
-    expect(within(panel).getByText('Thor')).toBeInTheDocument();
-    expect(within(panel).getByText('DEMONSTRAÇÃO')).toBeInTheDocument();
-    expect(
-      within(panel).getByText('Dados de demonstração - esta área ainda não persiste no banco'),
-    ).toBeInTheDocument();
-    expect(within(panel).getByText(/backlog \(B3\)/i)).toBeInTheDocument();
+    renderPage();
 
-    expect(within(aprovadaArticle).getByRole('button', {
-      name: 'Ver termo de adoção (demo)',
-    })).toHaveAttribute('aria-expanded', 'true');
-    expect(vi.mocked(adoptionService.review)).not.toHaveBeenCalled();
+    const article = await articleByMotivation(aprovada.motivation);
+    fireEvent.click(within(article).getByRole('button', { name: 'Registrar adoção' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Confirmar adoção' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Animal já adotado.');
     expect(vi.mocked(adoptionService.list)).toHaveBeenCalledTimes(1);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(
+      within(article).queryByRole('button', { name: 'Ver termo' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('imprime o termo chamando window.print', async () => {
+    mockMember(7);
+    const printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+    renderPage();
+
+    const registeredArticle = await articleByMotivation(registered.motivation);
+    fireEvent.click(
+      within(registeredArticle).getByRole('button', { name: 'Ver termo' }),
+    );
+    await screen.findByRole('region', { name: /Termo de adoção/i });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Imprimir termo' }));
+    expect(printSpy).toHaveBeenCalledTimes(1);
   });
 
   it('clicar Aprovar chama review com aprovada e refaz a busca via reload', async () => {

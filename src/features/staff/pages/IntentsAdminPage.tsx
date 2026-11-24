@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adoptionService } from '../../adoption/services/adoptionService';
-import type { IntentStatus } from '../../adoption/types/adoption.types';
+import { adoptionRecordService } from '../../adoption/services/adoptionRecordService';
+import type { AdoptionIntent, IntentStatus } from '../../adoption/types/adoption.types';
 import { HttpError } from '../../../shared/api/httpsClient';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { SelectField } from '../../../shared/components/SelectField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { formatDateTime } from '../../../shared/utils/format';
+import { buildAdoptionTerm } from '../utils/adoptionTerm';
+import { AdoptionTermPanel } from '../components/AdoptionTermPanel';
 import {
   INTENT_STATUS_LABEL,
   INTENT_STATUS_OPTIONS,
@@ -16,7 +20,6 @@ import { Panel } from '../components/Panel';
 import { Alert } from '../components/Alert';
 import { EmptyState } from '../components/EmptyState';
 import { StatusBadge } from '../components/StatusBadge';
-import { AdoptionTermDemoPanel } from '../components/AdoptionTermDemoPanel';
 
 type StatusFilter = 'todas' | IntentStatus;
 
@@ -26,11 +29,15 @@ const FILTER_OPTIONS = [
 ];
 
 export function IntentsAdminPage() {
+  const { user } = useAuth();
+  const responsibleMemberId = user?.memberId ?? null;
   const [status, setStatus] = useState<StatusFilter>('pendente');
   const [actionError, setActionError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
-  /** ID da intenção cuja prévia do termo está aberta (somente leitura). */
+  /** ID da intenção com o termo aberto (somente leitura). */
   const [openTermId, setOpenTermId] = useState<number | null>(null);
+  /** ID da intenção em confirmação de adoção. */
+  const [confirmingId, setConfirmingId] = useState<number | null>(null);
 
   const { data, loading, error, reload } = useAsyncData(
     () =>
@@ -54,6 +61,32 @@ export function IntentsAdminPage() {
           ? err.message
           : 'Não foi possível avaliar a intenção.';
       setActionError(message);
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function handleRegister(intent: AdoptionIntent) {
+    if (responsibleMemberId === null) return;
+    setActionError(null);
+    setBusyId(intent.id);
+    const adoptionDate = new Date().toISOString().slice(0, 10);
+    try {
+      await adoptionRecordService.create({
+        adoptionIntentId: intent.id,
+        responsibleMemberId,
+        adoptionDate,
+        termText: buildAdoptionTerm(intent, responsibleMemberId, adoptionDate),
+      });
+      setConfirmingId(null);
+      setOpenTermId(null);
+      reload();
+    } catch (err) {
+      setActionError(
+        err instanceof HttpError
+          ? err.message
+          : 'Não foi possível registrar a adoção.',
+      );
     } finally {
       setBusyId(null);
     }
@@ -142,23 +175,68 @@ export function IntentsAdminPage() {
                   </div>
                 )}
 
-                {intent.status === 'aprovada' && (
-                  <>
+                {intent.status === 'aprovada' &&
+                  (intent.adoption ? (
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
                         aria-expanded={openTermId === intent.id}
-                        aria-controls={`termo-demo-${intent.id}`}
+                        aria-controls={`termo-${intent.id}`}
                         onClick={() =>
                           setOpenTermId((current) => (current === intent.id ? null : intent.id))
                         }
                       >
-                        Ver termo de adoção (demo)
+                        Ver termo
                       </button>
                     </div>
-                    {openTermId === intent.id && <AdoptionTermDemoPanel intent={intent} />}
-                  </>
+                  ) : (
+                    <div className="space-y-3">
+                      {responsibleMemberId === null && (
+                        <Alert variant="info">
+                          É necessário vínculo com membro para registrar a adoção.
+                        </Alert>
+                      )}
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                          disabled={responsibleMemberId === null}
+                          onClick={() => setConfirmingId(intent.id)}
+                        >
+                          Registrar adoção
+                        </button>
+                      </div>
+                      {confirmingId === intent.id && (
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                            disabled={busyId === intent.id}
+                            onClick={() => void handleRegister(intent)}
+                          >
+                            Confirmar adoção
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex min-h-11 items-center rounded-xl border border-staff-line px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none"
+                            onClick={() => setConfirmingId(null)}
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                {intent.adoption && openTermId === intent.id && (
+                  <AdoptionTermPanel
+                    intent={intent}
+                    adoptionDate={intent.adoption.adoptionDate}
+                    responsibleMemberId={intent.adoption.responsibleMemberId}
+                    termText={intent.adoption.termText}
+                    onPrint={() => window.print()}
+                  />
                 )}
               </article>
             ))}
