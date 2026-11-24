@@ -12,6 +12,12 @@ import {
   type FeedingPointAnimal,
 } from '../services/feedingPointService';
 import { foodService, type Food, type FoodMovement } from '../services/foodService';
+import {
+  reportService,
+  type OccurrencesByMonth,
+  type SupplyConsumption,
+  type SupplyKind,
+} from '../services/reportService';
 import { downloadCsv } from '../utils/csv';
 import { ReportsPage } from './ReportsPage';
 
@@ -24,6 +30,9 @@ vi.mock('../services/feedingPointService', () => ({
 }));
 vi.mock('../services/foodService', () => ({
   foodService: { list: vi.fn(), listAllMovements: vi.fn() },
+}));
+vi.mock('../services/reportService', () => ({
+  reportService: { getOccurrencesByMonth: vi.fn(), getSupplyConsumption: vi.fn() },
 }));
 // Mantém o gerador puro real e substitui só o efeito de download no navegador.
 vi.mock('../utils/csv', async (importActual) => {
@@ -148,6 +157,92 @@ const movimentacoes = [
 
 const racoes = [makeFood(1, 'Ração premium'), makeFood(2, 'Ração de gato')];
 
+// Mês atual com duas ocorrências recentes e mês de 35 dias atrás com uma;
+// o item antigo fica na fronteira do período padrão de 30 dias.
+const ocorrencias: OccurrencesByMonth = {
+  total: 3,
+  months: [
+    {
+      month: isoDaysAgo(0).slice(0, 7),
+      total: 2,
+      items: [
+        {
+          id: 1,
+          animalId: 1,
+          animalName: 'Mel',
+          description: 'Vacina aplicada',
+          eventDate: isoDaysAgo(0),
+          memberName: 'Maria Silva',
+        },
+        {
+          id: 2,
+          animalId: 2,
+          animalName: 'Thor',
+          description: 'Visita de rotina',
+          eventDate: isoDaysAgo(1),
+          memberName: 'Maria Silva',
+        },
+      ],
+    },
+    {
+      month: isoDaysAgo(35).slice(0, 7),
+      total: 1,
+      items: [
+        {
+          id: 3,
+          animalId: 3,
+          animalName: 'Nina',
+          description: 'Exame clínico',
+          eventDate: isoDaysAgo(29),
+          memberName: 'Maria Silva',
+        },
+      ],
+    },
+  ],
+};
+
+const medicamentos: SupplyConsumption = {
+  kind: 'medication',
+  from: isoDaysAgo(29),
+  to: isoDaysAgo(0),
+  totalQuantity: 8,
+  items: [
+    {
+      supplyId: 1,
+      name: 'Dipirona',
+      type: 'medicamento',
+      quantity: 8,
+      unit: 'comprimidos',
+      point: 'Bloco A',
+      stockQuantity: 24,
+    },
+  ],
+};
+
+const produtos: SupplyConsumption = {
+  kind: 'product',
+  from: isoDaysAgo(29),
+  to: isoDaysAgo(0),
+  totalQuantity: 5,
+  items: [
+    {
+      supplyId: 2,
+      name: 'Papel higiênico',
+      type: 'produto',
+      quantity: 5,
+      unit: 'unidades',
+      point: 'Biblioteca',
+      stockQuantity: 20,
+    },
+  ],
+};
+
+/** Data do movimento de cada insumo, para o mock recortar como a API faz. */
+const supplyDate: Record<SupplyKind, string> = {
+  medication: isoDaysAgo(20),
+  product: isoDaysAgo(10),
+};
+
 function pageOf<T>(items: T[]) {
   return { items, total: items.length, limit: 200, offset: 0 };
 }
@@ -186,6 +281,24 @@ function setup() {
     limit: 200,
     offset: 0,
   }));
+  vi.mocked(reportService.getOccurrencesByMonth).mockImplementation(async ({ from, to }) => {
+    const months = ocorrencias.months
+      .map((month) => ({
+        ...month,
+        items: month.items.filter(
+          (item) => (!from || item.eventDate >= from) && (!to || item.eventDate <= to),
+        ),
+      }))
+      .filter((month) => month.items.length > 0)
+      .map((month) => ({ ...month, total: month.items.length }));
+    return { total: months.reduce((sum, month) => sum + month.total, 0), months };
+  });
+  vi.mocked(reportService.getSupplyConsumption).mockImplementation(async ({ kind, from, to }) => {
+    const report = kind === 'medication' ? medicamentos : produtos;
+    const outside = (from && supplyDate[kind] < from) || (to && supplyDate[kind] > to);
+    if (outside) return { ...report, from, to, totalQuantity: 0, items: [] };
+    return { ...report, from, to };
+  });
 }
 
 function rowText(region: HTMLElement, label: string): string {
@@ -199,6 +312,21 @@ function rowText(region: HTMLElement, label: string): string {
 function lastMovementParams() {
   const params = vi.mocked(foodService.listAllMovements).mock.calls.at(-1)?.[0];
   if (!params) throw new Error('listAllMovements não foi chamado');
+  return params;
+}
+
+function lastOccurrenceParams() {
+  const params = vi.mocked(reportService.getOccurrencesByMonth).mock.calls.at(-1)?.[0];
+  if (!params) throw new Error('getOccurrencesByMonth não foi chamado');
+  return params;
+}
+
+function lastSupplyParams(kind: SupplyKind) {
+  const params = vi
+    .mocked(reportService.getSupplyConsumption)
+    .mock.calls.filter(([call]) => call.kind === kind)
+    .at(-1)?.[0];
+  if (!params) throw new Error(`getSupplyConsumption(${kind}) não foi chamado`);
   return params;
 }
 
@@ -431,53 +559,219 @@ describe('ReportsPage', () => {
     expect(content).toContain('Total;;11,5');
   });
 
-  it('mostra os três próximos relatórios com o que falta e a estimativa do backlog', async () => {
+  it('mostra os três relatórios novos com totais da API', async () => {
     renderPage();
-    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
 
-    const titles = within(region).getAllByRole('heading', { level: 3 });
-    expect(titles.map((title) => title.textContent)).toEqual([
-      'Ocorrências mensais',
-      'Medicamentos',
-      'Produtos',
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    expect(await within(occurrences).findByText('3 ocorrências')).toBeInTheDocument();
+    expect(rowText(occurrences, monthLabelOf(isoDaysAgo(0)))).toContain('2 ocorrências');
+
+    const medications = await screen.findByRole('region', { name: /Medicamentos/i });
+    expect(await within(medications).findByText('1 item')).toBeInTheDocument();
+    expect(rowText(medications, 'Dipirona')).toContain('8 comprimidos');
+
+    const products = await screen.findByRole('region', { name: /Produtos/i });
+    expect(await within(products).findByText('1 item')).toBeInTheDocument();
+    expect(rowText(products, 'Papel higiênico')).toContain('5 unidades');
+
+    expect(screen.queryByRole('region', { name: /Próximos relatórios/i })).not.toBeInTheDocument();
+  });
+
+  it('aplica o período padrão e recarrega os três ao trocar', async () => {
+    renderPage();
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    await within(occurrences).findByText('3 ocorrências');
+
+    expect(lastOccurrenceParams()).toEqual({ from: isoDaysAgo(29), to: isoDaysAgo(0) });
+    expect(lastSupplyParams('medication')).toEqual({
+      kind: 'medication',
+      from: isoDaysAgo(29),
+      to: isoDaysAgo(0),
+    });
+    expect(lastSupplyParams('product')).toEqual({
+      kind: 'product',
+      from: isoDaysAgo(29),
+      to: isoDaysAgo(0),
+    });
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Período' }), {
+      target: { value: '7' },
+    });
+
+    await waitFor(() => {
+      expect(within(occurrences).queryByText(monthLabelOf(isoDaysAgo(35)))).not.toBeInTheDocument();
+    });
+    expect(lastOccurrenceParams()).toEqual({ from: isoDaysAgo(6), to: isoDaysAgo(0) });
+    expect(lastSupplyParams('medication')).toEqual({
+      kind: 'medication',
+      from: isoDaysAgo(6),
+      to: isoDaysAgo(0),
+    });
+    expect(lastSupplyParams('product')).toEqual({
+      kind: 'product',
+      from: isoDaysAgo(6),
+      to: isoDaysAgo(0),
+    });
+  });
+
+  it('propaga intervalo personalizado aos três', async () => {
+    renderPage();
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    await within(occurrences).findByText('3 ocorrências');
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Período' }), {
+      target: { value: 'custom' },
+    });
+    fireEvent.change(await screen.findByLabelText('Data inicial'), {
+      target: { value: isoDaysAgo(6) },
+    });
+    fireEvent.change(await screen.findByLabelText('Data final'), {
+      target: { value: isoDaysAgo(0) },
+    });
+
+    await waitFor(() => {
+      expect(lastOccurrenceParams()).toEqual({ from: isoDaysAgo(6), to: isoDaysAgo(0) });
+      expect(lastSupplyParams('medication')).toMatchObject({
+        from: isoDaysAgo(6),
+        to: isoDaysAgo(0),
+      });
+      expect(lastSupplyParams('product')).toMatchObject({
+        from: isoDaysAgo(6),
+        to: isoDaysAgo(0),
+      });
+    });
+    await waitFor(() => {
+      expect(within(occurrences).queryByText(monthLabelOf(isoDaysAgo(35)))).not.toBeInTheDocument();
+    });
+  });
+
+  it('não recarrega os novos painéis com intervalo invertido', async () => {
+    renderPage();
+    await screen.findByText('11,5 kg');
+    await screen.findByText('3 ocorrências');
+    const callsBefore = {
+      occurrences: vi.mocked(reportService.getOccurrencesByMonth).mock.calls.length,
+      medication: vi
+        .mocked(reportService.getSupplyConsumption)
+        .mock.calls.filter(([params]) => params.kind === 'medication').length,
+      product: vi
+        .mocked(reportService.getSupplyConsumption)
+        .mock.calls.filter(([params]) => params.kind === 'product').length,
+    };
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Período' }), {
+      target: { value: 'custom' },
+    });
+    fireEvent.change(await screen.findByLabelText('Data inicial'), {
+      target: { value: isoDaysAgo(1) },
+    });
+    fireEvent.change(await screen.findByLabelText('Data final'), {
+      target: { value: isoDaysAgo(5) },
+    });
+
+    expect(
+      await screen.findByText('A data inicial não pode ser posterior à data final.'),
+    ).toBeInTheDocument();
+    expect(vi.mocked(reportService.getOccurrencesByMonth).mock.calls).toHaveLength(
+      callsBefore.occurrences,
+    );
+    expect(
+      vi
+        .mocked(reportService.getSupplyConsumption)
+        .mock.calls.filter(([params]) => params.kind === 'medication'),
+    ).toHaveLength(callsBefore.medication);
+    expect(
+      vi
+        .mocked(reportService.getSupplyConsumption)
+        .mock.calls.filter(([params]) => params.kind === 'product'),
+    ).toHaveLength(callsBefore.product);
+  });
+
+  it('isolamento de erro por painel', async () => {
+    vi.mocked(reportService.getOccurrencesByMonth).mockRejectedValue(
+      new Error('Falha ao carregar ocorrências.'),
+    );
+
+    renderPage();
+
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    expect(await within(occurrences).findByRole('alert')).toHaveTextContent(
+      'Falha ao carregar ocorrências.',
+    );
+    expect(within(occurrences).queryByText('3 ocorrências')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('alert')).toHaveLength(1);
+
+    const medications = await screen.findByRole('region', { name: /Medicamentos/i });
+    expect(await within(medications).findByText('1 item')).toBeInTheDocument();
+    const products = await screen.findByRole('region', { name: /Produtos/i });
+    expect(await within(products).findByText('1 item')).toBeInTheDocument();
+    expect(await screen.findByText('6 animais')).toBeInTheDocument();
+    expect(await screen.findByText('4 vínculos')).toBeInTheDocument();
+    expect(await screen.findByText('11,5 kg')).toBeInTheDocument();
+  });
+
+  it('estados vazios específicos dos novos painéis', async () => {
+    vi.mocked(reportService.getOccurrencesByMonth).mockResolvedValue({ total: 0, months: [] });
+    vi.mocked(reportService.getSupplyConsumption).mockImplementation(
+      async ({ kind, from, to }) => ({ kind, from, to, totalQuantity: 0, items: [] }),
+    );
+
+    renderPage();
+
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    expect(
+      await within(occurrences).findByText('Nenhuma ocorrência no período.'),
+    ).toBeInTheDocument();
+    const medications = await screen.findByRole('region', { name: /Medicamentos/i });
+    expect(
+      await within(medications).findByText('Nenhum medicamento consumido no período.'),
+    ).toBeInTheDocument();
+    const products = await screen.findByRole('region', { name: /Produtos/i });
+    expect(
+      await within(products).findByText('Nenhum produto consumido no período.'),
+    ).toBeInTheDocument();
+  });
+
+  it('exporta CSV dos três painéis novos', async () => {
+    renderPage();
+    const occurrences = await screen.findByRole('region', { name: /Ocorrências mensais/i });
+    await within(occurrences).findByText('3 ocorrências');
+
+    fireEvent.click(within(occurrences).getByRole('button', { name: /Exportar CSV/i }));
+    const medications = screen.getByRole('region', { name: /Medicamentos/i });
+    fireEvent.click(within(medications).getByRole('button', { name: /Exportar CSV/i }));
+    const products = screen.getByRole('region', { name: /Produtos/i });
+    fireEvent.click(within(products).getByRole('button', { name: /Exportar CSV/i }));
+
+    expect(downloadCsv).toHaveBeenCalledTimes(3);
+    const [occurrencesFile, occurrencesCsv] = vi.mocked(downloadCsv).mock.calls[0];
+    expect(occurrencesFile).toMatch(/^relatorio-ocorrencias-mensais-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(occurrencesCsv.startsWith('\uFEFF')).toBe(true);
+    expect(occurrencesCsv).toContain('Mês;Data;Animal;Descrição;Autor');
+    expect(occurrencesCsv).toContain('Vacina aplicada');
+    expect(occurrencesCsv).toContain('\r\n');
+
+    const [medicationsFile, medicationsCsv] = vi.mocked(downloadCsv).mock.calls[1];
+    expect(medicationsFile).toMatch(/^relatorio-medicamentos-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(medicationsCsv).toContain('Item;Tipo;Consumo;Unidade;Ponto;Estoque atual');
+    expect(medicationsCsv).toContain('Dipirona;medicamento;8;comprimidos;Bloco A;24');
+
+    const [productsFile, productsCsv] = vi.mocked(downloadCsv).mock.calls[2];
+    expect(productsFile).toMatch(/^relatorio-produtos-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(productsCsv).toContain('Papel higiênico;produto;5;unidades;Biblioteca;20');
+  });
+
+  it('não oferece exclusão nos novos painéis', async () => {
+    renderPage();
+    const regions = await Promise.all([
+      screen.findByRole('region', { name: /Ocorrências mensais/i }),
+      screen.findByRole('region', { name: /Medicamentos/i }),
+      screen.findByRole('region', { name: /Produtos/i }),
     ]);
 
-    const items = within(region).getAllByRole('listitem');
-    expect(items).toHaveLength(3);
-    for (const item of items) {
-      expect(item.className).toContain('border-dashed');
-      expect(within(item).getByText(/planejado/i)).toBeInTheDocument();
-      expect(within(item).getByText(/^Falta:/i)).toBeInTheDocument();
-      expect(within(item).getByText(/^Estimativa:/i)).toBeInTheDocument();
+    for (const region of regions) {
+      expect(within(region).queryByRole('button', { name: /excluir/i })).not.toBeInTheDocument();
+      expect(within(region).queryByRole('link', { name: /excluir/i })).not.toBeInTheDocument();
     }
-
-    // Estimativas reais do roadmap: B1 (S07), B2 (S07) e B4 (S09).
-    expect(within(items[0]).getByText(/B2/i)).toBeInTheDocument();
-    expect(within(items[0]).getByText(/B4/i)).toBeInTheDocument();
-    expect(within(items[0]).getByText(/S09/i)).toBeInTheDocument();
-    expect(within(items[1]).getByText(/B1/i)).toBeInTheDocument();
-    expect(within(items[1]).getByText(/S07/i)).toBeInTheDocument();
-    expect(within(items[2]).getByText(/B1/i)).toBeInTheDocument();
-    expect(within(items[2]).getByText(/S07/i)).toBeInTheDocument();
-  });
-
-  it('deixa os próximos relatórios como texto: nenhum botão ou link que não faz nada', async () => {
-    renderPage();
-    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
-
-    expect(within(region).queryByRole('button')).not.toBeInTheDocument();
-    expect(within(region).queryByRole('link')).not.toBeInTheDocument();
-  });
-
-  it('não implementa nem busca dados dos relatórios 4-6', async () => {
-    renderPage();
-    const region = await screen.findByRole('region', { name: /Próximos relatórios/i });
-    await screen.findByText('11,5 kg');
-
-    // A seção é puramente informativa: nenhum service novo é acionado por ela.
-    expect(vi.mocked(animalService.list)).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(feedingPointService.list)).toHaveBeenCalledTimes(1);
-    expect(vi.mocked(foodService.listAllMovements)).toHaveBeenCalledTimes(1);
-    expect(within(region).queryByRole('alert')).not.toBeInTheDocument();
   });
 });

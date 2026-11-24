@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { BarChart3, CalendarRange, Download, Package, PawPrint } from 'lucide-react';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
 import { cn } from '../../../shared/lib/utils';
@@ -12,6 +12,16 @@ import {
   type FeedingPointAnimal,
 } from '../services/feedingPointService';
 import { foodService, type Food } from '../services/foodService';
+import { reportService } from '../services/reportService';
+import type { ReportRow } from '../types/report.types';
+import {
+  buildOccurrenceCsv,
+  buildOccurrenceRows,
+  buildSupplyCsv,
+  buildSupplyRows,
+  decimal,
+  monthLabel,
+} from '../utils/reportRows';
 import { csvFilename, downloadCsv, toCsvFile, type CsvField } from '../utils/csv';
 import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
@@ -45,32 +55,6 @@ const PRESET_DAYS: Record<Exclude<PeriodPreset, 'custom'>, number> = {
 
 const HIGH_LIMIT = 200;
 
-/**
- * Relatórios 4-6 (D4.6): apenas comunicação do que falta. Cada item aponta
- * para o item real do backlog e sua estimativa — sem service, sem botão e sem
- * endpoint. Os números vieram de B1/B2/B4 do roadmap, não foram inventados.
- */
-const UPCOMING_REPORTS: { title: string; missing: string; estimate: string }[] = [
-  {
-    title: 'Ocorrências mensais',
-    missing:
-      'Contagem e lista de ocorrências por mês com filtro de período; depende do histórico clínico e de vacinação.',
-    estimate: 'B4 · ~1 dia · S09 (depende de B1 e B2).',
-  },
-  {
-    title: 'Medicamentos',
-    missing:
-      'Substituir as fixtures por cadastro e estoque com API real e calcular consumo e estoque por período.',
-    estimate: 'B1 · ~1,5 dia · S07 + B4 · ~1 dia · S09.',
-  },
-  {
-    title: 'Produtos',
-    missing:
-      'Substituir as fixtures por cadastro e estoque com API real e calcular consumo e estoque por período.',
-    estimate: 'B1 · ~1,5 dia · S07 + B4 · ~1 dia · S09.',
-  },
-];
-
 const EXPORT_BUTTON =
   'inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
 
@@ -88,22 +72,8 @@ function periodFor(preset: Exclude<PeriodPreset, 'custom'>): { from: string; to:
   return { from: toIsoDate(from), to: toIsoDate(to) };
 }
 
-/** Rótulo do mês (`AAAA-MM`) por extenso, ex.: "novembro de 2026". */
-function monthLabel(month: string): string {
-  const [year, monthNumber] = month.split('-').map(Number);
-  if (!year || !monthNumber) return 'Sem data';
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(
-    new Date(year, monthNumber - 1, 1),
-  );
-}
-
 function plural(count: number, singular: string, pluralForm: string): string {
   return `${count} ${count === 1 ? singular : pluralForm}`;
-}
-
-/** Número em pt-BR para o Excel entender `7,5` como decimal, não `7.5`. */
-function csvKg(value: number): string {
-  return value.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 }
 
 /**
@@ -141,17 +111,6 @@ function Bar({ ratio, tone }: { ratio: number; tone: BadgeTone }) {
     </div>
   );
 }
-
-type ReportRow = {
-  key: string;
-  label: string;
-  /** Valor já formatado para leitura (ex.: "3 animais", "7,5 kg"). */
-  value: string;
-  detail?: string;
-  badge?: ReactNode;
-  ratio: number;
-  tone: BadgeTone;
-};
 
 function ReportRowList({ rows }: { rows: ReportRow[] }) {
   return (
@@ -244,6 +203,23 @@ export function ReportsPage() {
 
   const periodLabel =
     activeFrom && activeTo ? `${formatDate(activeFrom)} a ${formatDate(activeTo)}` : null;
+
+  // Os três painéis novos usam o mesmo filtro, mas só buscam com datas válidas.
+  const [reportPeriod, setReportPeriod] = useState<{ from: string; to: string }>({
+    from: activeFrom,
+    to: activeTo,
+  });
+
+  useEffect(() => {
+    if (!activeFrom || !activeTo) return;
+    // Só o efeito pode preservar o último período válido quando o filtro fica inválido.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReportPeriod((current) =>
+      current.from === activeFrom && current.to === activeTo
+        ? current
+        : { from: activeFrom, to: activeTo },
+    );
+  }, [activeFrom, activeTo]);
 
   const statusData = useAsyncData(() => animalService.list({ limit: HIGH_LIMIT }), []);
 
@@ -383,13 +359,66 @@ export function ReportsPage() {
 
     const csvRows: CsvField[][] = [
       ['Tipo', 'Item', 'Consumo (kg)'],
-      ...foodEntries.map((entry) => ['Ração', entry.label, csvKg(entry.kg)]),
-      ...monthEntries.map((entry) => ['Mês', monthLabel(entry.month), csvKg(entry.kg)]),
-      ['Total', '', csvKg(total)],
+      ...foodEntries.map((entry) => ['Ração', entry.label, decimal(entry.kg)]),
+      ...monthEntries.map((entry) => ['Mês', monthLabel(entry.month), decimal(entry.kg)]),
+      ['Total', '', decimal(total)],
     ];
 
     return { total, foodRows, monthRows, csvRows };
   }, [consumptionData.data]);
+
+  const occurrencesData = useAsyncData(
+    () => reportService.getOccurrencesByMonth(reportPeriod),
+    [reportPeriod.from, reportPeriod.to],
+  );
+  const medicationData = useAsyncData(
+    () => reportService.getSupplyConsumption({ ...reportPeriod, kind: 'medication' }),
+    [reportPeriod.from, reportPeriod.to],
+  );
+  const productData = useAsyncData(
+    () => reportService.getSupplyConsumption({ ...reportPeriod, kind: 'product' }),
+    [reportPeriod.from, reportPeriod.to],
+  );
+
+  const occurrenceReport = useMemo(() => {
+    const data = occurrencesData.data;
+    return {
+      total: data?.total ?? 0,
+      rows: data ? buildOccurrenceRows(data) : [],
+      csvRows: data ? buildOccurrenceCsv(data) : [],
+      hasData: Boolean(data && data.total > 0 && data.months.length > 0),
+    };
+  }, [occurrencesData.data]);
+
+  const medicationReport = useMemo(() => {
+    const data = medicationData.data;
+    return {
+      total: data?.items.length ?? 0,
+      rows: data ? buildSupplyRows(data) : [],
+      csvRows: data ? buildSupplyCsv(data) : [],
+      hasData: Boolean(data && data.items.length > 0),
+    };
+  }, [medicationData.data]);
+
+  const productReport = useMemo(() => {
+    const data = productData.data;
+    return {
+      total: data?.items.length ?? 0,
+      rows: data ? buildSupplyRows(data) : [],
+      csvRows: data ? buildSupplyCsv(data) : [],
+      hasData: Boolean(data && data.items.length > 0),
+    };
+  }, [productData.data]);
+
+  const occurrenceSubtitle = periodLabel
+    ? `Ocorrências agrupadas por mês (${periodLabel}).`
+    : 'Ocorrências agrupadas por mês no período selecionado.';
+  const medicationSubtitle = periodLabel
+    ? `Consumo de medicamentos no período (${periodLabel}).`
+    : 'Consumo de medicamentos no período selecionado.';
+  const productSubtitle = periodLabel
+    ? `Consumo de produtos no período (${periodLabel}).`
+    : 'Consumo de produtos no período selecionado.';
 
   function exportCsv(slug: string, rows: CsvField[][]) {
     downloadCsv(csvFilename(slug), toCsvFile(rows));
@@ -582,44 +611,121 @@ export function ReportsPage() {
         </div>
       </div>
 
-      <section
-        aria-labelledby="proximos-relatorios"
-        className="rounded-xl border border-dashed border-staff-line bg-staff-bg/40 p-5"
-      >
-        <div className="min-w-0">
-          <h2
-            id="proximos-relatorios"
-            className="font-display text-lg font-semibold text-staff-ink"
-          >
-            Próximos relatórios
-          </h2>
-          <p className="mt-1 text-sm text-staff-muted">
-            Ainda não disponíveis: dependem de dados que não existem na API hoje. O que está aqui
-            é o plano do backlog, não um relatório pronto.
-          </p>
-        </div>
-        <ul className="mt-4 grid gap-4 md:grid-cols-3">
-          {UPCOMING_REPORTS.map((report) => (
-            <li
-              key={report.title}
-              className="flex flex-col gap-2 rounded-lg border border-dashed border-staff-line bg-staff-surface p-4"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-display text-base font-semibold text-staff-ink">
-                  {report.title}
-                </h3>
-                <StatusBadge tone="gray">Planejado</StatusBadge>
-              </div>
-              <p className="text-sm text-staff-muted">
-                <span className="font-semibold text-staff-ink">Falta:</span> {report.missing}
-              </p>
-              <p className="text-sm text-staff-muted">
-                <span className="font-semibold text-staff-ink">Estimativa:</span> {report.estimate}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ReportSection
+          id="relatorio-ocorrencias-mensais"
+          title="Ocorrências mensais"
+          subtitle={occurrenceSubtitle}
+          total={
+            occurrencesData.loading || occurrencesData.error
+              ? undefined
+              : plural(occurrenceReport.total, 'ocorrência', 'ocorrências')
+          }
+          totalLabel="no período"
+          exportButton={
+            !occurrencesData.loading && !occurrencesData.error && occurrenceReport.hasData ? (
+              <button
+                type="button"
+                className={EXPORT_BUTTON}
+                onClick={() => exportCsv('ocorrencias-mensais', occurrenceReport.csvRows)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Exportar CSV
+              </button>
+            ) : undefined
+          }
+        >
+          {occurrencesData.loading ? (
+            <EmptyState>Carregando ocorrências...</EmptyState>
+          ) : occurrencesData.error ? (
+            <div className="mt-4">
+              <Alert variant="danger">
+                {occurrencesData.error ?? 'Não foi possível carregar as ocorrências.'}
+              </Alert>
+            </div>
+          ) : !occurrenceReport.hasData ? (
+            <EmptyState>Nenhuma ocorrência no período.</EmptyState>
+          ) : (
+            <ReportRowList rows={occurrenceReport.rows} />
+          )}
+        </ReportSection>
+
+        <ReportSection
+          id="relatorio-medicamentos"
+          title="Medicamentos"
+          subtitle={medicationSubtitle}
+          total={
+            medicationData.loading || medicationData.error
+              ? undefined
+              : plural(medicationReport.total, 'item', 'itens')
+          }
+          totalLabel="no período"
+          exportButton={
+            !medicationData.loading && !medicationData.error && medicationReport.hasData ? (
+              <button
+                type="button"
+                className={EXPORT_BUTTON}
+                onClick={() => exportCsv('medicamentos', medicationReport.csvRows)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Exportar CSV
+              </button>
+            ) : undefined
+          }
+        >
+          {medicationData.loading ? (
+            <EmptyState>Carregando medicamentos...</EmptyState>
+          ) : medicationData.error ? (
+            <div className="mt-4">
+              <Alert variant="danger">
+                {medicationData.error ?? 'Não foi possível carregar os medicamentos.'}
+              </Alert>
+            </div>
+          ) : !medicationReport.hasData ? (
+            <EmptyState>Nenhum medicamento consumido no período.</EmptyState>
+          ) : (
+            <ReportRowList rows={medicationReport.rows} />
+          )}
+        </ReportSection>
+
+        <ReportSection
+          id="relatorio-produtos"
+          title="Produtos"
+          subtitle={productSubtitle}
+          total={
+            productData.loading || productData.error
+              ? undefined
+              : plural(productReport.total, 'item', 'itens')
+          }
+          totalLabel="no período"
+          exportButton={
+            !productData.loading && !productData.error && productReport.hasData ? (
+              <button
+                type="button"
+                className={EXPORT_BUTTON}
+                onClick={() => exportCsv('produtos', productReport.csvRows)}
+              >
+                <Download size={16} aria-hidden="true" />
+                Exportar CSV
+              </button>
+            ) : undefined
+          }
+        >
+          {productData.loading ? (
+            <EmptyState>Carregando produtos...</EmptyState>
+          ) : productData.error ? (
+            <div className="mt-4">
+              <Alert variant="danger">
+                {productData.error ?? 'Não foi possível carregar os produtos.'}
+              </Alert>
+            </div>
+          ) : !productReport.hasData ? (
+            <EmptyState>Nenhum produto consumido no período.</EmptyState>
+          ) : (
+            <ReportRowList rows={productReport.rows} />
+          )}
+        </ReportSection>
+      </div>
 
       <p className="flex items-center gap-2 text-sm text-staff-muted">
         <PawPrint size={16} aria-hidden="true" />
