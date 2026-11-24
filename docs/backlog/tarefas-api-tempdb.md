@@ -21,6 +21,7 @@ Restrições válidas para todas as tarefas registradas aqui:
 - [ ] **B2 — Receitas, histórico e vacinação** — detalhes na seção B2 abaixo.
 - [ ] **B3 — Registro de adoção com termo** — detalhes na seção B3 abaixo.
 - [ ] **B4 — Relatórios 4–6** — detalhes na seção B4 abaixo.
+- [ ] **B5 — Editar óbito e listar mortes** — detalhes na seção B5 abaixo.
 
 ## B1 — Medicamentos e produtos com API real
 
@@ -1150,3 +1151,167 @@ check("kind inválido -> 422", r.status_code == 422, f"{r.status_code} {r.text}"
 ### Aceite suspenso
 
 Exibir ocorrências mensais e consumo de medicamentos/produtos com números que batem com o seed estendido, recarregar e continuar vendo os mesmos valores **só pode ser verificado depois que a API do B4 for executada** no `TempDB` (ver checklist "Antes de executar (B4)"). A fatia atual de front **não marca `B4` como concluído no roadmap**: o item permanece `- [ ]` até a execução e a conferência dos números com o seed estendido.
+
+## B5 — Editar óbito e listar mortes
+
+### Contexto
+
+Data: 2026-11-24 · Origem: desenho da fatia de frente do B5 em `docs/superpowers/specs/2026-11-24-b5-obito-ocorrencia-design.md`.
+
+O front do B5 está pronto e a API continua pendente: `animalService.updateDeceased` envia `PATCH /api/animals/{id}/deceased`, a ficha do animal exibe o painel **Óbito** na aba **Dados** com a edição de data e causa, e a lista de animais ganhou o filtro **Falecidos** e a coluna **Data do óbito**. A edição de **ocorrência** (`PATCH /api/events/{id}`) já existe desde a D1.6 (`eventService.ts` + `EventsAdminPage.tsx`) e **não muda** nesta fatia — o smoke test abaixo apenas confirma que ela continua corrigindo a ocorrência. O registro de óbito (`POST /api/animals/{id}/deceased`) marca `is_deceased`, mas ainda não grava data nem causa: sem as colunas novas, a correção não tem onde persistir.
+
+Como no B1/B2/B3/B4, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação; a execução fica para o final das tarefas deste repo. O item `B5` permanece `- [ ]` no roadmap até a execução e a conferência da correção na listagem.
+
+Valem as mesmas restrições, com o recorte desta fatia:
+
+- nenhuma migration `0001`–`0008` é alterada — toda mudança de banco é aditiva e idempotente, concentrada na `0009`;
+- nenhuma alteração em `EventsAdminPage`, `eventService`, `markDeceased`, rotas, tags, seed, relatórios ou catálogo público;
+- sem DELETE e sem botão de exclusão — a correção é sempre `PATCH` auditável;
+- data obrigatória em `AAAA-MM-DD` e não futura; causa opcional, aparada, até 200 caracteres (vazia vira `null`);
+- documentação, mensagens de erro e interface em português, sem mojibake.
+
+### Passo 1 — Migration `0009` (criar `migrations/0009_deceased_correction.sql`)
+
+Aditiva e idempotente: só acrescenta as duas colunas em `animals` com `if not exists`, **sem alterar nenhuma migration `0001`–`0008`**. RLS e grants ficam **iguais aos das tabelas existentes** (a `animals` já tem `enable row level security`, policies e grants da `0001`/`0004`; nada disso muda). Esqueleto a adaptar:
+
+```sql
+-- 0009 — Correção de óbito (data e causa em animals)
+-- Aditiva e idempotente; não altera nenhuma migration 0001–0008.
+-- RLS e grants de public.animals permanecem os das tabelas existentes.
+
+alter table public.animals
+    add column if not exists death_date date;
+
+alter table public.animals
+    add column if not exists death_cause text;
+
+-- RLS já habilitada e policies/grants de public.animals inalterados
+-- (mesmos das tabelas existentes); nenhuma alteração aqui.
+
+notify pgrst, 'reload schema';
+```
+
+### Passo 2 — Schemas Pydantic em `app/schemas.py`
+
+Acrescentar o schema de corpo e estender o `AnimalOut` existente, seguindo o estilo dos schemas já presentes (`date`, `Field`, `field_validator`). O corpo usa `death_date: date` (obrigatório, formato `AAAA-MM-DD` — o `date` do Pydantic rejeita outros formatos com `422`) e `death_cause: str | None` (opcional). As validações de data futura, causa aparada e limite de 200 caracteres viram `ValueError` no validador, que o FastAPI devolve como `422` com a mensagem em português:
+
+```python
+class DeceasedCorrectionInput(BaseModel):
+    death_date: date
+    death_cause: str | None = None
+
+    @field_validator("death_date")
+    @classmethod
+    def death_date_not_future(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("A data do óbito não pode ser futura.")
+        return value
+
+    @field_validator("death_cause")
+    @classmethod
+    def normalize_cause(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        if len(value) > 200:
+            raise ValueError("A causa do óbito deve ter no máximo 200 caracteres.")
+        return value or None
+```
+
+`AnimalOut` ganha os dois campos novos, opcionais e anuláveis (resposta antiga sem as chaves continua válida; o front converte ausência para `null`):
+
+```python
+class AnimalOut(BaseModel):
+    # campos existentes, mantidos
+    ...
+    death_date: date | None = None
+    death_cause: str | None = None
+```
+
+### Passo 3 — `PATCH /api/animals/{id}/deceased` no router de animais
+
+Em `app/routers/animals.py` (router existente, prefixo `/api/animals`), espelhando o padrão dos demais PATCH do projeto:
+
+- `PATCH "/{id}/deceased"` → `response_model=AnimalOut`, `member: CurrentUser = Depends(require_member)` — **qualquer membro da equipe** corrige, a mesma permissão do registro de óbito pela lista; sem novo gate de administração.
+- Corpo `DeceasedCorrectionInput` = `{ death_date: date, death_cause: str | null }`.
+- Buscar o animal via `get_service_client()` (`_find_animal`): id inexistente → `404` com `detail="Animal não encontrado"`.
+- Se o animal **não** estiver falecido (`is_deceased` falso) → `409` com `detail="Animal não está falecido"` — a correção só se aplica a quem já morreu.
+- `422` do FastAPI/Pydantic para data futura, data fora de `AAAA-MM-DD` ou causa com mais de 200 caracteres (mensagens em português do Passo 2).
+- Gravar apenas `death_date` e `death_cause` (`model_dump()`) — **nunca** tocar em `is_deceased`; devolver a linha atualizada com `200`.
+- Todas as mensagens de erro em português. **Não registrar rota DELETE** em `/api/animals`, `/api/animals/{id}` nem `/api/animals/{id}/deceased`.
+
+### Passo 4 — Ajuste do `POST /api/animals/{id}/deceased`
+
+O registro existente **mantém o contrato atual** (marca `is_deceased` e devolve `AnimalOut`, sem corpo novo), mas passa a preencher `death_date` com **a data do registro** (dia corrente) para que toda morte já nasça com data; `death_cause` permanece `null` nesse fluxo (a causa só entra pela correção do Passo 3). `markDeceased` do front não ganha corpo novo e continua funcionando sem alteração.
+
+### Passo 5 — Exposição em `GET /api/animals`
+
+`death_date` e `death_cause` entram na resposta de `GET /api/animals` — inclusive com `include_deceased=true`, que é a fonte da lista de falecidos — e também em `GET /api/animals/{id}`, consumido pela ficha. Os campos vêm junto do animal; **não** há endpoint novo de listagem de mortes (paginação/lista de mortes é B6).
+
+### Passo 6 — Registro em `app/main.py` se necessário
+
+A correção entra no router de animais **já registrado** em `app/main.py`; nesse caso nada muda. Se a implementação criar um módulo/router novo, incluir o import e `app.include_router(...)` junto dos demais, no padrão das seções anteriores.
+
+### Passo 7 — Smoke test em `scripts/smoke_test.py`
+
+Inserir um bloco com o **próximo número livre** — após a execução do B4, `[16] Óbito (B5)` — antes do bloco de sessão (renumerar o bloco de sessão para `[17]`, conforme o número vigente), reaproveitando `check(name, condição, detail)`, `admin_headers`, `bol_headers` e a variável `tag`. Cobertura mínima:
+
+1. `PATCH /api/animals/{id}/deceased` sem token → `401` (anon);
+2. com membro (`bol_headers`) em animal falecido → `200`, ecoando `death_date` e `death_cause` enviados;
+3. nova listagem `GET /api/animals?include_deceased=true` → a correção refletida no item do animal (mesmos `death_date`/`death_cause`);
+4. `PATCH` em id inexistente (com `json={}` para não cair no `422` de validação antes do `404`) → `404` com `detail` "Animal não encontrado";
+5. `PATCH` em animal **vivo** → `409` com `detail` "Animal não está falecido";
+6. `PATCH` com data futura → `422` ("A data do óbito não pode ser futura.") e com causa de 201 caracteres → `422` ("A causa do óbito deve ter no máximo 200 caracteres.");
+7. `PATCH /api/events/{id}` continua corrigindo ocorrência → `200` (edição de ocorrência intacta nesta fatia);
+8. nenhuma rota DELETE exposta em `/api/animals`, `/api/animals/{id}` e `/api/animals/{id}/deceased`.
+
+Esqueleto ilustrativo (usar um animal falecido já existente no seed):
+
+```python
+r = client.patch(f"/api/animals/{animal_id}/deceased", headers=bol_headers,
+                 json={"death_date": "2026-11-20", "death_cause": "Atropelamento"})
+check("membro corrige óbito -> 200", r.status_code == 200, f"{r.status_code} {r.text}")
+
+r = client.get("/api/animals", headers=bol_headers,
+               params={"include_deceased": "true"})
+item = next((i for i in r.json().get("items", []) if i.get("animal_id") == animal_id), None)
+check("correção refletida na listagem",
+      r.status_code == 200 and item is not None
+      and item.get("death_date") == "2026-11-20"
+      and item.get("death_cause") == "Atropelamento",
+      f"{r.status_code} {r.text[:200]}")
+```
+
+### Passo 8 — Documentação
+
+Atualizar `TempDB/DOCUMENTACAO.md` (no projeto `TempDB`, quando a API for executada):
+
+- árvore de `migrations/` com `0009_deceased_correction.sql`;
+- item de migrations: aplicar em ordem `0001` → … → `0009`;
+- endpoints: `PATCH /api/animals/{id}/deceased` (correção), o ajuste do `POST /api/animals/{id}/deceased` (grava `death_date`) e os campos novos em `GET /api/animals` / `GET /api/animals/{id}` — correção para membros, sem DELETE;
+- matriz RBAC (§5): linha para "Corrigir óbito" ✅ membro;
+- modelos de dados (§6): colunas `death_date date` e `death_cause text` em `animals`;
+- registrar a migration `0009` como aplicada e o `notify pgrst, 'reload schema';` no fim dela.
+
+### Desvios registrados
+
+- **PATCH dedicado (opção 1 do parceiro):** a correção usa `PATCH /api/animals/{id}/deceased` em vez de virar campo genérico do update cadastral; preserva a semântica de `POST /deceased` e o contrato consumido pelo front.
+- **`POST` mantém o contrato atual:** só passa a preencher `death_date` com a data do registro; nenhum corpo novo e nenhuma mudança em `markDeceased`.
+- **`409` para animal vivo:** corrigir óbito de quem não morreu é conflito de estado, não erro de formato — e a correção nunca reativa nem reverte `is_deceased`.
+- **Sem DELETE e sem "desfazer óbito":** a única via de alteração é o `PATCH` auditável, nas duas pontas.
+- **Sem endpoint de mortes:** a listagem de falecidos continua sendo `GET /api/animals?include_deceased=true` com filtro local no front; lista/paginação dedicada de mortes fica para o B6.
+
+### Antes de executar (B5)
+
+Espelhando o checklist do B1–B4, com os comandos já prontos para o projeto `TempDB`:
+
+- [ ] Confirmar a branch do `TempDB` em que a API será implementada (trabalhar no projeto `TempDB`, não neste repo de front).
+- [ ] Aplicar `migrations/0009_deceased_correction.sql` via Supabase MCP (`apply_migration`) ou, com `DATABASE_URL` válido no `.env`, via `.venv\Scripts\python.exe scripts\apply_migration.py 0009_deceased_correction.sql` (executa em uma transação).
+- [ ] Confirmar que a migration termina com `notify pgrst, 'reload schema';` e que o schema cache recarregou (o `PATCH /api/animals/{id}/deceased` aparece em `http://127.0.0.1:8000/docs`).
+- [ ] Subir a API (`.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000`) e rodar `.venv\Scripts\python.exe scripts\smoke_test.py` — incluído o bloco do B5 com anon 401, membro 200, correção refletida em `GET /api/animals?include_deceased=true`, 404/409/422, `PATCH /api/events/{id}` ainda corrigindo ocorrência e nenhuma rota DELETE exposta.
+- [ ] Rodar `.venv\Scripts\python.exe scripts\test_seed_demo.py`.
+- [ ] **Correção refletida na listagem: verificação final, pendente.** Só pode ser confirmada depois que o usuário executar os passos acima; até lá o aceite fica suspenso e `B5` não deve ser marcado como concluído.
+
+### Aceite suspenso
+
+Corrigir a data e a causa do óbito na ficha, recarregar e ver a correção refletida em `GET /api/animals?include_deceased=true` **só pode ser verificado depois que a API do B5 for executada** no `TempDB` (ver checklist "Antes de executar (B5)"). A fatia atual de front **não marca `B5` como concluído no roadmap**: o item permanece `- [ ]` até a execução e a conferência da correção na listagem.
