@@ -13,6 +13,7 @@ import { AnimalPhoto } from '../../animals/components/AnimalPhoto';
 import { SelectField } from '../../../shared/components/SelectField';
 import { TextField } from '../../../shared/components/TextField';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
+import { formatDate } from '../../../shared/utils/format';
 import { ANIMAL_STATUS_LABEL, ANIMAL_STATUS_TONE } from '../utils/badges';
 import { PageHead } from '../components/PageHead';
 import { Panel } from '../components/Panel';
@@ -28,7 +29,7 @@ import {
   TableRow,
 } from '../../../shared/ui/table';
 
-type StatusFilter = 'todos' | AnimalStatus;
+type StatusFilter = 'todos' | AnimalStatus | 'falecidos';
 
 const STATUS_FILTER_OPTIONS = [
   { value: 'todos', label: 'Todos os status' },
@@ -36,6 +37,7 @@ const STATUS_FILTER_OPTIONS = [
   { value: 'em_processo', label: ANIMAL_STATUS_LABEL.em_processo },
   { value: 'adotado', label: ANIMAL_STATUS_LABEL.adotado },
   { value: 'indisponivel', label: ANIMAL_STATUS_LABEL.indisponivel },
+  { value: 'falecidos', label: 'Falecidos' },
 ];
 
 export function AnimalsAdminPage() {
@@ -54,7 +56,9 @@ export function AnimalsAdminPage() {
   const animals = data?.items ?? [];
 
   const filtered = animals.filter((animal) => {
-    const matchesStatus = status === 'todos' || animal.status === status;
+    const matchesStatus =
+      status === 'todos' ||
+      (status === 'falecidos' ? animal.isDeceased : animal.status === status);
     const term = query.trim().toLowerCase();
     const matchesQuery = term === '' || animal.name.toLowerCase().includes(term);
     return matchesStatus && matchesQuery;
@@ -139,6 +143,7 @@ export function AnimalsAdminPage() {
                 <TableHead>Nome</TableHead>
                 <TableHead>Sexo</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Data do óbito</TableHead>
                 <TableHead>Comportamento</TableHead>
                 <TableHead>Castrado</TableHead>
                 <TableHead />
@@ -163,6 +168,9 @@ export function AnimalsAdminPage() {
                     <StatusBadge tone={ANIMAL_STATUS_TONE[animal.status]}>
                       {ANIMAL_STATUS_LABEL[animal.status]}
                     </StatusBadge>
+                  </TableCell>
+                  <TableCell className="text-staff-muted">
+                    {formatDate(animal.deathDate)}
                   </TableCell>
                   <TableCell className="text-staff-muted">
                     {animal.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'}

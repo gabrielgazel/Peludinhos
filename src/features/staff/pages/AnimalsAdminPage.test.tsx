@@ -49,7 +49,14 @@ function makeAnimal(partial: Partial<Animal> & { id: number; name: string }): An
   };
 }
 
-const mel = makeAnimal({ id: 1, name: 'Mel', sex: 'F', status: 'disponivel', isNeutered: true });
+const mel = makeAnimal({
+  id: 1,
+  name: 'Mel',
+  sex: 'F',
+  status: 'disponivel',
+  isNeutered: true,
+  deathDate: null,
+});
 const thor = makeAnimal({
   id: 2,
   name: 'Thor',
@@ -57,6 +64,7 @@ const thor = makeAnimal({
   status: 'adotado',
   behavior: 'sociavel',
   isNeutered: false,
+  deathDate: null,
 });
 const luna = makeAnimal({
   id: 3,
@@ -65,6 +73,7 @@ const luna = makeAnimal({
   status: 'indisponivel',
   behavior: null,
   isDeceased: true,
+  deathDate: '2026-11-20',
 });
 
 const fixtures = [mel, thor, luna];
@@ -173,6 +182,60 @@ describe('AnimalsAdminPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Status' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Comportamento' })).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Castrado' })).toBeInTheDocument();
+  });
+
+  it('expõe a coluna Data do óbito com a data formatada', async () => {
+    renderPage(adminUser);
+
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    expect(
+      screen.getByRole('columnheader', { name: 'Data do óbito' }),
+    ).toBeInTheDocument();
+
+    const lunaRow = screen.getByText('Luna').closest('tr') as HTMLElement;
+    expect(within(lunaRow).getByText('20/11/2026')).toBeInTheDocument();
+
+    const melRow = screen.getByText('Mel').closest('tr') as HTMLElement;
+    expect(within(melRow).getByText('—')).toBeInTheDocument();
+
+    const thorRow = screen.getByText('Thor').closest('tr') as HTMLElement;
+    expect(within(thorRow).getByText('—')).toBeInTheDocument();
+  });
+
+  it('filtra apenas falecidos e combina com a busca por nome', async () => {
+    renderPage(adminUser);
+
+    await screen.findByText('Luna');
+    fireEvent.change(screen.getByLabelText(/Status/i), {
+      target: { value: 'falecidos' },
+    });
+
+    expect(screen.getByText('Luna')).toBeInTheDocument();
+    expect(screen.queryByText('Mel')).not.toBeInTheDocument();
+    expect(screen.queryByText('Thor')).not.toBeInTheDocument();
+    expect(rowCount()).toBe(2);
+
+    fireEvent.change(screen.getByLabelText(/Buscar por nome/i), {
+      target: { value: 'Mel' },
+    });
+
+    expect(
+      screen.getByText('Nenhum animal encontrado com esses filtros.'),
+    ).toBeInTheDocument();
+  });
+
+  it('não envia status quando Falecidos está ativo', async () => {
+    renderPage(adminUser);
+
+    await screen.findByText('Luna');
+    fireEvent.change(screen.getByLabelText(/Status/i), {
+      target: { value: 'falecidos' },
+    });
+
+    expect(vi.mocked(animalService.list)).toHaveBeenLastCalledWith({
+      limit: 200,
+      includeDeceased: true,
+    });
   });
 
   it('exibe o selo Falecido apenas para o animal falecido', async () => {
