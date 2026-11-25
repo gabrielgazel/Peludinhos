@@ -201,17 +201,26 @@ equipe. No menu lateral, o grupo **Geral** reúne as opções abaixo.
 ### 4.2 Consultar animais e registrar um óbito
 
 1. Clique em **Animais** no menu.
-2. Use **Buscar por nome** e o filtro **Status** para localizar o animal.
+2. Use **Buscar por nome** e o filtro **Status** (inclusive a opção
+   **Falecidos**) para localizar o animal; a coluna **Data do óbito** mostra a
+   data registrada.
 3. Para registrar um falecimento, clique em **Registrar óbito** e confirme.
 4. Clique em **Ver ficha** para abrir a ficha interna do animal e, na aba **Saúde**, consultar histórico, vacinas e receitas.
+5. Para animais falecidos, abra a aba **Dados** e confira **Data do óbito** e
+   **Causa do óbito** no painel **Óbito**; clique em **Editar óbito** para
+   corrigir os campos, **Salvar óbito** para enviar a correção ou **Cancelar**
+   para desistir.
 
 > **Resultado esperado:** a lista mostra os animais cadastrados, incluindo os
 > que já encontraram um lar. A confirmação diz “Registrar o óbito de {nome}?
 > Esta ação não pode ser desfeita.” — depois de confirmar, o animal deixa de
-> aparecer como disponível no catálogo. O botão **Editar** aparece apenas para
-> a administração. Na aba **Saúde**, **Editar** aparece só para o autor do
-> registro ou a administração; não há exclusão e a persistência depende da API
-> pendente (`docs/backlog/tarefas-api-tempdb.md`).
+> aparecer como disponível no catálogo. Animais vivos aparecem com `—` na
+> coluna **Data do óbito**. A correção feita em **Editar óbito** só aparece
+> depois que a API do `TempDB` estiver executada; até lá nenhum dado é
+> inventado e a persistência continua pendente
+> (`docs/backlog/tarefas-api-tempdb.md`). O botão **Editar** aparece apenas
+> para a administração. Na aba **Saúde**, **Editar** aparece só para o autor
+> do registro ou a administração; não há exclusão.
 
 ### 4.3 Consultar e manter pontos de alimentação
 
