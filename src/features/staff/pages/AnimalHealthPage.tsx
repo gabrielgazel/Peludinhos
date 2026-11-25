@@ -5,7 +5,9 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useAnimal } from '../../animals/hooks/useAnimals';
 import { isAdmin } from '../../../shared/types/role.types';
 import { useAsyncData } from '../../../shared/hooks/useAsyncData';
+import { TextField } from '../../../shared/components/TextField';
 import { formatDate } from '../../../shared/utils/format';
+import { animalService } from '../../animals/services/animalService';
 import { BEHAVIOR_LABEL, SEX_LABEL } from '../../animals/constants/animal.labels';
 import { ANIMAL_STATUS_LABEL } from '../utils/badges';
 import {
@@ -96,6 +98,12 @@ const PRESCRIPTION_COLUMNS: ClinicalColumn<Prescription>[] = [
 const BACK_LINK_CLASS =
   'inline-flex min-h-11 items-center gap-2 rounded-xl border border-staff-line bg-staff-surface px-3 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
 
+const DECEASED_PRIMARY_BUTTON =
+  'inline-flex min-h-11 items-center rounded-xl bg-staff-ink px-4 text-sm font-bold text-staff-surface transition-colors hover:bg-staff-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
+
+const DECEASED_SECONDARY_BUTTON =
+  'inline-flex min-h-11 items-center rounded-xl border border-staff-line bg-staff-surface px-4 text-sm font-bold text-staff-ink transition-colors hover:bg-staff-bg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none';
+
 function tabClass(active: boolean): string {
   return [
     'inline-flex min-h-11 items-center rounded-xl border px-4 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-staff-accent motion-reduce:transition-none',
@@ -152,11 +160,13 @@ export function AnimalHealthPage() {
   const { id } = useParams();
   const animalId = Number(id);
   const { user } = useAuth();
-  const { animal, loading, failed } = useAnimal(animalId);
+  const { animal, loading, failed, reload } = useAnimal(animalId);
 
   const [tab, setTab] = useState<'dados' | 'saude'>('dados');
   const [form, setForm] = useState<FormState | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [deceasedForm, setDeceasedForm] = useState<{ date: string; cause: string } | null>(null);
+  const [deceasedError, setDeceasedError] = useState<string | null>(null);
 
   const history = useAsyncData(
     () => veterinaryHistoryService.list(animalId, { limit: 200 }),
@@ -268,6 +278,37 @@ export function AnimalHealthPage() {
     }
   }
 
+  function openDeceasedForm() {
+    setDeceasedError(null);
+    setDeceasedForm({ date: '', cause: '' });
+  }
+
+  async function handleDeceasedSubmit() {
+    if (!deceasedForm) return;
+
+    const date = clean(deceasedForm.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      setDeceasedError('Preencha a data do óbito.');
+      return;
+    }
+    if (date > new Date().toISOString().slice(0, 10)) {
+      setDeceasedError('A data do óbito não pode ser futura.');
+      return;
+    }
+    setDeceasedError(null);
+
+    try {
+      await animalService.updateDeceased(animalId, {
+        deathDate: date,
+        deathCause: optionalOrNull(deceasedForm.cause),
+      });
+      reload();
+      setDeceasedForm(null);
+    } catch (err) {
+      setDeceasedError(err instanceof Error ? err.message : 'Não foi possível salvar o óbito.');
+    }
+  }
+
   return (
     <div className="space-y-6">
       <PageHead
@@ -307,21 +348,90 @@ export function AnimalHealthPage() {
         loading ? (
           <EmptyState>Carregando animal...</EmptyState>
         ) : (
-          <Panel>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <DetailItem label="Nome" value={animal?.name ?? '—'} />
-              <DetailItem label="Sexo" value={animal ? SEX_LABEL[animal.sex] : '—'} />
-              <DetailItem
-                label="Status"
-                value={animal ? ANIMAL_STATUS_LABEL[animal.status] : '—'}
-              />
-              <DetailItem label="Idade" value={animal?.age ?? '—'} />
-              <DetailItem
-                label="Comportamento"
-                value={animal?.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'}
-              />
-            </dl>
-          </Panel>
+          <>
+            <Panel>
+              <dl className="grid gap-4 sm:grid-cols-2">
+                <DetailItem label="Nome" value={animal?.name ?? '—'} />
+                <DetailItem label="Sexo" value={animal ? SEX_LABEL[animal.sex] : '—'} />
+                <DetailItem
+                  label="Status"
+                  value={animal ? ANIMAL_STATUS_LABEL[animal.status] : '—'}
+                />
+                <DetailItem label="Idade" value={animal?.age ?? '—'} />
+                <DetailItem
+                  label="Comportamento"
+                  value={animal?.behavior ? BEHAVIOR_LABEL[animal.behavior] : '—'}
+                />
+              </dl>
+            </Panel>
+
+            {animal?.isDeceased ? (
+              <Panel>
+                <h2 className="font-display text-xl font-semibold text-staff-ink">Óbito</h2>
+                {deceasedForm ? (
+                  <form
+                    noValidate
+                    className="mt-4 space-y-4"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void handleDeceasedSubmit();
+                    }}
+                  >
+                    {deceasedError ? (
+                      <Alert variant="danger">{deceasedError}</Alert>
+                    ) : null}
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <TextField
+                        id="deceased-date"
+                        label="Data do óbito"
+                        type="date"
+                        required
+                        value={deceasedForm.date}
+                        onChange={(date) => setDeceasedForm({ ...deceasedForm, date })}
+                      />
+                      <TextField
+                        id="deceased-cause"
+                        label="Causa do óbito"
+                        optional
+                        maxLength={200}
+                        value={deceasedForm.cause}
+                        onChange={(cause) => setDeceasedForm({ ...deceasedForm, cause })}
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button type="submit" className={DECEASED_PRIMARY_BUTTON}>
+                        Salvar óbito
+                      </button>
+                      <button
+                        type="button"
+                        className={DECEASED_SECONDARY_BUTTON}
+                        onClick={() => {
+                          setDeceasedForm(null);
+                          setDeceasedError(null);
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="mt-4 space-y-4">
+                    <dl className="grid gap-4 sm:grid-cols-2">
+                      <DetailItem label="Data do óbito" value={formatDate(animal.deathDate)} />
+                      <DetailItem label="Causa do óbito" value={animal.deathCause ?? '—'} />
+                    </dl>
+                    <button
+                      type="button"
+                      className={DECEASED_SECONDARY_BUTTON}
+                      onClick={openDeceasedForm}
+                    >
+                      Editar óbito
+                    </button>
+                  </div>
+                )}
+              </Panel>
+            ) : null}
+          </>
         )
       ) : (
         <div className="space-y-6">

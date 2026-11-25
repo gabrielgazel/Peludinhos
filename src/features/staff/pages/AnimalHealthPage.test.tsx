@@ -23,7 +23,12 @@ import { AnimalHealthPage } from './AnimalHealthPage';
 vi.mock('../../auth/hooks/useAuth', () => ({ useAuth: vi.fn() }));
 vi.mock('../../animals/hooks/useAnimals', () => ({ useAnimal: vi.fn() }));
 vi.mock('../../animals/services/animalService', () => ({
-  animalService: { list: vi.fn(), getById: vi.fn(), markDeceased: vi.fn() },
+  animalService: {
+    list: vi.fn(),
+    getById: vi.fn(),
+    markDeceased: vi.fn(),
+    updateDeceased: vi.fn(),
+  },
 }));
 vi.mock('../../animals/services/veterinaryHistoryService', () => ({
   veterinaryHistoryService: { list: vi.fn(), create: vi.fn(), update: vi.fn() },
@@ -80,6 +85,15 @@ const mel: Animal = {
   updatedAt: null,
 };
 
+const melDeceased: Animal = {
+  ...mel,
+  isDeceased: true,
+  deathDate: '2026-11-20',
+  deathCause: 'Atropelamento',
+};
+
+const reloadMock = vi.fn();
+
 const historyWithDate: VeterinaryHistory = {
   id: 1,
   animalId: 5,
@@ -132,9 +146,14 @@ function page<T>(items: T[]) {
   return { items, total: items.length, limit: 200, offset: 0 };
 }
 
-function renderPage(user: AuthUser) {
+function renderPage(user: AuthUser, animal: Animal = mel) {
   vi.mocked(useAuth).mockReturnValue({ user } as ReturnType<typeof useAuth>);
-  vi.mocked(useAnimal).mockReturnValue({ animal: mel, loading: false, failed: false, reload: vi.fn() });
+  vi.mocked(useAnimal).mockReturnValue({
+    animal,
+    loading: false,
+    failed: false,
+    reload: reloadMock,
+  });
   return render(
     <MemoryRouter initialEntries={['/painel/animais/5']}>
       <Routes>
@@ -151,6 +170,7 @@ function openSaude() {
 describe('AnimalHealthPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    reloadMock.mockReset();
     vi.mocked(animalService.list).mockResolvedValue(page([mel]));
     vi.mocked(animalService.getById).mockResolvedValue(mel);
     vi.mocked(veterinaryHistoryService.list).mockResolvedValue(page(histories));
@@ -365,5 +385,110 @@ describe('AnimalHealthPage', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Preencha os campos obrigatórios.');
     expect(veterinaryHistoryService.create).not.toHaveBeenCalled();
+  });
+
+  it('não mostra painel de óbito para animal vivo', () => {
+    renderPage(bolsistaUser);
+
+    expect(screen.queryByText('Óbito')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Editar óbito' })).not.toBeInTheDocument();
+  });
+
+  it('mostra data e causa do óbito na ficha do falecido para bolsista', () => {
+    renderPage(bolsistaUser, melDeceased);
+
+    expect(screen.getByText('20/11/2026')).toBeInTheDocument();
+    expect(screen.getByText('Atropelamento')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Editar óbito' })).toBeInTheDocument();
+  });
+
+  it('salva a correção e recarrega a ficha sem reverter o óbito', async () => {
+    vi.mocked(animalService.updateDeceased).mockResolvedValue({
+      ...melDeceased,
+      deathDate: '2026-11-21',
+    });
+    reloadMock.mockImplementation(() => {
+      vi.mocked(useAnimal).mockReturnValue({
+        animal: { ...melDeceased, deathDate: '2026-11-21' },
+        loading: false,
+        failed: false,
+        reload: reloadMock,
+      });
+    });
+    renderPage(bolsistaUser, melDeceased);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+    fireEvent.change(screen.getByLabelText('Data do óbito'), {
+      target: { value: '2026-11-21' },
+    });
+    fireEvent.change(screen.getByLabelText('Causa do óbito (opcional)'), {
+      target: { value: 'Queda' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
+
+    await waitFor(() => {
+      expect(animalService.updateDeceased).toHaveBeenCalledWith(5, {
+        deathDate: '2026-11-21',
+        deathCause: 'Queda',
+      });
+    });
+    expect(reloadMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Salvar óbito' })).not.toBeInTheDocument();
+    expect(screen.getByText('21/11/2026')).toBeInTheDocument();
+    expect(screen.getByText('Óbito')).toBeInTheDocument();
+  });
+
+  it('causa vazia é enviada como null', async () => {
+    vi.mocked(animalService.updateDeceased).mockResolvedValue(melDeceased);
+    renderPage(bolsistaUser, melDeceased);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+    fireEvent.change(screen.getByLabelText('Data do óbito'), {
+      target: { value: '2026-11-21' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
+
+    await waitFor(() => {
+      expect(animalService.updateDeceased).toHaveBeenCalledWith(5, {
+        deathDate: '2026-11-21',
+        deathCause: null,
+      });
+    });
+  });
+
+  it('não chama a API com data vazia ou futura', async () => {
+    const futura = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    renderPage(bolsistaUser, melDeceased);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Preencha a data do óbito.');
+    expect(animalService.updateDeceased).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByLabelText('Data do óbito'), { target: { value: futura } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('A data do óbito não pode ser futura.');
+    });
+    expect(animalService.updateDeceased).not.toHaveBeenCalled();
+  });
+
+  it('mostra erro da API em Alert e mantém o formulário aberto', async () => {
+    vi.mocked(animalService.updateDeceased).mockRejectedValue(
+      new Error('Não foi possível salvar o óbito.'),
+    );
+    renderPage(bolsistaUser, melDeceased);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+    fireEvent.change(screen.getByLabelText('Data do óbito'), {
+      target: { value: '2026-11-21' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível salvar o óbito.');
+    expect(screen.getByRole('button', { name: 'Salvar óbito' })).toBeInTheDocument();
+    expect(reloadMock).not.toHaveBeenCalled();
   });
 });
