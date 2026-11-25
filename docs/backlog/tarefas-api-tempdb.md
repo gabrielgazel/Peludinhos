@@ -1,14 +1,14 @@
-# Pendências de API do B1 no TempDB
+# Implementações a executar no projeto TempDB (B1–B5)
 
-Data: 2026-11-22 · Origem: contrato acordado em `docs/superpowers/specs/2026-11-22-b1-insumos-front-design.md` (fatia de front do B1).
+Data: 2026-11-22 · Atualizado em 2026-11-24 · Origem: especificações das fatias de front B1–B5 (`docs/superpowers/specs/`).
 
 ## Regra geral
 
-Toda tarefa que exigir alteração no projeto `TempDB` é anotada neste arquivo, com **contexto**, **passos**, **aceite** e **restrições**. A execução fica para o **final das tarefas deste repo**. Nesta tarefa nada é executado no `TempDB`: este arquivo é somente documentação.
+Este arquivo reúne **todas** as implementações que devem ser feitas no projeto `TempDB`, organizadas por fatia (B1 a B5). Cada seção traz **contexto**, **passos**, **aceite** e **restrições**, e deve ser lida como instrução de execução. Nenhuma dessas alterações é feita neste repo de front: todo o trabalho — migrations, schemas, routers, seed, documentação e smoke tests — acontece no projeto `TempDB`, na sessão de implementação.
 
 Restrições válidas para todas as tarefas registradas aqui:
 
-- nenhuma migration `0001`–`0004` é alterada — toda mudança de banco é aditiva e idempotente, concentrada na `0005`;
+- nenhuma migration `0001`–`0004` é alterada — toda mudança de banco é aditiva e idempotente, concentrada nas migrations `0005` (B1), `0006` (B2), `0007` (B3), `0008` (B4) e `0009` (B5), aplicadas nessa ordem;
 - nenhuma alteração em seed, backend, rotas, tags ou outras páginas fora do escopo descrito;
 - documentação e mensagens de erro/interface em português;
 - sem DELETE na API (o aceite pede apenas criar, editar e listar).
@@ -17,7 +17,7 @@ Restrições válidas para todas as tarefas registradas aqui:
 
 ### Em aberto
 
-- [ ] **B1 — Medicamentos e produtos com API real** — itens abertos: B1 e B2; detalhes na seção `B1` abaixo.
+- [ ] **B1 — Medicamentos e produtos com API real** — detalhes na seção `B1` abaixo.
 - [ ] **B2 — Receitas, histórico e vacinação** — detalhes na seção B2 abaixo.
 - [ ] **B3 — Registro de adoção com termo** — detalhes na seção B3 abaixo.
 - [ ] **B4 — Relatórios 4–6** — detalhes na seção B4 abaixo.
@@ -307,7 +307,7 @@ Atualizar `TempDB/DOCUMENTACAO.md` (no projeto `TempDB`, quando a API for execut
 
 Data: 2026-11-23 · Origem: desenho da fatia de frente do B2 em `docs/superpowers/specs/2026-11-23-b2-saude-animal-front-design.md`.
 
-A ficha do animal no painel ganhou a aba **Saúde**, com histórico veterinário, vacinação e receitas. O front já está preparado para o contrato abaixo (tipos, services e página), mas as rotas, tabelas e schemas ainda não existem. Como no B1, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação; a execução fica para o final das tarefas deste repo.
+A ficha do animal no painel ganhou a aba **Saúde**, com histórico veterinário, vacinação e receitas. O front já está preparado para o contrato abaixo (tipos, services e página), mas as rotas, tabelas e schemas ainda não existem. Nenhuma implementação foi executada no projeto `TempDB` durante a fatia de front — as instruções abaixo descrevem o trabalho a ser feito agora nesse projeto.
 
 Valem as mesmas restrições do B1, válidas para todas as tarefas registradas aqui:
 
@@ -674,7 +674,7 @@ Data: 2026-11-23 · Origem: desenho da fatia de frente do B3 em `docs/superpower
 
 Hoje o fluxo termina na intenção aprovada: `IntentsAdminPage` oferece apenas **“Ver termo de adoção (demo)”**, um painel somente leitura com marca d'água `DEMONSTRAÇÃO`, `DemoBanner` e o aviso de que o registro definitivo entraria no B3. A prévia da D4.5 **não registra nada**: não grava adoção, não muda o animal e não sobrevive a um recarregamento. O B3 fecha essa lacuna no front — registrar a adoção a partir da intenção aprovada, exibir o termo preenchido e torná-lo imprimível — mas a persistência real depende da API descrita abaixo.
 
-Como no B1 e no B2, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação; a execução fica para o final das tarefas deste repo. O item `B3` permanece `- [ ]` no roadmap até a execução e a verificação da persistência real.
+Nenhuma implementação foi executada no projeto `TempDB` durante a fatia de front — as instruções abaixo descrevem o trabalho a ser feito agora nesse projeto. O item `B3` permanece `- [ ]` no roadmap até a execução e a verificação da persistência real.
 
 Valem as mesmas restrições do B1/B2, com o recorte desta fatia:
 
@@ -909,7 +909,7 @@ Data: 2026-11-24 · Origem: desenho da fatia de frente do B4 em `docs/superpower
 
 A página de relatórios passou a exibir três painéis novos — ocorrências mensais, consumo de medicamentos e consumo de produtos — alimentados por contratos de relatório dedicados. O B1 expõe apenas o **estoque atual** de medicamentos e produtos: não há histórico de consumo por período. Deduzir consumo da diferença de estoque produziria número falso sempre que houvesse reposição; por isso o front **não** tem fallback para fixture nem para valores estimados e consome `GET /api/reports/...` diretamente.
 
-Como no B1/B2/B3, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação. Os três relatórios antigos (status, pontos e consumo de ração), seus rótulos, CSV e testes permanecem intactos.
+Nenhuma implementação foi executada no projeto `TempDB` durante a fatia de front — as instruções abaixo descrevem o trabalho a ser feito agora nesse projeto. Os três relatórios antigos (status, pontos e consumo de ração), seus rótulos, CSV e testes permanecem intactos.
 
 Valem as mesmas restrições, com o recorte desta fatia:
 
@@ -1160,7 +1160,7 @@ Data: 2026-11-24 · Origem: desenho da fatia de frente do B5 em `docs/superpower
 
 O front do B5 está pronto e a API continua pendente: `animalService.updateDeceased` envia `PATCH /api/animals/{id}/deceased`, a ficha do animal exibe o painel **Óbito** na aba **Dados** com a edição de data e causa, e a lista de animais ganhou o filtro **Falecidos** e a coluna **Data do óbito**. A edição de **ocorrência** (`PATCH /api/events/{id}`) já existe desde a D1.6 (`eventService.ts` + `EventsAdminPage.tsx`) e **não muda** nesta fatia — o smoke test abaixo apenas confirma que ela continua corrigindo a ocorrência. O registro de óbito (`POST /api/animals/{id}/deceased`) marca `is_deceased`, mas ainda não grava data nem causa: sem as colunas novas, a correção não tem onde persistir.
 
-Como no B1/B2/B3/B4, **nada é executado no projeto `TempDB` nesta fatia**: este arquivo é somente documentação; a execução fica para o final das tarefas deste repo. O item `B5` permanece `- [ ]` no roadmap até a execução e a conferência da correção na listagem.
+Nenhuma implementação foi executada no projeto `TempDB` durante a fatia de front — as instruções abaixo descrevem o trabalho a ser feito agora nesse projeto. O item `B5` permanece `- [ ]` no roadmap até a execução e a conferência da correção na listagem.
 
 Valem as mesmas restrições, com o recorte desta fatia:
 
