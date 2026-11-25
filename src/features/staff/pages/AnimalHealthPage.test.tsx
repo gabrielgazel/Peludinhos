@@ -73,6 +73,8 @@ const mel: Animal = {
   behavior: 'docil',
   notes: null,
   isDeceased: false,
+  deathDate: null,
+  deathCause: null,
   photoUrl: null,
   createdAt: null,
   updatedAt: null,

@@ -84,6 +84,8 @@ function makeAnimal(
     behavior: null,
     notes: null,
     isDeceased: false,
+    deathDate: null,
+    deathCause: null,
     photoUrl: null,
     createdAt,
     updatedAt: null,

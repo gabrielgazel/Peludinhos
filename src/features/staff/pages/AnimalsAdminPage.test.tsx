@@ -44,6 +44,8 @@ function makeAnimal(partial: Partial<Animal> & { id: number; name: string }): An
     createdAt: null,
     updatedAt: null,
     ...partial,
+    deathDate: partial.deathDate ?? null,
+    deathCause: partial.deathCause ?? null,
   };
 }
 

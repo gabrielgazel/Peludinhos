@@ -10,7 +10,8 @@ vi.mock('../../animals/hooks/useAnimals', () => ({ useAvailableAnimals: vi.fn() 
 const animal = (id: number, name: string, status: Animal['status']): Animal => ({
   id, name, sex: 'F', colorDescription: 'Caramelo', age: '2 anos',
   isNeutered: true, status, behavior: 'docil', notes: null,
-  isDeceased: false, photoUrl: null, createdAt: null, updatedAt: null,
+  isDeceased: false, deathDate: null, deathCause: null,
+  photoUrl: null, createdAt: null, updatedAt: null,
 });
 
 describe('PublicHomePage', () => {

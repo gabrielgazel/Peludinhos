@@ -20,6 +20,8 @@ export function mapAnimal(row: ApiAnimal): Animal {
     behavior: row.behavior,
     notes: row.notes,
     isDeceased: row.is_deceased,
+    deathDate: row.death_date ?? null,
+    deathCause: row.death_cause ?? null,
     photoUrl: row.photo_url ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -33,6 +35,43 @@ export interface AnimalListParams {
   includeDeceased?: boolean;
   limit?: number;
   offset?: number;
+}
+
+/** Correção de óbito enviada ao PATCH /animals/{id}/deceased. */
+export interface DeceasedPayload {
+  deathDate: string;
+  deathCause: string | null;
+}
+
+const FALLBACK_DECEASED_ERROR = 'Não foi possível salvar o óbito.';
+const GENERIC_ERROR = /^(erro \d{3}\b|failed to fetch\b|network error\b|request failed\b)/i;
+
+function specificMessage(message: unknown): string | null {
+  if (typeof message !== 'string') return null;
+  const trimmed = message.trim();
+  return trimmed && !GENERIC_ERROR.test(trimmed) ? trimmed : null;
+}
+
+/** Preserva o detail da API (string ou lista de msg); troca o resto pelo fallback. */
+function deceasedErrorMessage(error: unknown): string {
+  const body = error && typeof error === 'object' ? (error as { body?: unknown }).body : null;
+  const detail = body && typeof body === 'object' ? (body as { detail?: unknown }).detail : null;
+
+  const fromDetail = specificMessage(detail);
+  if (fromDetail) return fromDetail;
+
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item) =>
+        item && typeof item === 'object' && 'msg' in item
+          ? specificMessage((item as { msg: unknown }).msg)
+          : specificMessage(item),
+      )
+      .filter((message): message is string => !!message);
+    if (messages.length > 0) return messages.join(' ');
+  }
+
+  return specificMessage(error instanceof Error ? error.message : null) ?? FALLBACK_DECEASED_ERROR;
 }
 
 export const animalService = {
@@ -59,6 +98,20 @@ export const animalService = {
 
   update: (id: number, payload: Partial<AnimalPayload>) =>
     httpClient.patch<ApiAnimal>(`/animals/${id}`, payload).then(mapAnimal),
+
+  /** Corrige data/causa de um óbito já registrado (PATCH auditável). */
+  updateDeceased: async (id: number, payload: DeceasedPayload): Promise<Animal> => {
+    try {
+      return await httpClient
+        .patch<ApiAnimal>(`/animals/${id}/deceased`, {
+          death_date: payload.deathDate,
+          death_cause: payload.deathCause,
+        })
+        .then(mapAnimal);
+    } catch (error) {
+      throw new Error(deceasedErrorMessage(error));
+    }
+  },
 
   markDeceased: (id: number) =>
     httpClient.post<ApiAnimal>(`/animals/${id}/deceased`).then(mapAnimal),

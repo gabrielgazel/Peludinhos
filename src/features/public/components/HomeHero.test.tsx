@@ -7,7 +7,8 @@ import { HomeHero } from './HomeHero';
 const animal = (id: number, name: string): Animal => ({
   id, name, sex: 'F', colorDescription: 'Caramelo', age: '2 anos',
   isNeutered: true, status: 'disponivel', behavior: 'docil', notes: null,
-  isDeceased: false, photoUrl: null, createdAt: null, updatedAt: null,
+  isDeceased: false, deathDate: null, deathCause: null,
+  photoUrl: null, createdAt: null, updatedAt: null,
 });
 
 function renderHero(animals: Animal[], loading = false, failed = false) {

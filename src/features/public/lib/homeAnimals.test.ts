@@ -5,7 +5,8 @@ import { availabilityLabel, selectAvailableAnimals } from './homeAnimals';
 const base: Animal = {
   id: 1, name: 'Mel', sex: 'F', colorDescription: 'Caramelo', age: '2 anos',
   isNeutered: true, status: 'disponivel', behavior: 'docil', notes: null,
-  isDeceased: false, photoUrl: null, createdAt: null, updatedAt: null,
+  isDeceased: false, deathDate: null, deathCause: null,
+  photoUrl: null, createdAt: null, updatedAt: null,
 };
 
 describe('selectAvailableAnimals', () => {

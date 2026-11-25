@@ -7,7 +7,8 @@ import { FeaturedAnimals } from './FeaturedAnimals';
 const animal = (id: number, name: string, status: Animal['status'] = 'disponivel'): Animal => ({
   id, name, sex: 'F', colorDescription: 'Caramelo', age: '2 anos',
   isNeutered: true, status, behavior: 'docil', notes: null,
-  isDeceased: false, photoUrl: null, createdAt: null, updatedAt: null,
+  isDeceased: false, deathDate: null, deathCause: null,
+  photoUrl: null, createdAt: null, updatedAt: null,
 });
 
 function renderSection(animals: Animal[], loading = false, failed = false) {

@@ -85,6 +85,8 @@ function makeAnimal(id: number, name: string): Animal {
     behavior: null,
     notes: null,
     isDeceased: false,
+    deathDate: null,
+    deathCause: null,
     photoUrl: null,
     createdAt: null,
     updatedAt: null,

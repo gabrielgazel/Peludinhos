@@ -25,6 +25,10 @@ export interface Animal {
   behavior: AnimalBehavior | null;
   notes: string | null;
   isDeceased: boolean;
+  /** Data do óbito em AAAA-MM-DD, ou null quando ausente. */
+  deathDate: string | null;
+  /** Causa do óbito, ou null quando ausente. */
+  deathCause: string | null;
   /** URL pública da foto (Supabase Storage) ou null quando não há foto. */
   photoUrl: string | null;
   createdAt: string | null;
@@ -57,6 +61,9 @@ export interface ApiAnimal {
   behavior: AnimalBehavior | null;
   notes: string | null;
   is_deceased: boolean;
+  /** Ausentes em respostas antigas da API: o mapeador normaliza para null. */
+  death_date?: string | null;
+  death_cause?: string | null;
   photo_path: string | null;
   photo_url: string | null;
   fk_administrator_member_id: number | null;
