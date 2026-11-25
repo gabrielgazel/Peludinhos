@@ -134,7 +134,7 @@ function page<T>(items: T[]) {
 
 function renderPage(user: AuthUser) {
   vi.mocked(useAuth).mockReturnValue({ user } as ReturnType<typeof useAuth>);
-  vi.mocked(useAnimal).mockReturnValue({ animal: mel, loading: false, failed: false });
+  vi.mocked(useAnimal).mockReturnValue({ animal: mel, loading: false, failed: false, reload: vi.fn() });
   return render(
     <MemoryRouter initialEntries={['/painel/animais/5']}>
       <Routes>

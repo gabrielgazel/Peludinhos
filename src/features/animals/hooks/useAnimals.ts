@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { animalService } from '../services/animalService';
 import type { Animal } from '../types/animal.types';
 
@@ -42,6 +42,7 @@ interface DetailResult {
 
 export function useAnimal(id: number) {
   const [result, setResult] = useState<DetailResult | null>(null);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     if (!Number.isFinite(id) || id <= 0) return;
@@ -60,15 +61,18 @@ export function useAnimal(id: number) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, version]);
 
   // Vale apenas o resultado do id atual; ids inválidos nunca carregam.
   const validId = Number.isFinite(id) && id > 0;
   const current = validId && result !== null && result.id === id ? result : null;
 
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
+
   return {
     animal: current?.animal ?? null,
     loading: validId && current === null,
     failed: current?.failed ?? false,
+    reload,
   };
 }
