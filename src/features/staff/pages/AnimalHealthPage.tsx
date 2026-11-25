@@ -280,7 +280,10 @@ export function AnimalHealthPage() {
 
   function openDeceasedForm() {
     setDeceasedError(null);
-    setDeceasedForm({ date: '', cause: '' });
+    setDeceasedForm({
+      date: animal?.deathDate ?? '',
+      cause: animal?.deathCause ?? '',
+    });
   }
 
   async function handleDeceasedSubmit() {

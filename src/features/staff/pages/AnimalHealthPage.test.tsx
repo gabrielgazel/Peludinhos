@@ -402,6 +402,15 @@ describe('AnimalHealthPage', () => {
     expect(screen.getByRole('button', { name: 'Editar óbito' })).toBeInTheDocument();
   });
 
+  it('abre o formulário com a data e a causa atuais do óbito', () => {
+    renderPage(bolsistaUser, melDeceased);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+
+    expect(screen.getByLabelText('Data do óbito')).toHaveValue('2026-11-20');
+    expect(screen.getByLabelText('Causa do óbito (opcional)')).toHaveValue('Atropelamento');
+  });
+
   it('salva a correção e recarrega a ficha sem reverter o óbito', async () => {
     vi.mocked(animalService.updateDeceased).mockResolvedValue({
       ...melDeceased,
@@ -446,6 +455,9 @@ describe('AnimalHealthPage', () => {
     fireEvent.change(screen.getByLabelText('Data do óbito'), {
       target: { value: '2026-11-21' },
     });
+    fireEvent.change(screen.getByLabelText('Causa do óbito (opcional)'), {
+      target: { value: '' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
 
     await waitFor(() => {
@@ -461,6 +473,7 @@ describe('AnimalHealthPage', () => {
     renderPage(bolsistaUser, melDeceased);
 
     fireEvent.click(screen.getByRole('button', { name: 'Editar óbito' }));
+    fireEvent.change(screen.getByLabelText('Data do óbito'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar óbito' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Preencha a data do óbito.');
