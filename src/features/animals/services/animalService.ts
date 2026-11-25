@@ -109,7 +109,7 @@ export const animalService = {
         })
         .then(mapAnimal);
     } catch (error) {
-      throw new Error(deceasedErrorMessage(error));
+      throw new Error(deceasedErrorMessage(error), { cause: error });
     }
   },
 
