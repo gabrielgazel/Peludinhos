@@ -69,7 +69,7 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 - Aparece: animal na listagem; ficha com o campo **Foto do animal** e a dica “JPG, PNG, WEBP ou GIF, até 5 MB”; confirmação “Registrar o óbito de Demo Ensaio 1? Esta ação não pode ser desfeita.”
 - Tempo alvo: 1:00
 - Frase de demo: “O óbito é aplicado só ao animal criado para o ensaio — nenhum animal do catálogo é alterado.”
-- Frase de demo: “A ficha interna reúne histórico, vacinas e receitas; a gravação depende da API do `TempDB`, ainda pendente (ver `docs/backlog/tarefas-api-tempdb.md`).” Abra com **Ver ficha**; na aba **Saúde**, mostre histórico, vacinas e receitas.
+- Frase de demo: “A ficha interna reúne histórico, vacinas e receitas; criar ou editar persiste pela API (ver `docs/backlog/tarefas-api-tempdb.md`). A data e a causa do óbito também podem ser corrigidas e aparecem na listagem de falecidos.” Abra com **Ver ficha**; na aba **Saúde**, mostre histórico, vacinas e receitas.
 - Plano B: se o upload falhar, pular a foto e mostrar o campo **Foto do animal** na ficha; se o óbito falhar duas vezes, sai do roteiro e vira apenas a frase.
 
 ### 5. Pontos: criar e vincular animais
@@ -99,10 +99,10 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 ### 8. Relatórios 1–6, membros, recuperação, manual e backlog
 
 - Clique: menu **Relatórios** → conferir os seis painéis **Animais por status**, **Animais por ponto**, **Consumo de ração**, **Ocorrências mensais**, **Medicamentos** e **Produtos**, com **Exportar CSV** em cada um quando houver dados; se sobrar tempo: menu **Membros**, `/recuperar-senha` (somente o formulário), o PDF único de entrega (`docs/pacote-entrega.pdf`) e o backlog `docs/backlog/tarefas-api-tempdb.md`.
-- Aparece: seis painéis; os três primeiros trazem números reais da API; os três novos dependem do contrato documentado no backlog B4 (`docs/backlog/tarefas-api-tempdb.md`), ainda pendente, e podem mostrar um `Alert` de erro ou estado vazio; rodapé “Os números são recalculados a cada visita; nenhuma informação é gravada.”
+- Aparece: seis painéis com números reais da API; os três novos (**Ocorrências mensais**, **Medicamentos** e **Produtos**) usam o contrato B4 documentado em `docs/backlog/tarefas-api-tempdb.md`; rodapé “Os números são recalculados a cada visita; nenhuma informação é gravada.”
 - Tempo alvo: 2:00
-- Frase de demo: “Os seis painéis leem a API; os três novos dependem do contrato documentado no backlog, então não mostram número inventado.”
-- Plano B: se um painel novo falhar, mostrar o `Alert` e explicar a pendência da API B4 documentada em `docs/backlog/tarefas-api-tempdb.md` — nunca apresentar estimativa como dado. Se **Animais por ponto** mostrar “Failed to fetch”, recarregar a página até três vezes — a API remota é intermitente e os outros cartões costumam carregar; se persistir, mostrar o print descrito dos painéis do ensaio anterior.
+- Frase de demo: “Os seis painéis leem a API; os três novos usam o contrato B4 e não mostram número inventado.”
+- Plano B: se um painel novo falhar, mostrar o `Alert` de erro ou estado vazio — nunca apresentar estimativa como dado. Se **Animais por ponto** mostrar “Failed to fetch”, recarregar a página até três vezes — a API remota é intermitente e os outros cartões costumam carregar; se persistir, mostrar o print descrito dos painéis do ensaio anterior.
 
 ---
 
@@ -112,16 +112,17 @@ tem frase própria nas seções abaixo. Tempo total alvo: **10:00**.
 | --- | --- |
 | Contas `*.demo@peludinhos.example` | “São contas de ensaio com senha pública, válidas só neste ambiente.” |
 | Intenção de adoção | “É uma manifestação de interesse; a equipe avalia e entra em contato por e-mail.” |
-| Insumos | “Medicamentos e produtos são listados e cadastrados na tela, com criação e edição restritas à administração; a persistência depende da execução da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`).” |
-| Termo de adoção | “Em uma intenção aprovada, registre a adoção, abra **Ver termo** e demonstre a impressão — lembrando que a persistência depende da API documentada em `docs/backlog/tarefas-api-tempdb.md`.” |
-| Relatórios 4–6 | “Os seis painéis leem a API; os três novos dependem do contrato documentado no backlog, então não mostram número inventado.” |
+| Insumos | “Medicamentos e produtos são listados, criados e editados na tela (criação e edição só para administração), com persistência pela API B1 — ver `docs/backlog/tarefas-api-tempdb.md`.” |
+| Termo de adoção | “Em uma intenção aprovada, registre a adoção, abra **Ver termo** e demonstre a impressão; o registro persiste pela API B3.” |
+| Relatórios 4–6 | “Os seis painéis leem a API; os três novos usam o contrato B4 e não mostram número inventado.” |
+| Correção de óbito | “Na ficha do animal, **Editar óbito** corrige data e causa; a alteração persiste e aparece na listagem de falecidos (B5).” |
 | Recuperação de senha | “A tela existe; o e-mail real de recuperação depende do servidor de e-mail e não é simulado aqui.” |
 
 ## Fora do build de produção
 
 - **`docs/pacote-entrega.pdf`** — artefato único de entrega (manual + roteiro), não rota da aplicação. Mostrar como PDF, nunca como tela.
 - **Backlog priorizado** — artefato da D5.6, ainda não existe no build.
-- **Contrato da API dos relatórios 4–6** — pendente no `TempDB`; os três painéis novos dependem do contrato documentado em `docs/backlog/tarefas-api-tempdb.md`, então não mostram número inventado.
+- **Contrato da API (B1–B5)** — documentado em `docs/backlog/tarefas-api-tempdb.md`; as APIs foram executadas no `TempDB`, mas o backlog é artefato de entrega, não rota da aplicação.
 - **Recuperação com e-mail real (D4.3)** — segue pendente de aceite; não fingir recebimento.
 
 ## Regra “falhou duas vezes sai”

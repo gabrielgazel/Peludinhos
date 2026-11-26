@@ -17,27 +17,27 @@ detalhe e intenção de adoção com autocadastro; login da equipe e painel;
 animais (busca, ficha, foto e óbito); pontos de alimentação e vínculo com
 animais; turno (iniciar, encerrar, histórico); ocorrência e ração (20 kg
 comprados, 5 kg consumidos, saldo de 15 kg); e os seis painéis de relatórios com
-exportação CSV (os três novos dependem da API B4 documentada no backlog). O
+exportação CSV (os três novos leem a API B4 documentada no backlog). O
 roteiro completo, com plano B e tempos medidos, está em
 `docs/roteiro-demo.md`; o passo a passo para quem usa o sistema está em
 `docs/manual-do-usuario.md`.
 
-## O que é demonstração ou está pendente
+## O que ainda é demonstração
 
 | Item | Como apresentar |
 | --- | --- |
-| Insumos (medicamentos e produtos) | Cadastro de medicamentos e produtos; persistência dependente da API (ver `docs/backlog/tarefas-api-tempdb.md`). |
-| Termo de adoção | Em uma intenção aprovada, **Registrar adoção** registra a adoção, **Ver termo** reabre o termo da adoção registrada e **Imprimir termo** abre a impressão; a persistência depende da API pendente (ver `docs/backlog/tarefas-api-tempdb.md`). |
-| Relatórios 4–6 | Painéis prontos no front — **Ocorrências mensais**, **Medicamentos** e **Produtos**; os números dependem da API documentada no backlog B4 (`docs/backlog/tarefas-api-tempdb.md`). |
+| Insumos (medicamentos e produtos) | Cadastro e edição com persistência real via API (contrato e aceite em `docs/backlog/tarefas-api-tempdb.md`). |
+| Termo de adoção | Em uma intenção aprovada, **Registrar adoção** registra a adoção, **Ver termo** reabre o termo da adoção registrada e **Imprimir termo** abre a impressão; o registro persiste via API. |
+| Relatórios 4–6 | Painéis reais — **Ocorrências mensais**, **Medicamentos** e **Produtos** — com números lidos da API B4 documentada no backlog (`docs/backlog/tarefas-api-tempdb.md`). |
+| Correção de óbito | A data e a causa informadas na ficha persistem via API e aparecem na listagem de falecidos (B5). |
 | Recuperação de senha | A tela é real, mas o envio de e-mail depende de servidor de e-mail e **não é simulado**. O teste com e-mail real (D4.3) segue pendente. |
 | Contas de demonstração | `*.demo@peludinhos.example`, senha pública `Demo@12345`, válidas somente neste ambiente. |
 
-Os painéis de relatórios 4–6 já estão no front, mas os números só aparecem com a
-API B4 documentada no backlog: não há fallback nem dado estimado. Sem a API, os
-painéis mostram erro em `Alert` ou estado vazio. O registro da adoção só passa a
-ser definitivo depois da execução e do aceite da API pendente; até lá, `B3`
-continua desmarcado no roadmap, assim como `B4` até o aceite da persistência
-real.
+As APIs B1–B5 foram executadas e aceitas no `TempDB` (migrations `0005`–`0009`,
+smoke test sem falhas). Os painéis de relatórios 4–6 leem números reais, sem
+fallback nem dado estimado, e o registro da adoção e a correção de óbito
+sobrevivem a um recarregamento. A única pendência de ambiente é o envio de
+e-mail da recuperação de senha (D4.3).
 
 ## Como rodar
 
@@ -140,21 +140,21 @@ Autenticação:
 - `/painel/animais` — gestão de animais
 - `/painel/animais/novo`, `/painel/animais/:id/editar` — cadastro/edição (admin)
 - `/painel/animais/:id` — ficha interna do animal com abas **Dados** e **Saúde**
-  (histórico, vacinação e receitas); persistência dependente da API pendente
-  (`docs/backlog/tarefas-api-tempdb.md`); abra pelo botão **Ver ficha** na
-  listagem
+  (histórico, vacinação e receitas) e correção de óbito com data e causa;
+  persistência via API B2/B5 (`docs/backlog/tarefas-api-tempdb.md`); abra pelo
+  botão **Ver ficha** na listagem
 - `/painel/operacao/pontos` — pontos de alimentação e vínculo com animais
 - `/painel/operacao/turnos` — turnos
 - `/painel/operacao/ocorrencias` — ocorrências
 - `/painel/operacao/racao` — compra, consumo e saldo de ração
 - `/painel/insumos` — medicamentos e produtos: listar, criar e editar (criar e
-  editar só para administração); persistência dependente da API pendente
+  editar só para administração), com persistência via API B1
   (`docs/backlog/tarefas-api-tempdb.md`)
 - `/painel/intencoes` — avaliação das intenções de adoção; intenções aprovadas
-  permitem registrar a adoção e imprimir o termo (persistência dependente da API
-  pendente em `docs/backlog/tarefas-api-tempdb.md`)
+  permitem registrar a adoção e imprimir o termo, com persistência via API B3
+  (`docs/backlog/tarefas-api-tempdb.md`)
 - `/painel/relatorios` — seis painéis no front; os três novos (**Ocorrências
-  mensais**, **Medicamentos**, **Produtos**) dependem da API B4 documentada em
+  mensais**, **Medicamentos**, **Produtos**) leem a API B4 documentada em
   `docs/backlog/tarefas-api-tempdb.md`
 - `/painel/membros`, `/painel/membros/:id` — gestão de membros (admin)
 

@@ -215,10 +215,9 @@ equipe. No menu lateral, o grupo **Geral** reúne as opções abaixo.
 > que já encontraram um lar. A confirmação diz “Registrar o óbito de {nome}?
 > Esta ação não pode ser desfeita.” — depois de confirmar, o animal deixa de
 > aparecer como disponível no catálogo. Animais vivos aparecem com `—` na
-> coluna **Data do óbito**. A correção feita em **Editar óbito** só aparece
-> depois que a API do `TempDB` estiver executada; até lá nenhum dado é
-> inventado e a persistência continua pendente
-> (`docs/backlog/tarefas-api-tempdb.md`). O botão **Editar** aparece apenas
+> coluna **Data do óbito**. A correção feita em **Editar óbito** persiste pela
+> API e aparece na listagem após recarregar (B5,
+> `docs/backlog/tarefas-api-tempdb.md`). O botão **Editar** aparece apenas
 > para a administração. Na aba **Saúde**, **Editar** aparece só para o autor
 > do registro ou a administração; não há exclusão.
 
@@ -382,19 +381,16 @@ aparecer, peça acesso ao administrador.
 
 ---
 
-## 6. Demonstração e pendências de API
+## 6. Registros reais e integrações
 
-Nesta seção estão os itens que continuam como demonstração e as pendências de
-API. O termo de adoção já é o registro real do fluxo: a adoção é registrada em
-**Intenções** e o termo salvo pode ser reaberto e impresso. Ainda assim, a
-persistência depende da API pendente em `docs/backlog/tarefas-api-tempdb.md`;
-até a execução e o aceite, `B3` continua desmarcado no roadmap e o termo não
-deve ser apresentado como registro definitivo. Os painéis de relatórios 4–6
-(**Ocorrências mensais**, **Medicamentos** e **Produtos**) já estão na tela,
-mas seus números dependem da API B4 documentada no mesmo backlog; `B4` permanece
-desmarcado no roadmap até o aceite da persistência real. A tela de insumos já
-usa cadastro com API, mas a persistência efetiva depende da API de insumos
-(§6.1), ainda pendente.
+Nesta seção estão os fluxos que usam API real. O termo de adoção é o registro
+real do fluxo: a adoção é registrada em **Intenções** e o termo salvo pode ser
+reaberto e impresso. A tela de insumos persiste medicamentos e produtos, os
+painéis de relatórios 4–6 (**Ocorrências mensais**, **Medicamentos** e
+**Produtos**) leem números reais, e a correção de óbito na ficha aparece na
+listagem de falecidos. As APIs B1–B5 foram executadas e aceitas no `TempDB`;
+o contrato e o aceite estão em `docs/backlog/tarefas-api-tempdb.md`. A única
+pendência de ambiente é o envio de e-mail da recuperação de senha (D4.3).
 
 ### 6.1 Insumos (medicamentos e produtos)
 
@@ -410,10 +406,8 @@ usa cadastro com API, mas a persistência efetiva depende da API de insumos
 
 > **Resultado esperado:** as duas listas aparecem e, para a administração, a
 > tela oferece criação e edição. Membros da equipe podem consultar; criar e
-> editar é restrito à administração. A persistência efetiva do que for
-> cadastrado depende da execução da API de insumos, ainda pendente (ver
-> `docs/backlog/tarefas-api-tempdb.md`): não apresente os dados como registro
-> definitivo antes disso.
+> editar é restrito à administração. O que for cadastrado persiste após
+> recarregar a tela (API B1, ver `docs/backlog/tarefas-api-tempdb.md`).
 
 ### 6.2 Termo de adoção
 
@@ -428,10 +422,8 @@ usa cadastro com API, mas a persistência efetiva depende da API de insumos
 3. Clique em **Imprimir termo** para abrir a impressão do navegador.
 
 > **Resultado esperado:** o termo mostra os dados reais da intenção aprovada,
-> sem marca d’água. A persistência do registro depende da API pendente em
-> `docs/backlog/tarefas-api-tempdb.md`: até a execução e o aceite, `B3` continua
-> desmarcado no roadmap e o termo não deve ser apresentado como registro
-> definitivo.
+> sem marca d’água. O registro persiste após recarregar a lista (API B3, ver
+> `docs/backlog/tarefas-api-tempdb.md`).
 
 ### 6.3 Relatórios 4–6
 
@@ -441,27 +433,25 @@ usa cadastro com API, mas a persistência efetiva depende da API de insumos
    vindos da API; use **Exportar CSV** em cada um quando houver dados.
 
 > **Resultado esperado:** os seis painéis aparecem na tela e todos leem a API.
-> Os três novos dependem do contrato B4 documentado em
-> `docs/backlog/tarefas-api-tempdb.md`, ainda pendente: sem a API, mostram um
-> `Alert` de erro ou estado vazio, sem fallback nem número inventado. `B4`
-> continua desmarcado no roadmap até o aceite da persistência real.
+> Os três novos (**Ocorrências mensais**, **Medicamentos** e **Produtos**) usam
+> o contrato B4 documentado em `docs/backlog/tarefas-api-tempdb.md`, com números
+> reais do período — sem fallback nem número inventado. Se a API estiver fora
+> do ar, o painel mostra um `Alert` de erro ou estado vazio.
 
 ### 6.4 O que mudou no termo de adoção
 
 A antiga prévia do termo foi substituída pelo registro real da adoção: em
 **Intenções**, **Registrar adoção** registra a adoção e **Ver termo** reabre o
-termo registrado para impressão. A faixa amarela do termo deixou de existir. A
-pendência que resta é a execução da API documentada em
-`docs/backlog/tarefas-api-tempdb.md`; até o aceite, `B3` continua desmarcado no
-roadmap.
+termo registrado para impressão. A faixa amarela do termo deixou de existir. O
+registro persiste via API, conforme o contrato B3 em
+`docs/backlog/tarefas-api-tempdb.md`.
 
 > **Resultado esperado:** você consegue explicar à banca que o termo é o
-> registro real do fluxo, que a persistência depende da API pendente e que os
-> seis painéis de front são animais por status, animais por ponto, consumo de
+> registro real do fluxo, que a persistência é feita pela API e que os seis
+> painéis de front são animais por status, animais por ponto, consumo de
 > ração, **Ocorrências mensais**, **Medicamentos** e **Produtos**. Os três
-> novos dependem da API B4 documentada em `docs/backlog/tarefas-api-tempdb.md`,
-> ainda pendente; `B4` permanece desmarcado no roadmap até o aceite da
-> persistência real.
+> novos leem números reais da API B4 documentada em
+> `docs/backlog/tarefas-api-tempdb.md`.
 
 ### 6.5 Saúde do animal (histórico, vacinas e receitas)
 
@@ -471,9 +461,8 @@ roadmap.
 > é permitida a qualquer membro; para criar é preciso ter vínculo com membro,
 > e **Editar** aparece só para o autor do registro ou a administração. O autor
 > aparece como `Membro #id` ou `—` quando não há vínculo. Não há botão de
-> exclusão. Criar ou editar e recarregar a página só persiste depois que a API
-> do `TempDB` for executada (ver `docs/backlog/tarefas-api-tempdb.md`); até lá,
-> não apresente os dados como registro definitivo.
+> exclusão. Criar ou editar e recarregar a página persiste os dados pela API
+> B2 (ver `docs/backlog/tarefas-api-tempdb.md`).
 
 ---
 

@@ -17,11 +17,11 @@ Restrições válidas para todas as tarefas registradas aqui:
 
 ### Em aberto
 
-- [ ] **B1 — Medicamentos e produtos com API real** — detalhes na seção `B1` abaixo.
-- [ ] **B2 — Receitas, histórico e vacinação** — detalhes na seção B2 abaixo.
-- [ ] **B3 — Registro de adoção com termo** — detalhes na seção B3 abaixo.
-- [ ] **B4 — Relatórios 4–6** — detalhes na seção B4 abaixo.
-- [ ] **B5 — Editar óbito e listar mortes** — detalhes na seção B5 abaixo.
+- [x] **B1 — Medicamentos e produtos com API real** — detalhes na seção `B1` abaixo.
+- [x] **B2 — Receitas, histórico e vacinação** — detalhes na seção B2 abaixo.
+- [x] **B3 - Registro de adoção com termo** - detalhes na seção B3 abaixo.
+- [x] **B4 — Relatórios 4–6** — detalhes na seção B4 abaixo.
+- [x] **B5 — Editar óbito e listar mortes** — detalhes na seção B5 abaixo.
 
 ## B1 — Medicamentos e produtos com API real
 
@@ -1160,7 +1160,7 @@ Data: 2026-11-24 · Origem: desenho da fatia de frente do B5 em `docs/superpower
 
 O front do B5 está pronto e a API continua pendente: `animalService.updateDeceased` envia `PATCH /api/animals/{id}/deceased`, a ficha do animal exibe o painel **Óbito** na aba **Dados** com a edição de data e causa, e a lista de animais ganhou o filtro **Falecidos** e a coluna **Data do óbito**. A edição de **ocorrência** (`PATCH /api/events/{id}`) já existe desde a D1.6 (`eventService.ts` + `EventsAdminPage.tsx`) e **não muda** nesta fatia — o smoke test abaixo apenas confirma que ela continua corrigindo a ocorrência. O registro de óbito (`POST /api/animals/{id}/deceased`) marca `is_deceased`, mas ainda não grava data nem causa: sem as colunas novas, a correção não tem onde persistir.
 
-Nenhuma implementação foi executada no projeto `TempDB` durante a fatia de front — as instruções abaixo descrevem o trabalho a ser feito agora nesse projeto. O item `B5` permanece `- [ ]` no roadmap até a execução e a conferência da correção na listagem.
+Implementação executada no projeto `TempDB` (worktree `b5-obito-api`): migration `0009`, schemas, router, smoke e documentação. O item `B5` passou a `- [x]` no roadmap após a conferência real da correção em `GET /api/animals?include_deceased=true`.
 
 Valem as mesmas restrições, com o recorte desta fatia:
 
@@ -1305,13 +1305,13 @@ Atualizar `TempDB/DOCUMENTACAO.md` (no projeto `TempDB`, quando a API for execut
 
 Espelhando o checklist do B1–B4, com os comandos já prontos para o projeto `TempDB`:
 
-- [ ] Confirmar a branch do `TempDB` em que a API será implementada (trabalhar no projeto `TempDB`, não neste repo de front).
-- [ ] Aplicar `migrations/0009_deceased_correction.sql` via Supabase MCP (`apply_migration`) ou, com `DATABASE_URL` válido no `.env`, via `.venv\Scripts\python.exe scripts\apply_migration.py 0009_deceased_correction.sql` (executa em uma transação).
-- [ ] Confirmar que a migration termina com `notify pgrst, 'reload schema';` e que o schema cache recarregou (o `PATCH /api/animals/{id}/deceased` aparece em `http://127.0.0.1:8000/docs`).
-- [ ] Subir a API (`.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000`) e rodar `.venv\Scripts\python.exe scripts\smoke_test.py` — incluído o bloco do B5 com anon 401, membro 200, correção refletida em `GET /api/animals?include_deceased=true`, 404/409/422, `PATCH /api/events/{id}` ainda corrigindo ocorrência e nenhuma rota DELETE exposta.
-- [ ] Rodar `.venv\Scripts\python.exe scripts\test_seed_demo.py`.
-- [ ] **Correção refletida na listagem: verificação final, pendente.** Só pode ser confirmada depois que o usuário executar os passos acima; até lá o aceite fica suspenso e `B5` não deve ser marcado como concluído.
+- [x] Confirmar a branch do `TempDB` em que a API será implementada (trabalhar no projeto `TempDB`, não neste repo de front) — worktree `b5-obito-api`.
+- [x] Aplicar `migrations/0009_deceased_correction.sql` via Supabase MCP (`apply_migration`) no projeto de dev `testedb`; colunas `death_date`/`death_cause` verificadas em `public.animals`.
+- [x] Confirmar que a migration termina com `notify pgrst, 'reload schema';` e que o schema cache recarregou (rotas expostas em `/openapi.json`).
+- [x] Subir a API (`.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000`) e rodar `.venv\Scripts\python.exe scripts\smoke_test.py` — bloco `[16] Óbito (B5)` com anon 401, membro 200, correção refletida em `GET /api/animals?include_deceased=true`, 404/409/422, `PATCH /api/events/{id}` ainda corrigindo ocorrência e nenhuma rota DELETE exposta; resultado real: 159 PASS / 0 FAIL.
+- [x] Rodar `.venv\Scripts\python.exe scripts\test_seed_demo.py` — 11 testes OK.
+- [x] **Correção refletida na listagem: verificação final.** Após a edição e a recarga, consulta direta a `GET /api/animals?include_deceased=true` devolveu o animal 93 com `death_date=2026-11-20` e `death_cause="Atropelamento"`; `B5` marcado como concluído.
 
-### Aceite suspenso
+### Aceite executado
 
-Corrigir a data e a causa do óbito na ficha, recarregar e ver a correção refletida em `GET /api/animals?include_deceased=true` **só pode ser verificado depois que a API do B5 for executada** no `TempDB` (ver checklist "Antes de executar (B5)"). A fatia atual de front **não marca `B5` como concluído no roadmap**: o item permanece `- [ ]` até a execução e a conferência da correção na listagem.
+Corrigir a data e a causa do óbito na ficha, recarregar e ver a correção refletida em `GET /api/animals?include_deceased=true`: confirmado no Supabase de dev e na API local. O PATCH gravou `death_date`/`death_cause`, a listagem com `include_deceased=true` devolveu os valores persistidos e o item `B5` do roadmap passou a `- [x]`.
